@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "common.hpp"
+#include <glad/glad.h>
 
 namespace glimac {
     

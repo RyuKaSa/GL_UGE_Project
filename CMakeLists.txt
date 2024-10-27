@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 cmake_policy(SET CMP0072 NEW)
 
-project(TD_GL_LEVEL2)
+project(TP4)
 
 # Set the folder where the executables are created
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
@@ -9,14 +9,12 @@ set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
 # Include glimac
 add_subdirectory(glimac)
 
-file(GLOB TP_DIRECTORIES "TP*")
+file(GLOB TP_DIRECTORIES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "TP*")
+list(REMOVE_ITEM TP_DIRECTORIES "TP1" "TP2")
 
 foreach(TP ${TP_DIRECTORIES})
-    message(WARNING "Configuring ${TP}")
+    message(WARNING "Configuring ${CMAKE_CURRENT_SOURCE_DIR}/${TP}")
     add_subdirectory(${TP})
-	# get_filename_component(DIRN ${TP} NAME)
-    # add_custom_target(${DIRN} COMMAND cd ${CMAKE_CURRENT_BINARY_DIR}/${DIRN} COMMAND make
-    #             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DIRN})
 endforeach()
 
 # Create a target for each TP
