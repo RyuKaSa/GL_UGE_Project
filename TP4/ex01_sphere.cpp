@@ -492,6 +492,11 @@ int main(int argc, char* argv[]) {
         glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube3MVPMatrix));
         glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube3NormalMatrix));
 
+        // Bind cube VAO and draw
+        glBindVertexArray(cubeVAO);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeIndices.size()), GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
+
         // cube 4 Model Matrix
         glm::mat4 cube4ModelMatrix = glm::mat4(1.0f);
         cube4ModelMatrix = glm::translate(cube4ModelMatrix, glm::vec3(0.0f, -2.0f, 0.0f)); // Position cube below the sphere
