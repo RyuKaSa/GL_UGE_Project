@@ -15,10 +15,9 @@
 int window_width = 800;
 int window_height = 800;
 
-
 int main(int argc, char* argv[]) {
     std::cout << "Program started" << std::endl;
-    
+
     // Initialize SDL video subsystem
     if (SDL_Init(SDL_INIT_VIDEO) != 0){
         std::cerr << "SDL_Init Error: " << SDL_GetError() << std::endl;
@@ -175,10 +174,36 @@ int main(int argc, char* argv[]) {
     // Set the clear color to a dark gray
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
+    // Camera parameters
+    glm::vec3 cameraPos(0.0f, 0.0f, 5.0f);    // Initial position of the camera
+    glm::vec3 cameraFront(0.0f, 0.0f, -1.0f); // Direction the camera is looking at
+    glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);     // Up vector
+
+    float cameraPosY = cameraPos.y; // Store the initial y position
+
+    float yaw = -90.0f;  // Yaw angle initialized to -90 degrees to look towards negative Z
+    float pitch = 0.0f;  // Pitch angle
+    float lastX = window_width / 2.0f;  // Last mouse X position
+    float lastY = window_height / 2.0f; // Last mouse Y position
+    bool firstMouse = true; // First mouse movement flag
+
+    float cameraSpeed = 5.0f; // Adjust accordingly
+    float deltaTime = 0.0f;   // Time between current frame and last frame
+    float lastFrame = 0.0f;   // Time of last frame
+
+    // Enable relative mouse mode to capture mouse movement
+    SDL_SetRelativeMouseMode(SDL_TRUE);
+
     // Main loop
     bool done = false;
     std::cout << "Entering main loop" << std::endl;
     while (!done) {
+        // Calculate delta time
+        float currentFrame = windowManager.getTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+        float adjustedSpeed = cameraSpeed * deltaTime;
+
         // Clear buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -189,17 +214,61 @@ int main(int argc, char* argv[]) {
                 done = true;
             }
             if (e.type == SDL_KEYDOWN) {
-                if (e.key.keysym.sym == SDLK_q || e.key.keysym.sym == SDLK_a) {
+                if (e.key.keysym.sym == SDLK_ESCAPE) {
                     done = true;
                 }
             }
+
+            // Mouse movement
+            if (e.type == SDL_MOUSEMOTION) {
+                float xpos = e.motion.xrel;
+                float ypos = e.motion.yrel;
+
+                float sensitivity = 0.1f; // Adjust this value
+                xpos *= sensitivity;
+                ypos *= sensitivity;
+
+                yaw += xpos;
+                pitch -= ypos; // Invert y-axis if necessary
+
+                // Constrain pitch
+                if (pitch > 89.0f)
+                    pitch = 89.0f;
+                if (pitch < -89.0f)
+                    pitch = -89.0f;
+
+                // Update camera front vector
+                glm::vec3 front;
+                front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+                front.y = sin(glm::radians(pitch));
+                front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+                cameraFront = glm::normalize(front);
+            }
         }
 
-        // Get elapsed time
-        float time = windowManager.getTime();
+        // Movement direction vectors projected onto the XZ-plane
+        glm::vec3 frontDirection = glm::normalize(glm::vec3(cameraFront.x, 0.0f, cameraFront.z));
+        glm::vec3 rightDirection = glm::normalize(glm::cross(frontDirection, cameraUp));
+
+        // Keyboard input for movement
+        const Uint8* state = SDL_GetKeyboardState(NULL);
+        if (state[SDL_SCANCODE_W]) {
+            cameraPos += adjustedSpeed * frontDirection;
+        }
+        if (state[SDL_SCANCODE_S]) {
+            cameraPos -= adjustedSpeed * frontDirection;
+        }
+        if (state[SDL_SCANCODE_A]) {
+            cameraPos -= rightDirection * adjustedSpeed;
+        }
+        if (state[SDL_SCANCODE_D]) {
+            cameraPos += rightDirection * adjustedSpeed;
+        }
+
+        // Keep the camera at the initial y position
+        cameraPos.y = cameraPosY;
 
         // Define MVP matrices
-        // Projection matrix: 70° Field of View, aspect ratio, near and far planes
         glm::mat4 ProjMatrix = glm::perspective(
             glm::radians(70.0f),                            // Field of View
             window_width / (float)window_height,            // Aspect ratio
@@ -207,21 +276,17 @@ int main(int argc, char* argv[]) {
             100.0f                                          // Far clipping plane
         );
 
-        // View matrix: camera at (0, 0, 5), looking at (0, 0, 0), up vector (0, 1, 0)
-        glm::mat4 ViewMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, -5));
-
-        // Model matrix: rotate over time
-        glm::mat4 ModelMatrix = glm::rotate(
-            glm::mat4(1.0f),
-            time,                                           // Rotation angle in radians
-            glm::vec3(0, 1, 0)                              // Rotation axis (y-axis)
+        glm::mat4 ViewMatrix = glm::lookAt(
+            cameraPos,             // Camera position
+            cameraPos + cameraFront, // Look at target
+            cameraUp               // Up vector
         );
 
-        // Combined Model-View and Model-View-Projection matrices
+        // Model matrix: identity matrix (no transformations)
+        glm::mat4 ModelMatrix = glm::mat4(1.0f);
+
         glm::mat4 MVMatrix = ViewMatrix * ModelMatrix;
         glm::mat4 MVPMatrix = ProjMatrix * MVMatrix;
-
-        // Normal matrix (transpose of the inverse of MVMatrix)
         glm::mat4 NormalMatrix = glm::transpose(glm::inverse(MVMatrix));
 
         // Send matrices to the GPU
