@@ -434,21 +434,77 @@ int main(int argc, char* argv[]) {
         glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
         glBindVertexArray(0);
 
-        // **Draw the Cube**
+        // **Draw the First Cube**
 
-        // Cube Model Matrix
-        glm::mat4 cubeModelMatrix = glm::mat4(1.0f);
-        cubeModelMatrix = glm::translate(cubeModelMatrix, glm::vec3(2.0f, 0.0f, 0.0f)); // Position cube next to sphere
-        cubeModelMatrix = glm::scale(cubeModelMatrix, glm::vec3(0.5f)); // Scale down the cube
+        // Cube 1 Model Matrix
+        glm::mat4 cube1ModelMatrix = glm::mat4(1.0f);
+        cube1ModelMatrix = glm::translate(cube1ModelMatrix, glm::vec3(2.0f, 0.0f, 0.0f)); // Position cube next to sphere
+        cube1ModelMatrix = glm::scale(cube1ModelMatrix, glm::vec3(0.5f)); // Scale down the cube uniformly
 
-        glm::mat4 cubeMVMatrix = ViewMatrix * cubeModelMatrix;
-        glm::mat4 cubeMVPMatrix = ProjMatrix * cubeMVMatrix;
-        glm::mat4 cubeNormalMatrix = glm::transpose(glm::inverse(cubeMVMatrix));
+        glm::mat4 cube1MVMatrix = ViewMatrix * cube1ModelMatrix;
+        glm::mat4 cube1MVPMatrix = ProjMatrix * cube1MVMatrix;
+        glm::mat4 cube1NormalMatrix = glm::transpose(glm::inverse(cube1MVMatrix));
 
         // Send cube matrices to the shaders
-        glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(cubeMVMatrix));
-        glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(cubeMVPMatrix));
-        glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(cubeNormalMatrix));
+        glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube1MVMatrix));
+        glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube1MVPMatrix));
+        glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube1NormalMatrix));
+
+        // Bind cube VAO and draw
+        glBindVertexArray(cubeVAO);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeIndices.size()), GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
+
+        // **Draw the Second Cube**
+
+        // Cube 2 Model Matrix
+        glm::mat4 cube2ModelMatrix = glm::mat4(1.0f);
+        cube2ModelMatrix = glm::translate(cube2ModelMatrix, glm::vec3(-2.0f, 0.0f, 0.0f)); // Position cube to the left
+        cube2ModelMatrix = glm::scale(cube2ModelMatrix, glm::vec3(0.5f)); // Same uniform scale
+
+        glm::mat4 cube2MVMatrix = ViewMatrix * cube2ModelMatrix;
+        glm::mat4 cube2MVPMatrix = ProjMatrix * cube2MVMatrix;
+        glm::mat4 cube2NormalMatrix = glm::transpose(glm::inverse(cube2MVMatrix));
+
+        // Send cube matrices to the shaders
+        glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube2MVMatrix));
+        glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube2MVPMatrix));
+        glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube2NormalMatrix));
+
+        // Bind cube VAO and draw
+        glBindVertexArray(cubeVAO);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeIndices.size()), GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
+
+        // **Draw the Third Cube**
+
+        // Cube 3 Model Matrix
+        glm::mat4 cube3ModelMatrix = glm::mat4(1.0f);
+        cube3ModelMatrix = glm::translate(cube3ModelMatrix, glm::vec3(0.0f, 2.0f, 0.0f)); // Position cube above the sphere
+        cube3ModelMatrix = glm::scale(cube3ModelMatrix, glm::vec3(0.5f, 1.0f, 0.5f)); // Non-uniform scaling
+
+        glm::mat4 cube3MVMatrix = ViewMatrix * cube3ModelMatrix;
+        glm::mat4 cube3MVPMatrix = ProjMatrix * cube3MVMatrix;
+        glm::mat4 cube3NormalMatrix = glm::transpose(glm::inverse(cube3MVMatrix));
+
+        // Send cube matrices to the shaders
+        glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube3MVMatrix));
+        glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube3MVPMatrix));
+        glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube3NormalMatrix));
+
+        // cube 4 Model Matrix
+        glm::mat4 cube4ModelMatrix = glm::mat4(1.0f);
+        cube4ModelMatrix = glm::translate(cube4ModelMatrix, glm::vec3(0.0f, -2.0f, 0.0f)); // Position cube below the sphere
+        cube4ModelMatrix = glm::scale(cube4ModelMatrix, glm::vec3(5.0f, 0.5f, 5.0f)); // Non-uniform scaling, floor
+
+        glm::mat4 cube4MVMatrix = ViewMatrix * cube4ModelMatrix;
+        glm::mat4 cube4MVPMatrix = ProjMatrix * cube4MVMatrix;
+        glm::mat4 cube4NormalMatrix = glm::transpose(glm::inverse(cube4MVMatrix));
+
+        // Send cube matrices to the shaders
+        glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube4MVMatrix));
+        glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube4MVPMatrix));
+        glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube4NormalMatrix));
 
         // Bind cube VAO and draw
         glBindVertexArray(cubeVAO);
