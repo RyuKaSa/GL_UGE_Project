@@ -11,9 +11,131 @@
 #include "glimac/SDLWindowManager.hpp"
 #include <SDL2/SDL.h>
 #include <cstddef> // For offsetof
+#include <vector>
 
 int window_width = 800;
 int window_height = 800;
+
+// Structure for 3D vertices with position, normal, and texture coordinates
+struct Vertex3D {
+    glm::vec3 position;    // Vertex position
+    glm::vec3 normal;      // Vertex normal
+    glm::vec2 texCoords;   // Texture coordinates
+
+    Vertex3D(const glm::vec3& pos, const glm::vec3& norm, const glm::vec2& uv)
+        : position(pos), normal(norm), texCoords(uv) {}
+};
+
+// Function to generate cube vertices and indices
+void createCube(std::vector<Vertex3D>& vertices, std::vector<GLuint>& indices) {
+    // Define the cube vertices
+    vertices = {
+        // Front face
+        Vertex3D(glm::vec3(-0.5f, -0.5f,  0.5f), glm::vec3( 0,  0,  1), glm::vec2(0.0f, 0.0f)),
+        Vertex3D(glm::vec3( 0.5f, -0.5f,  0.5f), glm::vec3( 0,  0,  1), glm::vec2(1.0f, 0.0f)),
+        Vertex3D(glm::vec3( 0.5f,  0.5f,  0.5f), glm::vec3( 0,  0,  1), glm::vec2(1.0f, 1.0f)),
+        Vertex3D(glm::vec3(-0.5f,  0.5f,  0.5f), glm::vec3( 0,  0,  1), glm::vec2(0.0f, 1.0f)),
+        // Back face
+        Vertex3D(glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3( 0,  0, -1), glm::vec2(1.0f, 0.0f)),
+        Vertex3D(glm::vec3( 0.5f, -0.5f, -0.5f), glm::vec3( 0,  0, -1), glm::vec2(0.0f, 0.0f)),
+        Vertex3D(glm::vec3( 0.5f,  0.5f, -0.5f), glm::vec3( 0,  0, -1), glm::vec2(0.0f, 1.0f)),
+        Vertex3D(glm::vec3(-0.5f,  0.5f, -0.5f), glm::vec3( 0,  0, -1), glm::vec2(1.0f, 1.0f)),
+        // Left face
+        Vertex3D(glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(-1,  0,  0), glm::vec2(0.0f, 0.0f)),
+        Vertex3D(glm::vec3(-0.5f, -0.5f,  0.5f), glm::vec3(-1,  0,  0), glm::vec2(1.0f, 0.0f)),
+        Vertex3D(glm::vec3(-0.5f,  0.5f,  0.5f), glm::vec3(-1,  0,  0), glm::vec2(1.0f, 1.0f)),
+        Vertex3D(glm::vec3(-0.5f,  0.5f, -0.5f), glm::vec3(-1,  0,  0), glm::vec2(0.0f, 1.0f)),
+        // Right face
+        Vertex3D(glm::vec3( 0.5f, -0.5f, -0.5f), glm::vec3( 1,  0,  0), glm::vec2(1.0f, 0.0f)),
+        Vertex3D(glm::vec3( 0.5f, -0.5f,  0.5f), glm::vec3( 1,  0,  0), glm::vec2(0.0f, 0.0f)),
+        Vertex3D(glm::vec3( 0.5f,  0.5f,  0.5f), glm::vec3( 1,  0,  0), glm::vec2(0.0f, 1.0f)),
+        Vertex3D(glm::vec3( 0.5f,  0.5f, -0.5f), glm::vec3( 1,  0,  0), glm::vec2(1.0f, 1.0f)),
+        // Top face
+        Vertex3D(glm::vec3(-0.5f,  0.5f, -0.5f), glm::vec3( 0,  1,  0), glm::vec2(0.0f, 1.0f)),
+        Vertex3D(glm::vec3(-0.5f,  0.5f,  0.5f), glm::vec3( 0,  1,  0), glm::vec2(0.0f, 0.0f)),
+        Vertex3D(glm::vec3( 0.5f,  0.5f,  0.5f), glm::vec3( 0,  1,  0), glm::vec2(1.0f, 0.0f)),
+        Vertex3D(glm::vec3( 0.5f,  0.5f, -0.5f), glm::vec3( 0,  1,  0), glm::vec2(1.0f, 1.0f)),
+        // Bottom face
+        Vertex3D(glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3( 0, -1,  0), glm::vec2(1.0f, 1.0f)),
+        Vertex3D(glm::vec3(-0.5f, -0.5f,  0.5f), glm::vec3( 0, -1,  0), glm::vec2(1.0f, 0.0f)),
+        Vertex3D(glm::vec3( 0.5f, -0.5f,  0.5f), glm::vec3( 0, -1,  0), glm::vec2(0.0f, 0.0f)),
+        Vertex3D(glm::vec3( 0.5f, -0.5f, -0.5f), glm::vec3( 0, -1,  0), glm::vec2(0.0f, 1.0f))
+    };
+
+    // Define the cube indices
+    indices = {
+        // Front face
+        0, 1, 2,  2, 3, 0,
+        // Back face
+        4, 5, 6,  6, 7, 4,
+        // Left face
+        8, 9,10, 10,11, 8,
+        // Right face
+       12,13,14, 14,15,12,
+        // Top face
+       16,17,18, 18,19,16,
+        // Bottom face
+       20,21,22, 22,23,20
+    };
+}
+
+// Function to set up VBO, EBO, and VAO for the cube
+void setupCubeBuffers(const std::vector<Vertex3D>& vertices, const std::vector<GLuint>& indices, GLuint& cubeVBO, GLuint& cubeEBO, GLuint& cubeVAO) {
+    // Generate VBO, EBO, and VAO
+    glGenBuffers(1, &cubeVBO);
+    glGenBuffers(1, &cubeEBO);
+    glGenVertexArrays(1, &cubeVAO);
+
+    // Bind VAO
+    glBindVertexArray(cubeVAO);
+
+    // Bind VBO and upload vertex data
+    glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex3D), vertices.data(), GL_STATIC_DRAW);
+
+    // Bind EBO and upload index data
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
+
+    // Set up vertex attributes
+    // Position attribute
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(
+        0,                      // Attribute index
+        3,                      // Number of components (x, y, z)
+        GL_FLOAT,               // Type
+        GL_FALSE,               // Normalized?
+        sizeof(Vertex3D),       // Stride
+        (void*)offsetof(Vertex3D, position) // Offset
+    );
+
+    // Normal attribute
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(
+        1,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(Vertex3D),
+        (void*)offsetof(Vertex3D, normal)
+    );
+
+    // Texture coordinate attribute
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(
+        2,
+        2,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(Vertex3D),
+        (void*)offsetof(Vertex3D, texCoords)
+    );
+
+    // Unbind VAO and buffers
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
 
 int main(int argc, char* argv[]) {
     std::cout << "Program started" << std::endl;
@@ -74,32 +196,32 @@ int main(int argc, char* argv[]) {
     glimac::Sphere sphere(1, 32, 16);
     std::cout << "Sphere created" << std::endl;
 
-    // Create and bind VBO
-    GLuint vbo;
-    glGenBuffers(1, &vbo);
-    if (vbo == 0) {
+    // Create and bind VBO for sphere
+    GLuint sphereVBO;
+    glGenBuffers(1, &sphereVBO);
+    if (sphereVBO == 0) {
         std::cerr << "Failed to generate VBO" << std::endl;
         return -1;
     }
-    std::cout << "VBO generated: " << vbo << std::endl;
+    std::cout << "Sphere VBO generated: " << sphereVBO << std::endl;
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, sphereVBO);
     glBufferData(GL_ARRAY_BUFFER, sphere.getVertexCount() * sizeof(glimac::ShapeVertex), sphere.getDataPointer(), GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    std::cout << "VBO data buffered" << std::endl;
+    std::cout << "Sphere VBO data buffered" << std::endl;
 
-    // Create VAO
-    GLuint vao;
-    glGenVertexArrays(1, &vao);
-    if (vao == 0) {
+    // Create VAO for sphere
+    GLuint sphereVAO;
+    glGenVertexArrays(1, &sphereVAO);
+    if (sphereVAO == 0) {
         std::cerr << "Failed to generate VAO" << std::endl;
         return -1;
     }
-    std::cout << "VAO generated: " << vao << std::endl;
+    std::cout << "Sphere VAO generated: " << sphereVAO << std::endl;
 
-    // Bind VAO and set up vertex attributes
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    // Bind VAO and set up vertex attributes for sphere
+    glBindVertexArray(sphereVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, sphereVBO);
 
     // Position attribute
     glEnableVertexAttribArray(0);
@@ -136,7 +258,18 @@ int main(int argc, char* argv[]) {
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-    std::cout << "VAO set up" << std::endl;
+    std::cout << "Sphere VAO set up" << std::endl;
+
+    // Cube setup
+    // Create cube vertices and indices
+    std::vector<Vertex3D> cubeVertices;
+    std::vector<GLuint> cubeIndices;
+    createCube(cubeVertices, cubeIndices);
+
+    // Set up VBO, EBO, and VAO for the cube
+    GLuint cubeVBO, cubeEBO, cubeVAO;
+    setupCubeBuffers(cubeVertices, cubeIndices, cubeVBO, cubeEBO, cubeVAO);
+    std::cout << "Cube VBO, EBO, and VAO set up" << std::endl;
 
     // Load shaders
     glimac::FilePath applicationPath(argv[0]);
@@ -282,30 +415,59 @@ int main(int argc, char* argv[]) {
             cameraUp               // Up vector
         );
 
-        // Model matrix: identity matrix (no transformations)
-        glm::mat4 ModelMatrix = glm::mat4(1.0f);
+        // **Draw the Sphere**
 
-        glm::mat4 MVMatrix = ViewMatrix * ModelMatrix;
-        glm::mat4 MVPMatrix = ProjMatrix * MVMatrix;
-        glm::mat4 NormalMatrix = glm::transpose(glm::inverse(MVMatrix));
+        // Sphere Model Matrix (identity since it's at the origin)
+        glm::mat4 sphereModelMatrix = glm::mat4(1.0f);
 
-        // Send matrices to the GPU
-        glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(MVMatrix));
-        glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(MVPMatrix));
-        glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+        glm::mat4 sphereMVMatrix = ViewMatrix * sphereModelMatrix;
+        glm::mat4 sphereMVPMatrix = ProjMatrix * sphereMVMatrix;
+        glm::mat4 sphereNormalMatrix = glm::transpose(glm::inverse(sphereMVMatrix));
 
-        // Bind VAO and draw the sphere
-        glBindVertexArray(vao);
+        // Send sphere matrices to the shaders
+        glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(sphereMVMatrix));
+        glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(sphereMVPMatrix));
+        glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(sphereNormalMatrix));
+
+        // Bind sphere VAO and draw
+        glBindVertexArray(sphereVAO);
         glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
+        glBindVertexArray(0);
+
+        // **Draw the Cube**
+
+        // Cube Model Matrix
+        glm::mat4 cubeModelMatrix = glm::mat4(1.0f);
+        cubeModelMatrix = glm::translate(cubeModelMatrix, glm::vec3(2.0f, 0.0f, 0.0f)); // Position cube next to sphere
+        cubeModelMatrix = glm::scale(cubeModelMatrix, glm::vec3(0.5f)); // Scale down the cube
+
+        glm::mat4 cubeMVMatrix = ViewMatrix * cubeModelMatrix;
+        glm::mat4 cubeMVPMatrix = ProjMatrix * cubeMVMatrix;
+        glm::mat4 cubeNormalMatrix = glm::transpose(glm::inverse(cubeMVMatrix));
+
+        // Send cube matrices to the shaders
+        glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(cubeMVMatrix));
+        glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(cubeMVPMatrix));
+        glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(cubeNormalMatrix));
+
+        // Bind cube VAO and draw
+        glBindVertexArray(cubeVAO);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeIndices.size()), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
         // Swap buffers
         windowManager.swapBuffers();
     }
 
-    // Clean up
-    glDeleteBuffers(1, &vbo);
-    glDeleteVertexArrays(1, &vao);
+    // Clean up sphere buffers
+    glDeleteBuffers(1, &sphereVBO);
+    glDeleteVertexArrays(1, &sphereVAO);
+
+    // Clean up cube buffers
+    glDeleteBuffers(1, &cubeVBO);
+    glDeleteBuffers(1, &cubeEBO);
+    glDeleteVertexArrays(1, &cubeVAO);
+
     std::cout << "Program terminated successfully" << std::endl;
 
     return 0;
