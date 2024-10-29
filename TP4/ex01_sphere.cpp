@@ -3,10 +3,12 @@
 
 #include <iostream>
 #include <glimac/Sphere.hpp>
+#include <glimac/Program.hpp>
+#include <glimac/Image.hpp>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glimac/Program.hpp>
 
 #include "glimac/SDLWindowManager.hpp"
 #include <SDL2/SDL.h>
@@ -71,11 +73,11 @@ void createCube(std::vector<Vertex3D>& vertices, std::vector<GLuint>& indices) {
         // Left face
         8, 9,10, 10,11, 8,
         // Right face
-       12,13,14, 14,15,12,
+        12,13,14, 14,15,12,
         // Top face
-       16,17,18, 18,19,16,
+        16,17,18, 18,19,16,
         // Bottom face
-       20,21,22, 22,23,20
+        20,21,22, 22,23,20
     };
 }
 
@@ -131,10 +133,8 @@ void setupCubeBuffers(const std::vector<Vertex3D>& vertices, const std::vector<G
         (void*)offsetof(Vertex3D, texCoords)
     );
 
-    // Unbind VAO and buffers
+    // Unbind VAO (EBO remains bound to VAO)
     glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 int main(int argc, char* argv[]) {
@@ -273,32 +273,70 @@ int main(int argc, char* argv[]) {
 
     // Load shaders
     glimac::FilePath applicationPath(argv[0]);
-    std::string vertexShaderPath = applicationPath.dirPath() + "TP4/shaders/" + (argc > 1 ? argv[1] : "sphere.vs.glsl");
-    std::string fragmentShaderPath = applicationPath.dirPath() + "TP4/shaders/" + (argc > 2 ? argv[2] : "sphere.fs.glsl");
+    // Load unified shader
+    std::string unifiedVertexShaderPath = applicationPath.dirPath() + "TP4/shaders/" + "unified_shader.vs.glsl";
+    std::string unifiedFragmentShaderPath = applicationPath.dirPath() + "TP4/shaders/" + "unified_shader.fs.glsl";
 
-    std::cout << "Vertex shader path: " << vertexShaderPath << std::endl;
-    std::cout << "Fragment shader path: " << fragmentShaderPath << std::endl;
+    std::cout << "Unified Vertex shader path: " << unifiedVertexShaderPath << std::endl;
+    std::cout << "Unified Fragment shader path: " << unifiedFragmentShaderPath << std::endl;
 
-    glimac::Program program = glimac::loadProgram(vertexShaderPath, fragmentShaderPath);
-    if (program.getGLId() == 0) {
-        std::cerr << "Failed to load shaders" << std::endl;
+    glimac::Program unifiedProgram = glimac::loadProgram(unifiedVertexShaderPath, unifiedFragmentShaderPath);
+    if (unifiedProgram.getGLId() == 0) {
+        std::cerr << "Failed to load unified shaders" << std::endl;
         return -1;
     }
-    std::cout << "Shaders loaded successfully" << std::endl;
+    std::cout << "Unified shaders loaded successfully" << std::endl;
 
-    program.use();
-    std::cout << "Program in use" << std::endl;
+    // Get uniform locations for unified program
+    unifiedProgram.use();
+    std::cout << "Unified program in use" << std::endl;
 
-    // Get uniform locations
-    GLint uMVPMatrixLocation = glGetUniformLocation(program.getGLId(), "uMVPMatrix");
-    GLint uMVMatrixLocation = glGetUniformLocation(program.getGLId(), "uMVMatrix");
-    GLint uNormalMatrixLocation = glGetUniformLocation(program.getGLId(), "uNormalMatrix");
+    GLint uMVPMatrixLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uMVPMatrix");
+    GLint uMVMatrixLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uMVMatrix");
+    GLint uNormalMatrixLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uNormalMatrix");
+    GLint uTextureLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uTexture");
+    GLint uObjectColorLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uObjectColor");
+    GLint uUseTextureLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uUseTexture");
 
-    if (uMVPMatrixLocation == -1 || uMVMatrixLocation == -1 || uNormalMatrixLocation == -1) {
-        std::cerr << "Failed to get uniform locations" << std::endl;
+    if (uMVPMatrixLocation == -1) std::cerr << "Failed to get 'uMVPMatrix' location" << std::endl;
+    if (uMVMatrixLocation == -1) std::cerr << "Failed to get 'uMVMatrix' location" << std::endl;
+    if (uNormalMatrixLocation == -1) std::cerr << "Failed to get 'uNormalMatrix' location" << std::endl;
+    if (uTextureLocation == -1) std::cerr << "Failed to get 'uTexture' location" << std::endl;
+    if (uObjectColorLocation == -1) std::cerr << "Failed to get 'uObjectColor' location" << std::endl;
+    if (uUseTextureLocation == -1) std::cerr << "Failed to get 'uUseTexture' location" << std::endl;
+
+    // Load the texture using glimac::Image
+    std::string texturePath = applicationPath.dirPath() + "../TP4/assets/textures/cobblestone-texture.png";
+    std::cout << "Attempting to load texture at: " << texturePath << std::endl;
+
+    std::unique_ptr<glimac::Image> pImage = glimac::loadImage(texturePath);
+    if (!pImage) {
+        std::cerr << "Failed to load texture image at " << texturePath << std::endl;
         return -1;
     }
-    std::cout << "Uniform locations retrieved" << std::endl;
+
+    // Generate and bind the texture
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+
+    // Set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    // Set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Upload the texture data
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pImage->getWidth(), pImage->getHeight(), 0, GL_RGBA, GL_FLOAT, pImage->getPixels());
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Set the texture unit to 0 (GL_TEXTURE0)
+    unifiedProgram.use();
+    glUniform1i(uTextureLocation, 0);
 
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
@@ -415,9 +453,11 @@ int main(int argc, char* argv[]) {
             cameraUp               // Up vector
         );
 
-        // **Draw the Sphere**
+        // Use unified program
+        unifiedProgram.use();
 
-        // Sphere Model Matrix (identity since it's at the origin)
+        // **Draw the Sphere**
+        // Sphere Model Matrix
         glm::mat4 sphereModelMatrix = glm::mat4(1.0f);
 
         glm::mat4 sphereMVMatrix = ViewMatrix * sphereModelMatrix;
@@ -429,13 +469,16 @@ int main(int argc, char* argv[]) {
         glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(sphereMVPMatrix));
         glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(sphereNormalMatrix));
 
+        // Set uniforms for untextured object
+        glUniform1f(uUseTextureLocation, 0.0f);
+        glUniform3f(uObjectColorLocation, 1.0f, 1.0f, 1.0f); // White color
+
         // Bind sphere VAO and draw
         glBindVertexArray(sphereVAO);
         glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
         glBindVertexArray(0);
 
         // **Draw the First Cube**
-
         // Cube 1 Model Matrix
         glm::mat4 cube1ModelMatrix = glm::mat4(1.0f);
         cube1ModelMatrix = glm::translate(cube1ModelMatrix, glm::vec3(2.0f, 0.0f, 0.0f)); // Position cube next to sphere
@@ -450,13 +493,16 @@ int main(int argc, char* argv[]) {
         glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube1MVPMatrix));
         glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube1NormalMatrix));
 
+        // Set uniforms for untextured object
+        glUniform1f(uUseTextureLocation, 0.0f);
+        glUniform3f(uObjectColorLocation, 0.6f, 0.6f, 0.6f); // Gray color
+
         // Bind cube VAO and draw
         glBindVertexArray(cubeVAO);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeIndices.size()), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
         // **Draw the Second Cube**
-
         // Cube 2 Model Matrix
         glm::mat4 cube2ModelMatrix = glm::mat4(1.0f);
         cube2ModelMatrix = glm::translate(cube2ModelMatrix, glm::vec3(-2.0f, 0.0f, 0.0f)); // Position cube to the left
@@ -471,13 +517,16 @@ int main(int argc, char* argv[]) {
         glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube2MVPMatrix));
         glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube2NormalMatrix));
 
+        // Set uniforms for untextured object
+        glUniform1f(uUseTextureLocation, 0.0f);
+        glUniform3f(uObjectColorLocation, 0.6f, 0.6f, 0.6f); // Gray color
+
         // Bind cube VAO and draw
         glBindVertexArray(cubeVAO);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeIndices.size()), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
         // **Draw the Third Cube**
-
         // Cube 3 Model Matrix
         glm::mat4 cube3ModelMatrix = glm::mat4(1.0f);
         cube3ModelMatrix = glm::translate(cube3ModelMatrix, glm::vec3(0.0f, 2.0f, 0.0f)); // Position cube above the sphere
@@ -492,12 +541,17 @@ int main(int argc, char* argv[]) {
         glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube3MVPMatrix));
         glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube3NormalMatrix));
 
+        // Set uniforms for untextured object
+        glUniform1f(uUseTextureLocation, 0.0f);
+        glUniform3f(uObjectColorLocation, 0.6f, 0.6f, 0.6f); // Gray color
+
         // Bind cube VAO and draw
         glBindVertexArray(cubeVAO);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeIndices.size()), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
-        // cube 4 Model Matrix
+        // **Draw the Fourth Cube (Floor)**
+        // Cube 4 Model Matrix
         glm::mat4 cube4ModelMatrix = glm::mat4(1.0f);
         cube4ModelMatrix = glm::translate(cube4ModelMatrix, glm::vec3(0.0f, -2.0f, 0.0f)); // Position cube below the sphere
         cube4ModelMatrix = glm::scale(cube4ModelMatrix, glm::vec3(5.0f, 0.5f, 5.0f)); // Non-uniform scaling, floor
@@ -510,6 +564,38 @@ int main(int argc, char* argv[]) {
         glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube4MVMatrix));
         glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube4MVPMatrix));
         glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube4NormalMatrix));
+
+        // Set uniforms for untextured object
+        glUniform1f(uUseTextureLocation, 0.0f);
+        glUniform3f(uObjectColorLocation, 0.6f, 0.6f, 0.6f); // Gray color
+
+        // Bind cube VAO and draw
+        glBindVertexArray(cubeVAO);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeIndices.size()), GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
+
+        // **Draw the Textured Cube**
+        // Textured Cube Model Matrix
+        glm::mat4 texturedCubeModelMatrix = glm::mat4(1.0f);
+        texturedCubeModelMatrix = glm::translate(texturedCubeModelMatrix, glm::vec3(0.0f, 0.0f, 2.0f)); // Position cube
+        texturedCubeModelMatrix = glm::scale(texturedCubeModelMatrix, glm::vec3(0.5f)); // Scale down the cube
+
+        glm::mat4 texturedCubeMVMatrix = ViewMatrix * texturedCubeModelMatrix;
+        glm::mat4 texturedCubeMVPMatrix = ProjMatrix * texturedCubeMVMatrix;
+        glm::mat4 texturedCubeNormalMatrix = glm::transpose(glm::inverse(texturedCubeMVMatrix));
+
+        // Send matrices to the shaders
+        glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(texturedCubeMVMatrix));
+        glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(texturedCubeMVPMatrix));
+        glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(texturedCubeNormalMatrix));
+
+        // Set uniforms for textured object
+        glUniform1f(uUseTextureLocation, 1.0f);
+
+        // Bind texture
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glUniform1i(uTextureLocation, 0);
 
         // Bind cube VAO and draw
         glBindVertexArray(cubeVAO);
@@ -528,6 +614,9 @@ int main(int argc, char* argv[]) {
     glDeleteBuffers(1, &cubeVBO);
     glDeleteBuffers(1, &cubeEBO);
     glDeleteVertexArrays(1, &cubeVAO);
+
+    // Clean up texture
+    glDeleteTextures(1, &textureID);
 
     std::cout << "Program terminated successfully" << std::endl;
 
