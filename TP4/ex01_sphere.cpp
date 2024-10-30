@@ -306,7 +306,7 @@ int main(int argc, char* argv[]) {
     if (uUseTextureLocation == -1) std::cerr << "Failed to get 'uUseTexture' location" << std::endl;
 
     // Load the texture using glimac::Image
-    std::string texturePath = applicationPath.dirPath() + "../TP4/assets/textures/cobblestone-texture.png";
+    std::string texturePath = applicationPath.dirPath() + "../TP4/assets/textures/cobblestone_8bit.png";
     std::cout << "Attempting to load texture at: " << texturePath << std::endl;
 
     std::unique_ptr<glimac::Image> pImage = glimac::loadImage(texturePath);
@@ -318,7 +318,7 @@ int main(int argc, char* argv[]) {
     // Flip texture vertically
     size_t width = pImage->getWidth();
     size_t height = pImage->getHeight();
-    glm::vec4* pixels = pImage->getPixels();  // Use glm::vec4* since that's what pImage->getPixels() returns
+    glm::vec4* pixels = pImage->getPixels();
 
     // Iterate through each column and swap rows from top to bottom
     for (size_t row = 0; row < height / 2; ++row) {
@@ -340,9 +340,9 @@ int main(int argc, char* argv[]) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    // Set texture filtering parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // Set texture filtering parameters to nearest-neighbor, to keep the texture pixelated, sharp, and crisp
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     // Upload the texture data
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pImage->getWidth(), pImage->getHeight(), 0, GL_RGBA, GL_FLOAT, pImage->getPixels());
