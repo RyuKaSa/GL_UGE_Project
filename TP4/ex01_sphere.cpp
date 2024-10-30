@@ -18,6 +18,20 @@
 int window_width = 800;
 int window_height = 800;
 
+// stone floot coords
+int numCubesX = 15; // Number of cubes along the x-axis
+int numCubesZ = 15; // Number of cubes along the z-axis
+float spacingX = 1.0f; // Distance between each cube along the x-axis
+float spacingZ = 1.0f; // Distance between each cube along the z-axis
+
+struct AABB {
+    glm::vec3 min;
+    glm::vec3 max;
+};
+
+std::vector<AABB> objectBoundaries; // List of all object boundaries
+float cameraRadius = 0.15f; // Radius of the camera sphere for collision detection
+
 // Structure for 3D vertices with position, normal, and texture coordinates
 struct Vertex3D {
     glm::vec3 position;    // Vertex position
@@ -135,6 +149,20 @@ void setupCubeBuffers(const std::vector<Vertex3D>& vertices, const std::vector<G
 
     // Unbind VAO (EBO remains bound to VAO)
     glBindVertexArray(0);
+}
+
+bool checkCollision(const glm::vec3& sphereCenter, float radius, const AABB& box) {
+    float distanceSquared = 0.0f;
+
+    // Calculate squared distance from sphere center to nearest AABB point
+    for (int i = 0; i < 3; ++i) {
+        if (sphereCenter[i] < box.min[i]) {
+            distanceSquared += (box.min[i] - sphereCenter[i]) * (box.min[i] - sphereCenter[i]);
+        } else if (sphereCenter[i] > box.max[i]) {
+            distanceSquared += (sphereCenter[i] - box.max[i]) * (sphereCenter[i] - box.max[i]);
+        }
+    }
+    return distanceSquared <= (radius * radius);
 }
 
 int main(int argc, char* argv[]) {
@@ -260,6 +288,14 @@ int main(int argc, char* argv[]) {
     glBindVertexArray(0);
     std::cout << "Sphere VAO set up" << std::endl;
 
+    // Define AABB for the Sphere
+    glm::vec3 spherePosition(0.0f, 0.0f, 0.0f); // Sphere center position
+    float sphereRadius = 1.0f; // Radius of the sphere
+    objectBoundaries.push_back({
+        spherePosition - glm::vec3(sphereRadius), // min corner
+        spherePosition + glm::vec3(sphereRadius)  // max corner
+    });
+
     // Cube setup
     // Create cube vertices and indices
     std::vector<Vertex3D> cubeVertices;
@@ -270,6 +306,41 @@ int main(int argc, char* argv[]) {
     GLuint cubeVBO, cubeEBO, cubeVAO;
     setupCubeBuffers(cubeVertices, cubeIndices, cubeVBO, cubeEBO, cubeVAO);
     std::cout << "Cube VBO, EBO, and VAO set up" << std::endl;
+
+    // Cube 1 AABB
+    glm::vec3 cube1Pos(2.0f, 0.0f, 0.0f); // Position of Cube 1
+    float cube1Size = 0.5f; // Size (half-dimension)
+    objectBoundaries.push_back({
+        cube1Pos - glm::vec3(cube1Size),
+        cube1Pos + glm::vec3(cube1Size)
+    });
+
+    // Cube 2 AABB
+    glm::vec3 cube2Pos(-2.0f, 0.0f, 0.0f); // Position of Cube 2
+    float cube2Size = 0.5f; // Size (half-dimension)
+    objectBoundaries.push_back({
+        cube2Pos - glm::vec3(cube2Size),
+        cube2Pos + glm::vec3(cube2Size)
+    });
+
+    // Cube 3 AABB (non-uniform scaling)
+    glm::vec3 cube3Pos(0.0f, 2.0f, 0.0f); // Position of Cube 3
+    glm::vec3 cube3Size(0.5f, 1.0f, 0.5f); // Non-uniform dimensions
+    objectBoundaries.push_back({
+        cube3Pos - cube3Size,
+        cube3Pos + cube3Size
+    });
+
+    for (int x = 0; x < numCubesX; ++x) {
+        for (int z = 0; z < numCubesZ; ++z) {
+            glm::vec3 cubePos(-7.0f + x * spacingX, -2.0f, 7.0f - z * spacingZ);
+            float cubeSize = 0.5f; // Size of each floor cube
+            objectBoundaries.push_back({
+                cubePos - glm::vec3(cubeSize),
+                cubePos + glm::vec3(cubeSize)
+            });
+        }
+    }
 
     // Load shaders
     glimac::FilePath applicationPath(argv[0]);
@@ -502,17 +573,35 @@ int main(int argc, char* argv[]) {
 
         // Keyboard input for movement
         const Uint8* state = SDL_GetKeyboardState(NULL);
+        
+        glm::vec3 proposedCameraPos = cameraPos; // Temporary camera position for collision testing
+
+        // Calculate proposed camera position based on input
         if (state[SDL_SCANCODE_W]) {
-            cameraPos += adjustedSpeed * frontDirection;
+            proposedCameraPos += adjustedSpeed * frontDirection;
         }
         if (state[SDL_SCANCODE_S]) {
-            cameraPos -= adjustedSpeed * frontDirection;
+            proposedCameraPos -= adjustedSpeed * frontDirection;
         }
         if (state[SDL_SCANCODE_A]) {
-            cameraPos -= rightDirection * adjustedSpeed;
+            proposedCameraPos -= rightDirection * adjustedSpeed;
         }
         if (state[SDL_SCANCODE_D]) {
-            cameraPos += rightDirection * adjustedSpeed;
+            proposedCameraPos += rightDirection * adjustedSpeed;
+        }
+
+        // Check collision against all objects
+        bool collisionDetected = false;
+        for (const auto& boundary : objectBoundaries) {
+            if (checkCollision(proposedCameraPos, cameraRadius, boundary)) {
+                collisionDetected = true;
+                break; // Stop further checking if a collision is found
+            }
+        }
+
+        // Update camera position only if no collision is detected
+        if (!collisionDetected) {
+            cameraPos = proposedCameraPos;
         }
 
         // Keep the camera at the initial y position
@@ -629,31 +718,7 @@ int main(int argc, char* argv[]) {
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeIndices.size()), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
-        // **Draw the Fourth Cube (Floor)**
-        // Cube 4 Model Matrix
-        glm::mat4 cube4ModelMatrix = glm::mat4(1.0f);
-        cube4ModelMatrix = glm::translate(cube4ModelMatrix, glm::vec3(0.0f, -2.0f, 0.0f)); // Position cube below the sphere
-        cube4ModelMatrix = glm::scale(cube4ModelMatrix, glm::vec3(5.0f, 0.5f, 5.0f)); // Non-uniform scaling, floor
-
-        glm::mat4 cube4MVMatrix = ViewMatrix * cube4ModelMatrix;
-        glm::mat4 cube4MVPMatrix = ProjMatrix * cube4MVMatrix;
-        glm::mat4 cube4NormalMatrix = glm::transpose(glm::inverse(cube4MVMatrix));
-
-        // Send cube matrices to the shaders
-        glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube4MVMatrix));
-        glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube4MVPMatrix));
-        glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube4NormalMatrix));
-
-        // Set uniforms for untextured object
-        glUniform1f(uUseTextureLocation, 0.0f);
-        glUniform3f(uObjectColorLocation, 0.6f, 0.6f, 0.6f); // Gray color
-
-        // Bind cube VAO and draw
-        glBindVertexArray(cubeVAO);
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeIndices.size()), GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);
-
-        // **Draw the Textured Cube**
+        // **Draw a Textured Cube**
         // Textured Cube Model Matrix
         glm::mat4 texturedCubeModelMatrix = glm::mat4(1.0f);
         texturedCubeModelMatrix = glm::translate(texturedCubeModelMatrix, glm::vec3(0.0f, 0.0f, 2.0f)); // Position cube
@@ -681,32 +746,42 @@ int main(int argc, char* argv[]) {
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeIndices.size()), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
-        // **Draw the New Textured Cube**
-        // New Textured Cube Model Matrix
-        glm::mat4 newTexturedCubeModelMatrix = glm::mat4(1.0f);
-        newTexturedCubeModelMatrix = glm::translate(newTexturedCubeModelMatrix, glm::vec3(0.0f, 0.0f, -2.0f)); // Position cube
-        newTexturedCubeModelMatrix = glm::scale(newTexturedCubeModelMatrix, glm::vec3(0.5f)); // Scale down the cube
+        for (int x = 0; x < numCubesX; ++x) {
+            for (int z = 0; z < numCubesZ; ++z) {
+                // **Draw Each Textured Cube in a Grid**
 
-        glm::mat4 newTexturedCubeMVMatrix = ViewMatrix * newTexturedCubeModelMatrix;
-        glm::mat4 newTexturedCubeMVPMatrix = ProjMatrix * newTexturedCubeMVMatrix;
-        glm::mat4 newTexturedCubeNormalMatrix = glm::transpose(glm::inverse(newTexturedCubeMVMatrix));
+                // New Textured Cube Model Matrix for each cube with incremental x and z positions
+                glm::mat4 newTexturedCubeModelMatrix = glm::mat4(1.0f);
+                newTexturedCubeModelMatrix = glm::translate(
+                    newTexturedCubeModelMatrix,
+                    glm::vec3(-7.0f + x * spacingX, -2.0f, 7.0f - z * spacingZ) // Position in x and z
+                );
+                newTexturedCubeModelMatrix = glm::scale(newTexturedCubeModelMatrix, glm::vec3(1.0f)); // Scale each cube
 
-        // Send matrices to the shaders
-        glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(newTexturedCubeMVMatrix));
-        glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(newTexturedCubeMVPMatrix));
-        glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(newTexturedCubeNormalMatrix));
+                glm::mat4 newTexturedCubeMVMatrix = ViewMatrix * newTexturedCubeModelMatrix;
+                glm::mat4 newTexturedCubeMVPMatrix = ProjMatrix * newTexturedCubeMVMatrix;
+                glm::mat4 newTexturedCubeNormalMatrix = glm::transpose(glm::inverse(newTexturedCubeMVMatrix));
 
-        // Set uniforms for textured object
-        glUniform1f(uUseTextureLocation, 1.0f);
+                // Send matrices to the shaders
+                glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(newTexturedCubeMVMatrix));
+                glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(newTexturedCubeMVPMatrix));
+                glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(newTexturedCubeNormalMatrix));
 
-        // Bind stone texture
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, stoneTextureID);
-        glUniform1i(uTextureLocation, 0);
+                // Set uniforms for textured object
+                glUniform1f(uUseTextureLocation, 1.0f);
 
-        // Bind cube VAO and draw
-        glBindVertexArray(cubeVAO);
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeIndices.size()), GL_UNSIGNED_INT, 0);
+                // Bind stone texture
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, stoneTextureID);
+                glUniform1i(uTextureLocation, 0);
+
+                // Bind cube VAO and draw
+                glBindVertexArray(cubeVAO);
+                glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeIndices.size()), GL_UNSIGNED_INT, 0);
+            }
+        }
+
+        // Unbind the VAO after the loops
         glBindVertexArray(0);
 
         // Swap buffers
