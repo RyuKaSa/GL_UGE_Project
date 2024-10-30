@@ -298,6 +298,7 @@ int main(int argc, char* argv[]) {
     GLint uObjectColorLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uObjectColor");
     GLint uUseTextureLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uUseTexture");
 
+    // sanity check
     if (uMVPMatrixLocation == -1) std::cerr << "Failed to get 'uMVPMatrix' location" << std::endl;
     if (uMVMatrixLocation == -1) std::cerr << "Failed to get 'uMVMatrix' location" << std::endl;
     if (uNormalMatrixLocation == -1) std::cerr << "Failed to get 'uNormalMatrix' location" << std::endl;
@@ -354,6 +355,51 @@ int main(int argc, char* argv[]) {
     unifiedProgram.use();
     glUniform1i(uTextureLocation, 0);
 
+    // Load the new texture "stone_8bit.png"
+    std::string stoneTexturePath = applicationPath.dirPath() + "../TP4/assets/textures/stone_8bit.png";
+    std::cout << "Attempting to load texture at: " << stoneTexturePath << std::endl;
+
+    std::unique_ptr<glimac::Image> pStoneImage = glimac::loadImage(stoneTexturePath);
+    if (!pStoneImage) {
+        std::cerr << "Failed to load texture image at " << stoneTexturePath << std::endl;
+        return -1;
+    }
+
+    // Flip the stone texture vertically
+    size_t stoneWidth = pStoneImage->getWidth();
+    size_t stoneHeight = pStoneImage->getHeight();
+    glm::vec4* stonePixels = pStoneImage->getPixels();
+
+    // Iterate through each column and swap rows from top to bottom
+    for (size_t row = 0; row < stoneHeight / 2; ++row) {
+        for (size_t col = 0; col < stoneWidth; ++col) {
+            size_t topIndex = row * stoneWidth + col;
+            size_t bottomIndex = (stoneHeight - 1 - row) * stoneWidth + col;
+
+            // Swap the pixels at topIndex and bottomIndex
+            std::swap(stonePixels[topIndex], stonePixels[bottomIndex]);
+        }
+    }
+
+    // Generate and bind the stone texture
+    GLuint stoneTextureID;
+    glGenTextures(1, &stoneTextureID);
+    glBindTexture(GL_TEXTURE_2D, stoneTextureID);
+
+    // Set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    // Set texture filtering parameters to nearest-neighbor
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    // Upload the stone texture data
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pStoneImage->getWidth(), pStoneImage->getHeight(), 0, GL_RGBA, GL_FLOAT, pStoneImage->getPixels());
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
     std::cout << "Depth test enabled" << std::endl;
@@ -381,6 +427,10 @@ int main(int argc, char* argv[]) {
     // Enable relative mouse mode to capture mouse movement
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
+    int frameCount = 0;
+    float fpsTimer = 0.0f;
+    int fps = 0;
+
     // Main loop
     bool done = false;
     std::cout << "Entering main loop" << std::endl;
@@ -390,6 +440,19 @@ int main(int argc, char* argv[]) {
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
         float adjustedSpeed = cameraSpeed * deltaTime;
+
+        // Update FPS counter
+        frameCount++;
+        fpsTimer += deltaTime;
+        if (fpsTimer >= 1.0f) {
+            fps = frameCount;
+            frameCount = 0;
+            fpsTimer -= 1.0f;
+
+            // Update window title with FPS
+            std::string newTitle = "Boules - FPS: " + std::to_string(fps);
+            SDL_SetWindowTitle(windowManager.getWindow(), newTitle.c_str());
+        }
 
         // Clear buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -611,6 +674,34 @@ int main(int argc, char* argv[]) {
         // Bind texture
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID);
+        glUniform1i(uTextureLocation, 0);
+
+        // Bind cube VAO and draw
+        glBindVertexArray(cubeVAO);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeIndices.size()), GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
+
+        // **Draw the New Textured Cube**
+        // New Textured Cube Model Matrix
+        glm::mat4 newTexturedCubeModelMatrix = glm::mat4(1.0f);
+        newTexturedCubeModelMatrix = glm::translate(newTexturedCubeModelMatrix, glm::vec3(0.0f, 0.0f, -2.0f)); // Position cube
+        newTexturedCubeModelMatrix = glm::scale(newTexturedCubeModelMatrix, glm::vec3(0.5f)); // Scale down the cube
+
+        glm::mat4 newTexturedCubeMVMatrix = ViewMatrix * newTexturedCubeModelMatrix;
+        glm::mat4 newTexturedCubeMVPMatrix = ProjMatrix * newTexturedCubeMVMatrix;
+        glm::mat4 newTexturedCubeNormalMatrix = glm::transpose(glm::inverse(newTexturedCubeMVMatrix));
+
+        // Send matrices to the shaders
+        glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(newTexturedCubeMVMatrix));
+        glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(newTexturedCubeMVPMatrix));
+        glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(newTexturedCubeNormalMatrix));
+
+        // Set uniforms for textured object
+        glUniform1f(uUseTextureLocation, 1.0f);
+
+        // Bind stone texture
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, stoneTextureID);
         glUniform1i(uTextureLocation, 0);
 
         // Bind cube VAO and draw
