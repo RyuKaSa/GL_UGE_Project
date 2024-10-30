@@ -315,6 +315,22 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
+    // Flip texture vertically
+    size_t width = pImage->getWidth();
+    size_t height = pImage->getHeight();
+    glm::vec4* pixels = pImage->getPixels();  // Use glm::vec4* since that's what pImage->getPixels() returns
+
+    // Iterate through each column and swap rows from top to bottom
+    for (size_t row = 0; row < height / 2; ++row) {
+        for (size_t col = 0; col < width; ++col) {
+            size_t topIndex = row * width + col;
+            size_t bottomIndex = (height - 1 - row) * width + col;
+
+            // Swap the pixels at topIndex and bottomIndex
+            std::swap(pixels[topIndex], pixels[bottomIndex]);
+        }
+    }
+
     // Generate and bind the texture
     GLuint textureID;
     glGenTextures(1, &textureID);
