@@ -14,11 +14,12 @@
 #include <SDL2/SDL.h>
 #include <cstddef> // For offsetof
 #include <vector>
+#include <map>
 
 int window_width = 800;
 int window_height = 800;
 
-// stone floot coords
+// Stone floor coordinates
 int numCubesX = 15; // Number of cubes along the x-axis
 int numCubesZ = 15; // Number of cubes along the z-axis
 float spacingX = 1.0f; // Distance between each cube along the x-axis
@@ -29,7 +30,6 @@ struct AABB {
     glm::vec3 max;
 };
 
-std::vector<AABB> objectBoundaries; // List of all object boundaries
 float cameraRadius = 0.15f; // Radius of the camera sphere for collision detection
 
 // Structure for 3D vertices with position, normal, and texture coordinates
@@ -41,6 +41,28 @@ struct Vertex3D {
     Vertex3D(const glm::vec3& pos, const glm::vec3& norm, const glm::vec2& uv)
         : position(pos), normal(norm), texCoords(uv) {}
 };
+
+enum class ObjectType {
+    Cube,
+    Sphere
+};
+
+struct SceneObject {
+    ObjectType type;
+    glm::vec3 position;
+    glm::vec3 scale;
+    glm::vec3 color;
+    bool useTexture;
+    GLuint textureID;       // Texture ID; use 0 if no texture
+    glm::vec3 rotationAxis; // Optional, if you want to support rotation
+    float rotationAngle;    // Optional, in degrees
+    AABB boundingBox;       // Axis-Aligned Bounding Box for collision
+    GLuint vaoID;           // VAO for the object
+    GLsizei indexCount;     // Number of indices to draw (if using EBO)
+};
+
+std::vector<SceneObject> sceneObjects; // List of all scene objects
+std::map<std::string, GLuint> textures; // Map to store loaded textures
 
 // Function to generate cube vertices and indices
 void createCube(std::vector<Vertex3D>& vertices, std::vector<GLuint>& indices) {
@@ -149,6 +171,117 @@ void setupCubeBuffers(const std::vector<Vertex3D>& vertices, const std::vector<G
 
     // Unbind VAO (EBO remains bound to VAO)
     glBindVertexArray(0);
+}
+
+GLuint loadTexture(const std::string& texturePath) {
+    if (textures.find(texturePath) != textures.end()) {
+        return textures[texturePath];
+    }
+
+    // Load the texture using glimac::Image
+    std::unique_ptr<glimac::Image> pImage = glimac::loadImage(texturePath);
+    if (!pImage) {
+        std::cerr << "Failed to load texture image at " << texturePath << std::endl;
+        return 0;
+    }
+
+    // Flip texture vertically
+    size_t width = pImage->getWidth();
+    size_t height = pImage->getHeight();
+    glm::vec4* pixels = pImage->getPixels();
+
+    // Iterate through each column and swap rows from top to bottom
+    for (size_t row = 0; row < height / 2; ++row) {
+        for (size_t col = 0; col < width; ++col) {
+            size_t topIndex = row * width + col;
+            size_t bottomIndex = (height - 1 - row) * width + col;
+
+            // Swap the pixels at topIndex and bottomIndex
+            std::swap(pixels[topIndex], pixels[bottomIndex]);
+        }
+    }
+
+    // Generate and bind the texture
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+
+    // Set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    // Set texture filtering parameters to nearest-neighbor, to keep the texture pixelated, sharp, and crisp
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    // Upload the texture data
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pImage->getWidth(), pImage->getHeight(), 0, GL_RGBA, GL_FLOAT, pImage->getPixels());
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Store in map
+    textures[texturePath] = textureID;
+    return textureID;
+}
+
+void addCube(
+    const glm::vec3& position,
+    const glm::vec3& scale,
+    const glm::vec3& color,
+    bool useTexture,
+    GLuint textureID = 0, // Default to 0 if no texture
+    const glm::vec3& rotationAxis = glm::vec3(0.0f),
+    float rotationAngle = 0.0f,
+    GLuint vaoID = 0,
+    GLsizei indexCount = 0
+) {
+    SceneObject cube;
+    cube.type = ObjectType::Cube;
+    cube.position = position;
+    cube.scale = scale;
+    cube.color = color;
+    cube.useTexture = useTexture;
+    cube.textureID = textureID;
+    cube.rotationAxis = rotationAxis;
+    cube.rotationAngle = rotationAngle;
+    cube.vaoID = vaoID;
+    cube.indexCount = indexCount;
+
+    // Calculate bounding box
+    glm::vec3 halfSize = scale * 0.5f;
+    cube.boundingBox.min = position - halfSize;
+    cube.boundingBox.max = position + halfSize;
+
+    // Add to scene objects
+    sceneObjects.push_back(cube);
+}
+
+void addSphere(
+    const glm::vec3& position,
+    float radius,
+    const glm::vec3& color,
+    bool useTexture,
+    GLuint textureID = 0, // Default to 0 if no texture
+    GLuint vaoID = 0,
+    GLsizei vertexCount = 0
+) {
+    SceneObject sphereObject;
+    sphereObject.type = ObjectType::Sphere;
+    sphereObject.position = position;
+    sphereObject.scale = glm::vec3(radius * 1.0f);
+    sphereObject.color = color;
+    sphereObject.useTexture = useTexture;
+    sphereObject.textureID = textureID;
+    sphereObject.vaoID = vaoID;
+    sphereObject.indexCount = vertexCount;
+
+    // Calculate bounding box
+    sphereObject.boundingBox.min = position - glm::vec3(radius);
+    sphereObject.boundingBox.max = position + glm::vec3(radius);
+
+    // Add to scene objects
+    sceneObjects.push_back(sphereObject);
 }
 
 bool checkCollision(const glm::vec3& sphereCenter, float radius, const AABB& box) {
@@ -288,14 +421,6 @@ int main(int argc, char* argv[]) {
     glBindVertexArray(0);
     std::cout << "Sphere VAO set up" << std::endl;
 
-    // Define AABB for the Sphere
-    glm::vec3 spherePosition(0.0f, 0.0f, 0.0f); // Sphere center position
-    float sphereRadius = 1.0f; // Radius of the sphere
-    objectBoundaries.push_back({
-        spherePosition - glm::vec3(sphereRadius), // min corner
-        spherePosition + glm::vec3(sphereRadius)  // max corner
-    });
-
     // Cube setup
     // Create cube vertices and indices
     std::vector<Vertex3D> cubeVertices;
@@ -306,41 +431,6 @@ int main(int argc, char* argv[]) {
     GLuint cubeVBO, cubeEBO, cubeVAO;
     setupCubeBuffers(cubeVertices, cubeIndices, cubeVBO, cubeEBO, cubeVAO);
     std::cout << "Cube VBO, EBO, and VAO set up" << std::endl;
-
-    // Cube 1 AABB
-    glm::vec3 cube1Pos(2.0f, 0.0f, 0.0f); // Position of Cube 1
-    float cube1Size = 0.5f; // Size (half-dimension)
-    objectBoundaries.push_back({
-        cube1Pos - glm::vec3(cube1Size),
-        cube1Pos + glm::vec3(cube1Size)
-    });
-
-    // Cube 2 AABB
-    glm::vec3 cube2Pos(-2.0f, 0.0f, 0.0f); // Position of Cube 2
-    float cube2Size = 0.5f; // Size (half-dimension)
-    objectBoundaries.push_back({
-        cube2Pos - glm::vec3(cube2Size),
-        cube2Pos + glm::vec3(cube2Size)
-    });
-
-    // Cube 3 AABB (non-uniform scaling)
-    glm::vec3 cube3Pos(0.0f, 2.0f, 0.0f); // Position of Cube 3
-    glm::vec3 cube3Size(0.5f, 1.0f, 0.5f); // Non-uniform dimensions
-    objectBoundaries.push_back({
-        cube3Pos - cube3Size,
-        cube3Pos + cube3Size
-    });
-
-    for (int x = 0; x < numCubesX; ++x) {
-        for (int z = 0; z < numCubesZ; ++z) {
-            glm::vec3 cubePos(-7.0f + x * spacingX, -2.0f, 7.0f - z * spacingZ);
-            float cubeSize = 0.5f; // Size of each floor cube
-            objectBoundaries.push_back({
-                cubePos - glm::vec3(cubeSize),
-                cubePos + glm::vec3(cubeSize)
-            });
-        }
-    }
 
     // Load shaders
     glimac::FilePath applicationPath(argv[0]);
@@ -369,7 +459,7 @@ int main(int argc, char* argv[]) {
     GLint uObjectColorLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uObjectColor");
     GLint uUseTextureLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uUseTexture");
 
-    // sanity check
+    // Sanity check
     if (uMVPMatrixLocation == -1) std::cerr << "Failed to get 'uMVPMatrix' location" << std::endl;
     if (uMVMatrixLocation == -1) std::cerr << "Failed to get 'uMVMatrix' location" << std::endl;
     if (uNormalMatrixLocation == -1) std::cerr << "Failed to get 'uNormalMatrix' location" << std::endl;
@@ -377,99 +467,9 @@ int main(int argc, char* argv[]) {
     if (uObjectColorLocation == -1) std::cerr << "Failed to get 'uObjectColor' location" << std::endl;
     if (uUseTextureLocation == -1) std::cerr << "Failed to get 'uUseTexture' location" << std::endl;
 
-    // Load the texture using glimac::Image
-    std::string texturePath = applicationPath.dirPath() + "../TP4/assets/textures/cobblestone_8bit.png";
-    std::cout << "Attempting to load texture at: " << texturePath << std::endl;
-
-    std::unique_ptr<glimac::Image> pImage = glimac::loadImage(texturePath);
-    if (!pImage) {
-        std::cerr << "Failed to load texture image at " << texturePath << std::endl;
-        return -1;
-    }
-
-    // Flip texture vertically
-    size_t width = pImage->getWidth();
-    size_t height = pImage->getHeight();
-    glm::vec4* pixels = pImage->getPixels();
-
-    // Iterate through each column and swap rows from top to bottom
-    for (size_t row = 0; row < height / 2; ++row) {
-        for (size_t col = 0; col < width; ++col) {
-            size_t topIndex = row * width + col;
-            size_t bottomIndex = (height - 1 - row) * width + col;
-
-            // Swap the pixels at topIndex and bottomIndex
-            std::swap(pixels[topIndex], pixels[bottomIndex]);
-        }
-    }
-
-    // Generate and bind the texture
-    GLuint textureID;
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-
-    // Set the texture wrapping parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    // Set texture filtering parameters to nearest-neighbor, to keep the texture pixelated, sharp, and crisp
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    // Upload the texture data
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pImage->getWidth(), pImage->getHeight(), 0, GL_RGBA, GL_FLOAT, pImage->getPixels());
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    // Set the texture unit to 0 (GL_TEXTURE0)
-    unifiedProgram.use();
-    glUniform1i(uTextureLocation, 0);
-
-    // Load the new texture "stone_8bit.png"
-    std::string stoneTexturePath = applicationPath.dirPath() + "../TP4/assets/textures/stone_8bit.png";
-    std::cout << "Attempting to load texture at: " << stoneTexturePath << std::endl;
-
-    std::unique_ptr<glimac::Image> pStoneImage = glimac::loadImage(stoneTexturePath);
-    if (!pStoneImage) {
-        std::cerr << "Failed to load texture image at " << stoneTexturePath << std::endl;
-        return -1;
-    }
-
-    // Flip the stone texture vertically
-    size_t stoneWidth = pStoneImage->getWidth();
-    size_t stoneHeight = pStoneImage->getHeight();
-    glm::vec4* stonePixels = pStoneImage->getPixels();
-
-    // Iterate through each column and swap rows from top to bottom
-    for (size_t row = 0; row < stoneHeight / 2; ++row) {
-        for (size_t col = 0; col < stoneWidth; ++col) {
-            size_t topIndex = row * stoneWidth + col;
-            size_t bottomIndex = (stoneHeight - 1 - row) * stoneWidth + col;
-
-            // Swap the pixels at topIndex and bottomIndex
-            std::swap(stonePixels[topIndex], stonePixels[bottomIndex]);
-        }
-    }
-
-    // Generate and bind the stone texture
-    GLuint stoneTextureID;
-    glGenTextures(1, &stoneTextureID);
-    glBindTexture(GL_TEXTURE_2D, stoneTextureID);
-
-    // Set the texture wrapping parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    // Set texture filtering parameters to nearest-neighbor
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    // Upload the stone texture data
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pStoneImage->getWidth(), pStoneImage->getHeight(), 0, GL_RGBA, GL_FLOAT, pStoneImage->getPixels());
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    glBindTexture(GL_TEXTURE_2D, 0);
+    // Load textures
+    GLuint textureID = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures/cobblestone_8bit.png");
+    GLuint stoneTextureID = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures/stone_8bit.png");
 
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
@@ -487,9 +487,6 @@ int main(int argc, char* argv[]) {
 
     float yaw = -90.0f;  // Yaw angle initialized to -90 degrees to look towards negative Z
     float pitch = 0.0f;  // Pitch angle
-    float lastX = window_width / 2.0f;  // Last mouse X position
-    float lastY = window_height / 2.0f; // Last mouse Y position
-    bool firstMouse = true; // First mouse movement flag
 
     float cameraSpeed = 5.0f; // Adjust accordingly
     float deltaTime = 0.0f;   // Time between current frame and last frame
@@ -502,9 +499,93 @@ int main(int argc, char* argv[]) {
     float fpsTimer = 0.0f;
     int fps = 0;
 
-    // Main loop
+    // Prepare to add objects to the scene
+    GLsizei cubeIndexCount = static_cast<GLsizei>(cubeIndices.size());
+    GLsizei sphereVertexCount = sphere.getVertexCount();
+
+    // Add sphere to the scene
+    addSphere(
+        glm::vec3(0.0f, 0.0f, 0.0f), // Position
+        1.0f,                        // Radius
+        glm::vec3(1.0f),             // Color (white)
+        false,                       // Use texture
+        0,                           // Texture ID
+        sphereVAO,                   // VAO ID
+        sphereVertexCount            // Vertex count
+    );
+
+    // Add cubes to the scene
+    addCube(
+        glm::vec3(2.0f, 0.0f, 0.0f), // Position
+        glm::vec3(0.5f),             // Scale
+        glm::vec3(0.6f),             // Color (gray)
+        false,                       // Use texture
+        0,                           // Texture ID
+        glm::vec3(0.0f),             // Rotation axis
+        0.0f,                        // Rotation angle
+        cubeVAO,                     // VAO ID
+        cubeIndexCount               // Index count
+    );
+
+    addCube(
+        glm::vec3(-2.0f, 0.0f, 0.0f), // Position
+        glm::vec3(0.5f),              // Scale
+        glm::vec3(0.6f),              // Color (gray)
+        false,                        // Use texture
+        0,                            // Texture ID
+        glm::vec3(0.0f),              // Rotation axis
+        0.0f,                         // Rotation angle
+        cubeVAO,                      // VAO ID
+        cubeIndexCount                // Index count
+    );
+
+    addCube(
+        glm::vec3(0.0f, 2.0f, 0.0f),  // Position
+        glm::vec3(0.5f, 1.0f, 0.5f),  // Scale (non-uniform)
+        glm::vec3(0.6f),              // Color (gray)
+        false,                        // Use texture
+        0,                            // Texture ID
+        glm::vec3(0.0f),              // Rotation axis
+        0.0f,                         // Rotation angle
+        cubeVAO,                      // VAO ID
+        cubeIndexCount                // Index count
+    );
+
+    // Add textured cube
+    addCube(
+        glm::vec3(0.0f, 0.0f, 2.0f),  // Position
+        glm::vec3(0.5f),              // Scale
+        glm::vec3(1.0f),              // Color (white, not used)
+        true,                         // Use texture
+        textureID,                    // Texture ID
+        glm::vec3(0.0f),              // Rotation axis
+        0.0f,                         // Rotation angle
+        cubeVAO,                      // VAO ID
+        cubeIndexCount                // Index count
+    );
+
+    // Add floor grid cubes
+    for (int x = 0; x < numCubesX; ++x) {
+        for (int z = 0; z < numCubesZ; ++z) {
+            glm::vec3 position(-7.0f + x * spacingX, -2.0f, 7.0f - z * spacingZ);
+            addCube(
+                position,                   // Position
+                glm::vec3(1.0f),            // Scale
+                glm::vec3(1.0f),            // Color (white, not used)
+                true,                       // Use texture
+                stoneTextureID,             // Texture ID
+                glm::vec3(0.0f),            // Rotation axis
+                0.0f,                       // Rotation angle
+                cubeVAO,                    // VAO ID
+                cubeIndexCount              // Index count
+            );
+        }
+    }
+
+    // Main loop variables
     bool done = false;
     std::cout << "Entering main loop" << std::endl;
+
     while (!done) {
         // Calculate delta time
         float currentFrame = windowManager.getTime();
@@ -573,7 +654,7 @@ int main(int argc, char* argv[]) {
 
         // Keyboard input for movement
         const Uint8* state = SDL_GetKeyboardState(NULL);
-        
+
         glm::vec3 proposedCameraPos = cameraPos; // Temporary camera position for collision testing
 
         // Calculate proposed camera position based on input
@@ -592,8 +673,8 @@ int main(int argc, char* argv[]) {
 
         // Check collision against all objects
         bool collisionDetected = false;
-        for (const auto& boundary : objectBoundaries) {
-            if (checkCollision(proposedCameraPos, cameraRadius, boundary)) {
+        for (const auto& object : sceneObjects) {
+            if (checkCollision(proposedCameraPos, cameraRadius, object.boundingBox)) {
                 collisionDetected = true;
                 break; // Stop further checking if a collision is found
             }
@@ -624,170 +705,58 @@ int main(int argc, char* argv[]) {
         // Use unified program
         unifiedProgram.use();
 
-        // **Draw the Sphere**
-        // Sphere Model Matrix
-        glm::mat4 sphereModelMatrix = glm::mat4(1.0f);
+        // Set common uniforms
+        glUniform1i(uTextureLocation, 0); // Texture unit 0
 
-        glm::mat4 sphereMVMatrix = ViewMatrix * sphereModelMatrix;
-        glm::mat4 sphereMVPMatrix = ProjMatrix * sphereMVMatrix;
-        glm::mat4 sphereNormalMatrix = glm::transpose(glm::inverse(sphereMVMatrix));
+        // Render all scene objects
+        for (const auto& object : sceneObjects) {
+            // Create Model Matrix
+            glm::mat4 modelMatrix = glm::mat4(1.0f);
+            modelMatrix = glm::translate(modelMatrix, object.position);
+            if (object.rotationAngle != 0.0f) {
+                modelMatrix = glm::rotate(modelMatrix, glm::radians(object.rotationAngle), object.rotationAxis);
+            }
+            modelMatrix = glm::scale(modelMatrix, object.scale);
 
-        // Send sphere matrices to the shaders
-        glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(sphereMVMatrix));
-        glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(sphereMVPMatrix));
-        glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(sphereNormalMatrix));
+            // Calculate transformation matrices
+            glm::mat4 mvMatrix = ViewMatrix * modelMatrix;
+            glm::mat4 mvpMatrix = ProjMatrix * mvMatrix;
+            glm::mat4 normalMatrix = glm::transpose(glm::inverse(mvMatrix));
 
-        // Set uniforms for untextured object
-        glUniform1f(uUseTextureLocation, 0.0f);
-        glUniform3f(uObjectColorLocation, 1.0f, 1.0f, 1.0f); // White color
+            // Send matrices to shaders
+            glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
+            glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+            glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
-        // Bind sphere VAO and draw
-        glBindVertexArray(sphereVAO);
-        glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
-        glBindVertexArray(0);
+            // Set object-specific uniforms
+            glUniform1f(uUseTextureLocation, object.useTexture ? 1.0f : 0.0f);
+            glUniform3fv(uObjectColorLocation, 1, glm::value_ptr(object.color));
 
-        // **Draw the First Cube**
-        // Cube 1 Model Matrix
-        glm::mat4 cube1ModelMatrix = glm::mat4(1.0f);
-        cube1ModelMatrix = glm::translate(cube1ModelMatrix, glm::vec3(2.0f, 0.0f, 0.0f)); // Position cube next to sphere
-        cube1ModelMatrix = glm::scale(cube1ModelMatrix, glm::vec3(0.5f)); // Scale down the cube uniformly
-
-        glm::mat4 cube1MVMatrix = ViewMatrix * cube1ModelMatrix;
-        glm::mat4 cube1MVPMatrix = ProjMatrix * cube1MVMatrix;
-        glm::mat4 cube1NormalMatrix = glm::transpose(glm::inverse(cube1MVMatrix));
-
-        // Send cube matrices to the shaders
-        glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube1MVMatrix));
-        glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube1MVPMatrix));
-        glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube1NormalMatrix));
-
-        // Set uniforms for untextured object
-        glUniform1f(uUseTextureLocation, 0.0f);
-        glUniform3f(uObjectColorLocation, 0.6f, 0.6f, 0.6f); // Gray color
-
-        // Bind cube VAO and draw
-        glBindVertexArray(cubeVAO);
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeIndices.size()), GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);
-
-        // **Draw the Second Cube**
-        // Cube 2 Model Matrix
-        glm::mat4 cube2ModelMatrix = glm::mat4(1.0f);
-        cube2ModelMatrix = glm::translate(cube2ModelMatrix, glm::vec3(-2.0f, 0.0f, 0.0f)); // Position cube to the left
-        cube2ModelMatrix = glm::scale(cube2ModelMatrix, glm::vec3(0.5f)); // Same uniform scale
-
-        glm::mat4 cube2MVMatrix = ViewMatrix * cube2ModelMatrix;
-        glm::mat4 cube2MVPMatrix = ProjMatrix * cube2MVMatrix;
-        glm::mat4 cube2NormalMatrix = glm::transpose(glm::inverse(cube2MVMatrix));
-
-        // Send cube matrices to the shaders
-        glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube2MVMatrix));
-        glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube2MVPMatrix));
-        glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube2NormalMatrix));
-
-        // Set uniforms for untextured object
-        glUniform1f(uUseTextureLocation, 0.0f);
-        glUniform3f(uObjectColorLocation, 0.6f, 0.6f, 0.6f); // Gray color
-
-        // Bind cube VAO and draw
-        glBindVertexArray(cubeVAO);
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeIndices.size()), GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);
-
-        // **Draw the Third Cube**
-        // Cube 3 Model Matrix
-        glm::mat4 cube3ModelMatrix = glm::mat4(1.0f);
-        cube3ModelMatrix = glm::translate(cube3ModelMatrix, glm::vec3(0.0f, 2.0f, 0.0f)); // Position cube above the sphere
-        cube3ModelMatrix = glm::scale(cube3ModelMatrix, glm::vec3(0.5f, 1.0f, 0.5f)); // Non-uniform scaling
-
-        glm::mat4 cube3MVMatrix = ViewMatrix * cube3ModelMatrix;
-        glm::mat4 cube3MVPMatrix = ProjMatrix * cube3MVMatrix;
-        glm::mat4 cube3NormalMatrix = glm::transpose(glm::inverse(cube3MVMatrix));
-
-        // Send cube matrices to the shaders
-        glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube3MVMatrix));
-        glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube3MVPMatrix));
-        glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(cube3NormalMatrix));
-
-        // Set uniforms for untextured object
-        glUniform1f(uUseTextureLocation, 0.0f);
-        glUniform3f(uObjectColorLocation, 0.6f, 0.6f, 0.6f); // Gray color
-
-        // Bind cube VAO and draw
-        glBindVertexArray(cubeVAO);
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeIndices.size()), GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);
-
-        // **Draw a Textured Cube**
-        // Textured Cube Model Matrix
-        glm::mat4 texturedCubeModelMatrix = glm::mat4(1.0f);
-        texturedCubeModelMatrix = glm::translate(texturedCubeModelMatrix, glm::vec3(0.0f, 0.0f, 2.0f)); // Position cube
-        texturedCubeModelMatrix = glm::scale(texturedCubeModelMatrix, glm::vec3(0.5f)); // Scale down the cube
-
-        glm::mat4 texturedCubeMVMatrix = ViewMatrix * texturedCubeModelMatrix;
-        glm::mat4 texturedCubeMVPMatrix = ProjMatrix * texturedCubeMVMatrix;
-        glm::mat4 texturedCubeNormalMatrix = glm::transpose(glm::inverse(texturedCubeMVMatrix));
-
-        // Send matrices to the shaders
-        glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(texturedCubeMVMatrix));
-        glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(texturedCubeMVPMatrix));
-        glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(texturedCubeNormalMatrix));
-
-        // Set uniforms for textured object
-        glUniform1f(uUseTextureLocation, 1.0f);
-
-        // Bind texture
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        glUniform1i(uTextureLocation, 0);
-
-        // Bind cube VAO and draw
-        glBindVertexArray(cubeVAO);
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeIndices.size()), GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);
-
-        for (int x = 0; x < numCubesX; ++x) {
-            for (int z = 0; z < numCubesZ; ++z) {
-                // **Draw Each Textured Cube in a Grid**
-
-                // New Textured Cube Model Matrix for each cube with incremental x and z positions
-                glm::mat4 newTexturedCubeModelMatrix = glm::mat4(1.0f);
-                newTexturedCubeModelMatrix = glm::translate(
-                    newTexturedCubeModelMatrix,
-                    glm::vec3(-7.0f + x * spacingX, -2.0f, 7.0f - z * spacingZ) // Position in x and z
-                );
-                newTexturedCubeModelMatrix = glm::scale(newTexturedCubeModelMatrix, glm::vec3(1.0f)); // Scale each cube
-
-                glm::mat4 newTexturedCubeMVMatrix = ViewMatrix * newTexturedCubeModelMatrix;
-                glm::mat4 newTexturedCubeMVPMatrix = ProjMatrix * newTexturedCubeMVMatrix;
-                glm::mat4 newTexturedCubeNormalMatrix = glm::transpose(glm::inverse(newTexturedCubeMVMatrix));
-
-                // Send matrices to the shaders
-                glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(newTexturedCubeMVMatrix));
-                glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(newTexturedCubeMVPMatrix));
-                glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(newTexturedCubeNormalMatrix));
-
-                // Set uniforms for textured object
-                glUniform1f(uUseTextureLocation, 1.0f);
-
-                // Bind stone texture
+            if (object.useTexture && object.textureID != 0) {
                 glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, stoneTextureID);
-                glUniform1i(uTextureLocation, 0);
+                glBindTexture(GL_TEXTURE_2D, object.textureID);
+            }
 
-                // Bind cube VAO and draw
-                glBindVertexArray(cubeVAO);
-                glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(cubeIndices.size()), GL_UNSIGNED_INT, 0);
+            // Bind the correct VAO
+            glBindVertexArray(object.vaoID);
+
+            // Draw based on object type
+            if (object.type == ObjectType::Cube) {
+                glDrawElements(GL_TRIANGLES, object.indexCount, GL_UNSIGNED_INT, 0);
+            } else if (object.type == ObjectType::Sphere) {
+                glDrawArrays(GL_TRIANGLES, 0, object.indexCount);
+            }
+
+            glBindVertexArray(0);
+
+            if (object.useTexture && object.textureID != 0) {
+                glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture
             }
         }
-
-        // Unbind the VAO after the loops
-        glBindVertexArray(0);
 
         // Swap buffers
         windowManager.swapBuffers();
     }
-
     // Clean up sphere buffers
     glDeleteBuffers(1, &sphereVBO);
     glDeleteVertexArrays(1, &sphereVAO);
@@ -797,8 +766,10 @@ int main(int argc, char* argv[]) {
     glDeleteBuffers(1, &cubeEBO);
     glDeleteVertexArrays(1, &cubeVAO);
 
-    // Clean up texture
-    glDeleteTextures(1, &textureID);
+    // Clean up textures
+    for (const auto& tex : textures) {
+        glDeleteTextures(1, &tex.second);
+    }
 
     std::cout << "Program terminated successfully" << std::endl;
 
