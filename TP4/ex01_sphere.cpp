@@ -18,6 +18,18 @@
 
 int window_width = 800;
 int window_height = 800;
+int shadowMapSize = 1024;
+float farPlane = 25.0f; // Far plane for shadow calculations
+
+// glimac::Program unifiedProgram; // Global shader program object
+
+// Uniform locations
+GLint uMVPMatrixLocation;
+GLint uMVMatrixLocation;
+GLint uNormalMatrixLocation;
+GLint uTextureLocation;
+GLint uObjectColorLocation;
+GLint uUseTextureLocation;
 
 // Stone floor coordinates
 int numCubesX = 15; // Number of cubes along the x-axis
@@ -64,6 +76,37 @@ struct SceneObject {
 std::vector<SceneObject> sceneObjects; // List of all scene objects
 std::map<std::string, GLuint> textures; // Map to store loaded textures
 
+// Light properties
+glm::vec3 lightPos = glm::vec3(5.0f, 5.0f, 5.0f); // Light source position
+float lightIntensity = 20.0f;
+float minBias = 0.05f;
+float maxBias = 0.5f;
+
+// Directions and up vectors for each cubemap face
+const glm::vec3 directions[6] = {
+    glm::vec3(1.0f, 0.0f, 0.0f),  // +X
+    glm::vec3(-1.0f, 0.0f, 0.0f), // -X
+    glm::vec3(0.0f, 1.0f, 0.0f),  // +Y
+    glm::vec3(0.0f, -1.0f, 0.0f), // -Y
+    glm::vec3(0.0f, 0.0f, 1.0f),  // +Z
+    glm::vec3(0.0f, 0.0f, -1.0f)  // -Z
+};
+
+const glm::vec3 upVectors[6] = {
+    glm::vec3(0.0f, -1.0f, 0.0f), // For +X
+    glm::vec3(0.0f, -1.0f, 0.0f), // For -X
+    glm::vec3(0.0f, 0.0f, -1.0f), // For +Y
+    glm::vec3(0.0f, 0.0f, 1.0f),  // For -Y
+    glm::vec3(0.0f, -1.0f, 0.0f), // For +Z
+    glm::vec3(0.0f, -1.0f, 0.0f)  // For -Z
+};
+
+// Shadow map cubemap for point light
+GLuint shadowMap;
+GLuint shadowMapFBO;
+
+
+
 // Function to generate cube vertices and indices
 void createCube(std::vector<Vertex3D>& vertices, std::vector<GLuint>& indices) {
     // Define the cube vertices
@@ -76,7 +119,7 @@ void createCube(std::vector<Vertex3D>& vertices, std::vector<GLuint>& indices) {
         // Back face
         Vertex3D(glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3( 0,  0, -1), glm::vec2(1.0f, 0.0f)),
         Vertex3D(glm::vec3( 0.5f, -0.5f, -0.5f), glm::vec3( 0,  0, -1), glm::vec2(0.0f, 0.0f)),
-        Vertex3D(glm::vec3( 0.5f,  0.5f, -0.5f), glm::vec3( 0,  0, -1), glm::vec2(0.0f, 1.0f)),
+        Vertex3D(glm::vec3( 0.5f,  0.5f, -0.5f), glm::vec3( 0,  0, -1), glm::vec2(1.0f, 1.0f)),
         Vertex3D(glm::vec3(-0.5f,  0.5f, -0.5f), glm::vec3( 0,  0, -1), glm::vec2(1.0f, 1.0f)),
         // Left face
         Vertex3D(glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(-1,  0,  0), glm::vec2(0.0f, 0.0f)),
@@ -86,7 +129,7 @@ void createCube(std::vector<Vertex3D>& vertices, std::vector<GLuint>& indices) {
         // Right face
         Vertex3D(glm::vec3( 0.5f, -0.5f, -0.5f), glm::vec3( 1,  0,  0), glm::vec2(1.0f, 0.0f)),
         Vertex3D(glm::vec3( 0.5f, -0.5f,  0.5f), glm::vec3( 1,  0,  0), glm::vec2(0.0f, 0.0f)),
-        Vertex3D(glm::vec3( 0.5f,  0.5f,  0.5f), glm::vec3( 1,  0,  0), glm::vec2(0.0f, 1.0f)),
+        Vertex3D(glm::vec3( 0.5f,  0.5f,  0.5f), glm::vec3( 1,  0,  0), glm::vec2(1.0f, 1.0f)),
         Vertex3D(glm::vec3( 0.5f,  0.5f, -0.5f), glm::vec3( 1,  0,  0), glm::vec2(1.0f, 1.0f)),
         // Top face
         Vertex3D(glm::vec3(-0.5f,  0.5f, -0.5f), glm::vec3( 0,  1,  0), glm::vec2(0.0f, 1.0f)),
@@ -298,6 +341,81 @@ bool checkCollision(const glm::vec3& sphereCenter, float radius, const AABB& box
     return distanceSquared <= (radius * radius);
 }
 
+void renderSceneFromLight(const glimac::Program& unifiedProgram) {
+    for (const auto& object : sceneObjects) {
+        // Create Model Matrix for each object
+        glm::mat4 modelMatrix = glm::mat4(1.0f);
+        modelMatrix = glm::translate(modelMatrix, object.position);
+        if (object.rotationAngle != 0.0f) {
+            modelMatrix = glm::rotate(modelMatrix, glm::radians(object.rotationAngle), object.rotationAxis);
+        }
+        modelMatrix = glm::scale(modelMatrix, object.scale);
+
+        // Pass model matrix to the shader (depth shader should include this uniform)
+        glUniformMatrix4fv(glGetUniformLocation(unifiedProgram.getGLId(), "uModelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+
+        // Bind VAO and render for each object type
+        glBindVertexArray(object.vaoID);
+        if (object.type == ObjectType::Cube) {
+            glDrawElements(GL_TRIANGLES, object.indexCount, GL_UNSIGNED_INT, 0);
+        } else if (object.type == ObjectType::Sphere) {
+            glDrawArrays(GL_TRIANGLES, 0, object.indexCount);
+        }
+        glBindVertexArray(0);
+    }
+}
+
+glm::mat4 ProjMatrix;
+glm::mat4 ViewMatrix;
+
+void renderScene(const glimac::Program& unifiedProgram) {
+    unifiedProgram.use();
+    for (const auto& object : sceneObjects) {
+        // Create Model Matrix for each object
+        glm::mat4 modelMatrix = glm::mat4(1.0f);
+        modelMatrix = glm::translate(modelMatrix, object.position);
+        if (object.rotationAngle != 0.0f) {
+            modelMatrix = glm::rotate(modelMatrix, glm::radians(object.rotationAngle), object.rotationAxis);
+        }
+        modelMatrix = glm::scale(modelMatrix, object.scale);
+
+        // Set MVP matrices for the shaders
+        glm::mat4 mvMatrix = ViewMatrix * modelMatrix;
+        glm::mat4 mvpMatrix = ProjMatrix * mvMatrix;
+        glm::mat4 normalMatrix = glm::transpose(glm::inverse(mvMatrix));
+
+        glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
+        glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+        glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+
+        // Set object-specific uniforms
+        glUniform1f(uUseTextureLocation, object.useTexture ? 1.0f : 0.0f);
+        glUniform3fv(uObjectColorLocation, 1, glm::value_ptr(object.color));
+
+        if (object.useTexture && object.textureID != 0) {
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, object.textureID);
+        }
+
+        // Bind the correct VAO
+        glBindVertexArray(object.vaoID);
+
+        // Draw based on object type
+        if (object.type == ObjectType::Cube) {
+            glDrawElements(GL_TRIANGLES, object.indexCount, GL_UNSIGNED_INT, 0);
+        } else if (object.type == ObjectType::Sphere) {
+            glDrawArrays(GL_TRIANGLES, 0, object.indexCount);
+        }
+
+        glBindVertexArray(0);
+
+        if (object.useTexture && object.textureID != 0) {
+            glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture
+        }
+    }
+}
+
+
 int main(int argc, char* argv[]) {
     std::cout << "Program started" << std::endl;
 
@@ -452,12 +570,16 @@ int main(int argc, char* argv[]) {
     unifiedProgram.use();
     std::cout << "Unified program in use" << std::endl;
 
-    GLint uMVPMatrixLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uMVPMatrix");
-    GLint uMVMatrixLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uMVMatrix");
-    GLint uNormalMatrixLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uNormalMatrix");
-    GLint uTextureLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uTexture");
-    GLint uObjectColorLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uObjectColor");
-    GLint uUseTextureLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uUseTexture");
+    uMVPMatrixLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uMVPMatrix");
+    uMVMatrixLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uMVMatrix");
+    uNormalMatrixLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uNormalMatrix");
+    uTextureLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uTexture");
+    uObjectColorLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uObjectColor");
+    uUseTextureLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uUseTexture");
+    GLint lightMatrixLoc = glGetUniformLocation(unifiedProgram.getGLId(), "uLightSpaceMatrix");
+    if (lightMatrixLoc == -1) {
+        std::cerr << "Failed to get 'uLightSpaceMatrix' location" << std::endl;
+    }
 
     // Sanity check
     if (uMVPMatrixLocation == -1) std::cerr << "Failed to get 'uMVPMatrix' location" << std::endl;
@@ -474,6 +596,29 @@ int main(int argc, char* argv[]) {
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
     std::cout << "Depth test enabled" << std::endl;
+
+    // Initialize shadow map framebuffer and cubemap texture
+    glGenFramebuffers(1, &shadowMapFBO);
+    glGenTextures(1, &shadowMap);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, shadowMap);
+    for (unsigned int i = 0; i < 6; ++i) {
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowMap, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        std::cerr << "Error: Shadow Map FBO not complete!" << std::endl;
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 
     // Set the clear color to a dark gray
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -688,71 +833,48 @@ int main(int argc, char* argv[]) {
         // Keep the camera at the initial y position
         cameraPos.y = cameraPosY;
 
-        // Define MVP matrices
-        glm::mat4 ProjMatrix = glm::perspective(
-            glm::radians(70.0f),                            // Field of View
-            window_width / (float)window_height,            // Aspect ratio
-            0.1f,                                           // Near clipping plane
-            100.0f                                          // Far clipping plane
+        // Redefine MVP matrices
+        ProjMatrix = glm::perspective(
+            glm::radians(70.0f),
+            window_width / (float)window_height,
+            0.1f,
+            100.0f
         );
 
-        glm::mat4 ViewMatrix = glm::lookAt(
-            cameraPos,             // Camera position
-            cameraPos + cameraFront, // Look at target
-            cameraUp               // Up vector
+        ViewMatrix = glm::lookAt(
+            cameraPos,
+            cameraPos + cameraFront,
+            cameraUp
         );
 
-        // Use unified program
-        unifiedProgram.use();
+        // Render shadow map from light's perspective
+        glViewport(0, 0, shadowMapSize, shadowMapSize);
+        glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+        for (int i = 0; i < 6; ++i) {
+            glm::mat4 lightProjection = glm::perspective(glm::radians(90.0f), 1.0f, 1.0f, farPlane);
+            glm::mat4 lightView = glm::lookAt(lightPos, lightPos + directions[i], upVectors[i]);
+            glm::mat4 lightSpaceMatrix = lightProjection * lightView;
 
-        // Set common uniforms
-        glUniform1i(uTextureLocation, 0); // Texture unit 0
+            // Pass the light space matrix to shader for current cubemap face
+            glUniformMatrix4fv(lightMatrixLoc, 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 
-        // Render all scene objects
-        for (const auto& object : sceneObjects) {
-            // Create Model Matrix
-            glm::mat4 modelMatrix = glm::mat4(1.0f);
-            modelMatrix = glm::translate(modelMatrix, object.position);
-            if (object.rotationAngle != 0.0f) {
-                modelMatrix = glm::rotate(modelMatrix, glm::radians(object.rotationAngle), object.rotationAxis);
-            }
-            modelMatrix = glm::scale(modelMatrix, object.scale);
-
-            // Calculate transformation matrices
-            glm::mat4 mvMatrix = ViewMatrix * modelMatrix;
-            glm::mat4 mvpMatrix = ProjMatrix * mvMatrix;
-            glm::mat4 normalMatrix = glm::transpose(glm::inverse(mvMatrix));
-
-            // Send matrices to shaders
-            glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
-            glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
-            glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
-
-            // Set object-specific uniforms
-            glUniform1f(uUseTextureLocation, object.useTexture ? 1.0f : 0.0f);
-            glUniform3fv(uObjectColorLocation, 1, glm::value_ptr(object.color));
-
-            if (object.useTexture && object.textureID != 0) {
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, object.textureID);
-            }
-
-            // Bind the correct VAO
-            glBindVertexArray(object.vaoID);
-
-            // Draw based on object type
-            if (object.type == ObjectType::Cube) {
-                glDrawElements(GL_TRIANGLES, object.indexCount, GL_UNSIGNED_INT, 0);
-            } else if (object.type == ObjectType::Sphere) {
-                glDrawArrays(GL_TRIANGLES, 0, object.indexCount);
-            }
-
-            glBindVertexArray(0);
-
-            if (object.useTexture && object.textureID != 0) {
-                glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture
-            }
+            // Clear depth buffer for each face and render scene from light's perspective
+            glClear(GL_DEPTH_BUFFER_BIT);
+            renderSceneFromLight(unifiedProgram);
         }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        // Set viewport back to normal screen size and clear buffers
+        glViewport(0, 0, window_width, window_height);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Bind the shadow cubemap for sampling in the fragment shader
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, shadowMap);
+        glUniform1i(glGetUniformLocation(unifiedProgram.getGLId(), "uShadowMap"), 1);
+
+        // Proceed with regular scene rendering
+        renderScene(unifiedProgram);
 
         // Swap buffers
         windowManager.swapBuffers();
@@ -770,6 +892,9 @@ int main(int argc, char* argv[]) {
     for (const auto& tex : textures) {
         glDeleteTextures(1, &tex.second);
     }
+
+    glDeleteFramebuffers(1, &shadowMapFBO);
+    glDeleteTextures(1, &shadowMap);
 
     std::cout << "Program terminated successfully" << std::endl;
 
