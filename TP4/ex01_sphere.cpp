@@ -54,7 +54,7 @@ struct SceneObject {
     glm::vec3 color;
     bool useTexture;
     GLuint textureID;       // Texture ID; use 0 if no texture
-    glm::vec3 rotationAxis; // Optional, if you want to support rotation
+    glm::vec3 rotationAxis; // Optional, if need support rotation
     float rotationAngle;    // Optional, in degrees
     AABB boundingBox;       // Axis-Aligned Bounding Box for collision
     GLuint vaoID;           // VAO for the object
@@ -298,6 +298,17 @@ bool checkCollision(const glm::vec3& sphereCenter, float radius, const AABB& box
     return distanceSquared <= (radius * radius);
 }
 
+// Function to generate a random float between 0 and 1
+float randomFloat() {
+    return static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+}
+
+// Function to generate a random color
+glm::vec3 randomColor() {
+    // return glm::vec3(randomFloat(), randomFloat(), randomFloat());
+    return glm::vec3(0.6f);
+}
+
 int main(int argc, char* argv[]) {
     std::cout << "Program started" << std::endl;
 
@@ -436,10 +447,10 @@ int main(int argc, char* argv[]) {
     glimac::FilePath applicationPath(argv[0]);
     // Load unified shader
     std::string unifiedVertexShaderPath = applicationPath.dirPath() + "TP4/shaders/" + "unified_shader.vs.glsl";
-    std::string unifiedFragmentShaderPath = applicationPath.dirPath() + "TP4/shaders/" + "unified_shader.fs.glsl";
+    std::string unifiedFragmentShaderPath = applicationPath.dirPath() + "TP4/shaders/" + "directionallight.fs.glsl";
 
     std::cout << "Unified Vertex shader path: " << unifiedVertexShaderPath << std::endl;
-    std::cout << "Unified Fragment shader path: " << unifiedFragmentShaderPath << std::endl;
+    std::cout << "directionallight Fragment shader path: " << unifiedFragmentShaderPath << std::endl;
 
     glimac::Program unifiedProgram = glimac::loadProgram(unifiedVertexShaderPath, unifiedFragmentShaderPath);
     if (unifiedProgram.getGLId() == 0) {
@@ -448,24 +459,33 @@ int main(int argc, char* argv[]) {
     }
     std::cout << "Unified shaders loaded successfully" << std::endl;
 
-    // Get uniform locations for unified program
+    // Get uniform locations
     unifiedProgram.use();
-    std::cout << "Unified program in use" << std::endl;
+    std::cout << "Shader program in use" << std::endl;
 
     GLint uMVPMatrixLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uMVPMatrix");
     GLint uMVMatrixLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uMVMatrix");
     GLint uNormalMatrixLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uNormalMatrix");
     GLint uTextureLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uTexture");
-    GLint uObjectColorLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uObjectColor");
     GLint uUseTextureLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uUseTexture");
+
+    GLint uKdLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uKd");
+    GLint uKsLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uKs");
+    GLint uShininessLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uShininess");
+    GLint uLightDir_vsLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uLightDir_vs");
+    GLint uLightIntensityLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uLightIntensity");
 
     // Sanity check
     if (uMVPMatrixLocation == -1) std::cerr << "Failed to get 'uMVPMatrix' location" << std::endl;
     if (uMVMatrixLocation == -1) std::cerr << "Failed to get 'uMVMatrix' location" << std::endl;
     if (uNormalMatrixLocation == -1) std::cerr << "Failed to get 'uNormalMatrix' location" << std::endl;
     if (uTextureLocation == -1) std::cerr << "Failed to get 'uTexture' location" << std::endl;
-    if (uObjectColorLocation == -1) std::cerr << "Failed to get 'uObjectColor' location" << std::endl;
     if (uUseTextureLocation == -1) std::cerr << "Failed to get 'uUseTexture' location" << std::endl;
+    if (uKdLocation == -1) std::cerr << "Failed to get 'uKd' location" << std::endl;
+    if (uKsLocation == -1) std::cerr << "Failed to get 'uKs' location" << std::endl;
+    if (uShininessLocation == -1) std::cerr << "Failed to get 'uShininess' location" << std::endl;
+    if (uLightDir_vsLocation == -1) std::cerr << "Failed to get 'uLightDir_vs' location" << std::endl;
+    if (uLightIntensityLocation == -1) std::cerr << "Failed to get 'uLightIntensity' location" << std::endl;
 
     // Load textures
     GLuint textureID = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures/cobblestone_8bit.png");
@@ -529,7 +549,7 @@ int main(int argc, char* argv[]) {
 
     addCube(
         glm::vec3(-2.0f, 0.0f, 0.0f), // Position
-        glm::vec3(0.5f),              // Scale
+        glm::vec3(1.0f),              // Scale
         glm::vec3(0.6f),              // Color (gray)
         false,                        // Use texture
         0,                            // Texture ID
@@ -545,7 +565,7 @@ int main(int argc, char* argv[]) {
         glm::vec3(0.6f),              // Color (gray)
         false,                        // Use texture
         0,                            // Texture ID
-        glm::vec3(0.0f),              // Rotation axis
+        glm::vec3(1.0f),              // Rotation axis
         0.0f,                         // Rotation angle
         cubeVAO,                      // VAO ID
         cubeIndexCount                // Index count
@@ -581,6 +601,10 @@ int main(int argc, char* argv[]) {
             );
         }
     }
+
+    // Light properties
+    glm::vec3 lightDirWorld = glm::vec3(1.0f, 1.0f, 1.0f); // Initial light direction
+    glm::vec3 lightIntensity = glm::vec3(1.0f);            // White light
 
     // Main loop variables
     bool done = false;
@@ -702,11 +726,26 @@ int main(int argc, char* argv[]) {
             cameraUp               // Up vector
         );
 
-        // Use unified program
+        // Use the shader program
         unifiedProgram.use();
 
-        // Set common uniforms
-        glUniform1i(uTextureLocation, 0); // Texture unit 0
+        // Update light direction to rotate around the scene
+        float time = windowManager.getTime();
+        float rotationSpeed = 0.5f;
+        float angle = time * rotationSpeed;
+
+        lightDirWorld = glm::vec3(
+            cos(angle),
+            1.0f,
+            sin(angle)
+        );
+
+        // Transform light direction to view space
+        glm::vec3 lightDirViewSpace = glm::vec3(ViewMatrix * glm::vec4(lightDirWorld, 0.0f));
+
+        // Set light properties
+        glUniform3fv(uLightDir_vsLocation, 1, glm::value_ptr(lightDirViewSpace));
+        glUniform3fv(uLightIntensityLocation, 1, glm::value_ptr(lightIntensity));
 
         // Render all scene objects
         for (const auto& object : sceneObjects) {
@@ -721,20 +760,42 @@ int main(int argc, char* argv[]) {
             // Calculate transformation matrices
             glm::mat4 mvMatrix = ViewMatrix * modelMatrix;
             glm::mat4 mvpMatrix = ProjMatrix * mvMatrix;
-            glm::mat4 normalMatrix = glm::transpose(glm::inverse(mvMatrix));
+            glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(mvMatrix)));
 
             // Send matrices to shaders
             glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
             glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
-            glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+            glUniformMatrix3fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
-            // Set object-specific uniforms
-            glUniform1f(uUseTextureLocation, object.useTexture ? 1.0f : 0.0f);
-            glUniform3fv(uObjectColorLocation, 1, glm::value_ptr(object.color));
+            // Set material properties
+            if (object.type == ObjectType::Sphere) {
+                // Random material properties for spheres
+                glm::vec3 Kd = randomColor();
+                glm::vec3 Ks = randomColor();
+                // float shininess = randomFloat() * 128.0f + 1.0f; // Shininess between 1 and 129
+                float shininess = 32.0f; // Fixed shininess
 
+                glUniform3fv(uKdLocation, 1, glm::value_ptr(Kd));
+                glUniform3fv(uKsLocation, 1, glm::value_ptr(Ks));
+                glUniform1f(uShininessLocation, shininess);
+            } else {
+                // Default material properties for other objects
+                glm::vec3 Kd = glm::vec3(0.6f); // Gray diffuse color
+                glm::vec3 Ks = glm::vec3(0.3f); // Low specular color
+                float shininess = 32.0f;        // Moderate shininess
+
+                glUniform3fv(uKdLocation, 1, glm::value_ptr(Kd));
+                glUniform3fv(uKsLocation, 1, glm::value_ptr(Ks));
+                glUniform1f(uShininessLocation, shininess);
+            }
+
+            // Handle textures
             if (object.useTexture && object.textureID != 0) {
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, object.textureID);
+                glUniform1f(uUseTextureLocation, 1.0f);
+            } else {
+                glUniform1f(uUseTextureLocation, 0.0f);
             }
 
             // Bind the correct VAO
