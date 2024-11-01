@@ -575,7 +575,7 @@ int main(int argc, char *argv[])
     // Generate shadow map texture
     glGenTextures(1, &shadowMap);
     glBindTexture(GL_TEXTURE_2D, shadowMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 4096, 4096, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 8192, 8192, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -864,7 +864,7 @@ int main(int argc, char *argv[])
         glm::mat4 lightSpaceMatrix = lightProjection * lightView;
 
         // First Pass: Render scene from light's perspective to generate shadow map
-        glViewport(0, 0, 4096, 4096); // Match shadow map resolution
+        glViewport(0, 0, 8192, 8192); // Match shadow map resolution
         glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
         glClear(GL_DEPTH_BUFFER_BIT);
 
