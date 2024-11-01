@@ -3,7 +3,7 @@
 in vec3 vNormal;
 in vec3 vFragPos;
 in vec2 vTexCoords;
-in vec4 vFragPosLightSpace; // New: Fragment position in light space
+in vec4 vFragPosLightSpace;
 
 out vec4 FragColor;
 
@@ -42,27 +42,33 @@ vec3 blinnPhong(vec3 Kd) {
     return diffuse + specular;
 }
 
-// Function to calculate shadow factor
-float calculateShadow(vec4 fragPosLightSpace)
-{
+// Function to calculate shadow factor with PCF
+float calculateShadowPCF(vec4 fragPosLightSpace) {
     // Perform perspective divide to get normalized light space coordinates
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
     projCoords = projCoords * 0.5 + 0.5; // Transform to [0,1] range for texture coordinates
 
-    // Sample the closest depth from the shadow map (from light's perspective)
-    float closestDepth = texture(shadowMap, projCoords.xy).r; 
-    float currentDepth = projCoords.z;
-
     // Add a small bias to prevent shadow acne
-    float bias = max(0.05 * (1.0 - dot(vNormal, normalize(-uLightDir_vs))), 0.005);
-    
-    float shadow = currentDepth - bias > closestDepth ? 0.0 : 1.0;
+    float bias = max(0.005 * (1.0 - dot(vNormal, normalize(-uLightDir_vs))), 0.0005);
 
-    return shadow;
+    // Kernel size for PCF, adjusted based on shadow map resolution
+    float pcfSize = 1.0 / 2048.0; // Assuming a shadow map resolution of 2048x2048
+
+    // Accumulate shadow factor
+    float shadow = 0.0;
+    int samples = 9; // Number of samples in a 3x3 kernel
+
+    // PCF loop for a 3x3 sample grid
+    for (int x = -1; x <= 1; ++x) {
+        for (int y = -1; y <= 1; ++y) {
+            float closestDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * pcfSize).r; 
+            shadow += (projCoords.z - bias > closestDepth) ? 0.0 : 1.0;
+        }
+    }
+    return shadow / float(samples); // Average the shadow factor
 }
 
-void main()
-{
+void main() {
     // Determine material color (either from texture or uniform)
     vec3 Kd = (uUseTexture > 0.5) ? texture(uTexture, vTexCoords).rgb : uKd;
 
@@ -73,11 +79,11 @@ void main()
     vec3 ambientLight = vec3(0.1);
     vec3 ambient = ambientLight * Kd;
 
-    // Calculate shadow factor using light space position
-    float shadow = calculateShadow(vFragPosLightSpace);
+    // Calculate shadow factor using PCF
+    float shadow = calculateShadowPCF(vFragPosLightSpace);
 
     // Combine Blinn-Phong color, ambient, and shadow factor
-    color = (ambient + color) * shadow;
+    color = ambient + (color * shadow);
 
     FragColor = vec4(color, 1.0);
 }
