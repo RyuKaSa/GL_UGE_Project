@@ -16,7 +16,7 @@
 #include <vector>
 #include <map>
 
-int window_width = 800;
+int window_width = 1200;
 int window_height = 800;
 
 // Stone floor coordinates
@@ -32,6 +32,7 @@ struct AABB
 };
 
 float cameraRadius = 0.15f; // Radius of the camera sphere for collision detection
+float cameraHeight = 2.0f;  // Height of the camera cylinder
 
 // Structure for 3D vertices with position, normal, and texture coordinates
 struct Vertex3D
@@ -291,23 +292,31 @@ void addSphere(
     sceneObjects.push_back(sphereObject);
 }
 
-bool checkCollision(const glm::vec3 &sphereCenter, float radius, const AABB &box)
-{
-    float distanceSquared = 0.0f;
+bool checkCollision(const glm::vec3& cylinderBaseCenter, float radius, float height, const AABB& box) {
+    float horizontalDistanceSquared = 0.0f;
 
-    // Calculate squared distance from sphere center to nearest AABB point
-    for (int i = 0; i < 3; ++i)
-    {
-        if (sphereCenter[i] < box.min[i])
-        {
-            distanceSquared += (box.min[i] - sphereCenter[i]) * (box.min[i] - sphereCenter[i]);
-        }
-        else if (sphereCenter[i] > box.max[i])
-        {
-            distanceSquared += (sphereCenter[i] - box.max[i]) * (sphereCenter[i] - box.max[i]);
+    // Check horizontal distance (x and z axes)
+    for (int i = 0; i < 3; i += 2) { // i = 0 for x, i = 2 for z
+        if (cylinderBaseCenter[i] < box.min[i]) {
+            horizontalDistanceSquared += (box.min[i] - cylinderBaseCenter[i]) * (box.min[i] - cylinderBaseCenter[i]);
+        } else if (cylinderBaseCenter[i] > box.max[i]) {
+            horizontalDistanceSquared += (cylinderBaseCenter[i] - box.max[i]) * (cylinderBaseCenter[i] - box.max[i]);
         }
     }
-    return distanceSquared <= (radius * radius);
+
+    // Check if horizontal distance exceeds radius
+    if (horizontalDistanceSquared > (radius * radius)) {
+        return false;
+    }
+
+    // Check vertical (y-axis) overlap
+    float cylinderTop = cylinderBaseCenter.y + height / 2.0f;
+    float cylinderBottom = cylinderBaseCenter.y - height / 2.0f;
+    if (cylinderTop < box.min.y || cylinderBottom > box.max.y) {
+        return false;
+    }
+
+    return true; // Collision detected
 }
 
 // Function to generate a random float between 0 and 1
@@ -638,7 +647,7 @@ int main(int argc, char *argv[])
     );
 
     addCube(
-        glm::vec3(-2.0f, 0.0f, 0.0f), // Position
+        glm::vec3(-2.0f, -1.0f, 0.0f), // Position
         glm::vec3(1.0f),              // Scale
         glm::vec3(0.2f, 1.0f, 0.1f),  // Color
         false,                        // Use texture
@@ -650,7 +659,7 @@ int main(int argc, char *argv[])
     );
 
     addCube(
-        glm::vec3(0.0f, 2.0f, 0.0f), // Position
+        glm::vec3(0.0f, -1.0f, 0.0f), // Position
         glm::vec3(0.5f, 1.0f, 0.5f), // Scale (non-uniform)
         glm::vec3(0.3f),             // Color (gray)
         false,                       // Use texture
@@ -676,7 +685,7 @@ int main(int argc, char *argv[])
 
     // Add textured cube
     addCube(
-        glm::vec3(0.0f, 0.0f, 3.0f), // Position
+        glm::vec3(0.0f, -1.0f, 3.0f), // Position
         glm::vec3(1.0f),             // Scale
         glm::vec3(1.0f),             // Color (white, not used)
         true,                        // Use texture
@@ -816,7 +825,7 @@ int main(int argc, char *argv[])
         bool collisionDetected = false;
         for (const auto &object : sceneObjects)
         {
-            if (checkCollision(proposedCameraPos, cameraRadius, object.boundingBox))
+            if (checkCollision(proposedCameraPos, cameraRadius, cameraHeight, object.boundingBox))
             {
                 collisionDetected = true;
                 break; // Stop further checking if a collision is found
