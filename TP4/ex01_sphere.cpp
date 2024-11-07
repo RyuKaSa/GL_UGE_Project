@@ -40,6 +40,8 @@ struct Vertex3D
     glm::vec3 position;  // Vertex position
     glm::vec3 normal;    // Vertex normal
     glm::vec2 texCoords; // Texture coordinates
+    glm::vec3 tangent;
+    glm::vec3 bitangent;
 
     Vertex3D(const glm::vec3 &pos, const glm::vec3 &norm, const glm::vec2 &uv)
         : position(pos), normal(norm), texCoords(uv) {}
@@ -59,6 +61,7 @@ struct SceneObject
     glm::vec3 color;
     bool useTexture;
     GLuint textureID;       // Texture ID; use 0 if no texture
+    GLuint normalMapID;     // Normal map ID; use 0 if no normal map
     glm::vec3 rotationAxis; // Optional, if need support rotation
     float rotationAngle;    // Optional, in degrees
     AABB boundingBox;       // Axis-Aligned Bounding Box for collision
@@ -121,6 +124,52 @@ void createCube(std::vector<Vertex3D> &vertices, std::vector<GLuint> &indices)
         20, 21, 22, 22, 23, 20};
 }
 
+void computeTangents(std::vector<Vertex3D>& vertices, const std::vector<GLuint>& indices) {
+    // Initialize tangents and bitangents to zero
+    for (auto& vertex : vertices) {
+        vertex.tangent = glm::vec3(0.0f);
+        vertex.bitangent = glm::vec3(0.0f);
+    }
+
+    // Compute per-triangle tangents and bitangents
+    for (size_t i = 0; i < indices.size(); i += 3) {
+        GLuint i0 = indices[i];
+        GLuint i1 = indices[i + 1];
+        GLuint i2 = indices[i + 2];
+
+        Vertex3D& v0 = vertices[i0];
+        Vertex3D& v1 = vertices[i1];
+        Vertex3D& v2 = vertices[i2];
+
+        glm::vec3 edge1 = v1.position - v0.position;
+        glm::vec3 edge2 = v2.position - v0.position;
+
+        glm::vec2 deltaUV1 = v1.texCoords - v0.texCoords;
+        glm::vec2 deltaUV2 = v2.texCoords - v0.texCoords;
+
+        float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+        glm::vec3 tangent, bitangent;
+
+        tangent = f * (deltaUV2.y * edge1 - deltaUV1.y * edge2);
+        bitangent = f * (-deltaUV2.x * edge1 + deltaUV1.x * edge2);
+
+        v0.tangent += tangent;
+        v1.tangent += tangent;
+        v2.tangent += tangent;
+
+        v0.bitangent += bitangent;
+        v1.bitangent += bitangent;
+        v2.bitangent += bitangent;
+    }
+
+    // Normalize tangents and bitangents
+    for (auto& vertex : vertices) {
+        vertex.tangent = glm::normalize(vertex.tangent);
+        vertex.bitangent = glm::normalize(vertex.bitangent);
+    }
+}
+
 // Function to set up VBO, EBO, and VAO for the cube
 void setupCubeBuffers(const std::vector<Vertex3D> &vertices, const std::vector<GLuint> &indices, GLuint &cubeVBO, GLuint &cubeEBO, GLuint &cubeVAO)
 {
@@ -171,6 +220,25 @@ void setupCubeBuffers(const std::vector<Vertex3D> &vertices, const std::vector<G
         GL_FALSE,
         sizeof(Vertex3D),
         (void *)offsetof(Vertex3D, texCoords));
+
+    // Tangent attribute
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(
+        3, 
+        3, 
+        GL_FLOAT, GL_FALSE, 
+        sizeof(Vertex3D), 
+        (void*)offsetof(Vertex3D, tangent));
+
+    // Bitangent attribute
+    glEnableVertexAttribArray(4);
+    glVertexAttribPointer(
+        4, 
+        3, 
+        GL_FLOAT, 
+        GL_FALSE, 
+        sizeof(Vertex3D), 
+        (void*)offsetof(Vertex3D, bitangent));
 
     // Unbind VAO (EBO remains bound to VAO)
     glBindVertexArray(0);
@@ -239,6 +307,7 @@ void addCube(
     const glm::vec3 &color,
     bool useTexture,
     GLuint textureID = 0, // Default to 0 if no texture
+    GLuint normalMapID = 0, // Default to 0 if no normal map
     const glm::vec3 &rotationAxis = glm::vec3(0.0f),
     float rotationAngle = 0.0f,
     GLuint vaoID = 0,
@@ -251,6 +320,7 @@ void addCube(
     cube.color = color;
     cube.useTexture = useTexture;
     cube.textureID = textureID;
+    cube.normalMapID = normalMapID;
     cube.rotationAxis = rotationAxis;
     cube.rotationAngle = rotationAngle;
     cube.vaoID = vaoID;
@@ -468,6 +538,7 @@ int main(int argc, char *argv[])
     std::vector<Vertex3D> cubeVertices;
     std::vector<GLuint> cubeIndices;
     createCube(cubeVertices, cubeIndices);
+    computeTangents(cubeVertices, cubeIndices);
 
     // Set up VBO, EBO, and VAO for the cube
     GLuint cubeVBO, cubeEBO, cubeVAO;
@@ -555,9 +626,14 @@ int main(int argc, char *argv[])
         std::cerr << "Failed to get 'uLightIntensity' location" << std::endl;
 
     // Load textures
-    GLuint textureID = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures/cobblestone_8bit.png");
-    GLuint stoneTextureID = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures/stone_8bit.png");
-    GLuint brownTerracottaTextureID = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures/brown_terracotta_8bit.png");
+    GLuint textureID = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures_HD/cobblestone_8bit.png");
+    GLuint stoneTextureID = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures_HD/stone_8bit.png");
+    GLuint brownTerracottaTextureID = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures_HD/brown_glazed_terracotta_8bit.png");
+
+    // load normal maps
+    GLuint textureID_normalMap = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures_HD/cobblestone_8bit_normal_map.png");
+    GLuint stoneTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures_HD/stone_8bit_normal_map.png");
+    GLuint brownTerracottaTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures_HD/brown_glazed_terracotta_8bit_normal_map.png");
 
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
@@ -652,6 +728,7 @@ int main(int argc, char *argv[])
         glm::vec3(0.2f, 1.0f, 0.1f),  // Color
         false,                        // Use texture
         0,                            // Texture ID
+        0,                            // Normal map ID
         glm::vec3(0.0f),              // Rotation axis
         0.0f,                         // Rotation angle
         cubeVAO,                      // VAO ID
@@ -664,6 +741,7 @@ int main(int argc, char *argv[])
         glm::vec3(0.3f),             // Color (gray)
         false,                       // Use texture
         0,                           // Texture ID
+        0,                           // Normal map ID
         glm::vec3(1.0f),             // Rotation axis
         0.0f,                        // Rotation angle
         cubeVAO,                     // VAO ID
@@ -677,6 +755,7 @@ int main(int argc, char *argv[])
         glm::vec3(1.0f),             // Color (white, not used)
         true,                        // Use texture
         textureID,                   // Texture ID
+        textureID_normalMap,         // Normal map ID
         glm::vec3(0.0f),             // Rotation axis
         0.0f,                        // Rotation angle
         cubeVAO,                     // VAO ID
@@ -690,6 +769,7 @@ int main(int argc, char *argv[])
         glm::vec3(1.0f),             // Color (white, not used)
         true,                        // Use texture
         brownTerracottaTextureID,    // Texture ID
+        brownTerracottaTextureID_normalMap,
         glm::vec3(0.0f),             // Rotation axis
         0.0f,                        // Rotation angle
         cubeVAO,                     // VAO ID
@@ -708,6 +788,7 @@ int main(int argc, char *argv[])
                 glm::vec3(1.0f), // Color (white, not used)
                 true,            // Use texture
                 stoneTextureID,  // Texture ID
+                stoneTextureID_normalMap,
                 glm::vec3(0.0f), // Rotation axis
                 0.0f,            // Rotation angle
                 cubeVAO,         // VAO ID
@@ -744,11 +825,14 @@ int main(int argc, char *argv[])
 
         // Update light intensity dynamically within the loop
         float time = windowManager.getTime();
-        glm::vec3 lightIntensity = glm::vec3(
-            (sin(time) + 1.0f) / 2.0f,       // Red oscillates between 0 and 1
-            (cos(time) + 1.0f) / 2.0f,       // Green oscillates between 0 and 1
-            (sin(time * 0.5f) + 1.0f) / 2.0f // Blue oscillates more slowly between 0 and 1
-        );
+        // glm::vec3 lightIntensity = glm::vec3(
+        //     (sin(time) + 1.0f) / 2.0f,       // Red oscillates between 0 and 1
+        //     (cos(time) + 1.0f) / 2.0f,       // Green oscillates between 0 and 1
+        //     (sin(time * 0.5f) + 1.0f) / 2.0f // Blue oscillates more slowly between 0 and 1
+        // );
+
+        // static white light
+        glm::vec3 lightIntensity = glm::vec3(1.0f);
 
         // Event handling
         SDL_Event e;
@@ -856,7 +940,7 @@ int main(int argc, char *argv[])
         );
 
         // Update light direction to rotate around the scene
-        float rotationSpeed = 1.0f;
+        float rotationSpeed = 0.5f;
         float angle = time * rotationSpeed;
 
         lightDirWorld = glm::vec3(
@@ -971,6 +1055,18 @@ int main(int argc, char *argv[])
                 glUniform1f(uUseTextureLocation, 0.0f);
             }
 
+            if (object.normalMapID != 0)
+            {
+                glActiveTexture(GL_TEXTURE2); // Bind to texture unit 2 (or another unused unit)
+                glBindTexture(GL_TEXTURE_2D, object.normalMapID);
+                glUniform1i(glGetUniformLocation(unifiedProgram.getGLId(), "uNormalMap"), 2);
+                glUniform1f(glGetUniformLocation(unifiedProgram.getGLId(), "uUseNormalMap"), 1.0f);
+            }
+            else
+            {
+                glUniform1f(glGetUniformLocation(unifiedProgram.getGLId(), "uUseNormalMap"), 0.0f); // Disable normal map usage
+            }
+
             glBindVertexArray(object.vaoID);
             if (object.type == ObjectType::Cube)
             {
@@ -981,10 +1077,16 @@ int main(int argc, char *argv[])
                 glDrawArrays(GL_TRIANGLES, 0, object.indexCount);
             }
 
-            glBindVertexArray(0);
+            // Unbind textures if they are used
             if (object.useTexture && object.textureID != 0)
             {
-                glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, 0); // Unbind base texture
+            }
+            if (object.normalMapID != 0)
+            {
+                glActiveTexture(GL_TEXTURE2);
+                glBindTexture(GL_TEXTURE_2D, 0); // Unbind normal map texture
             }
         }
 
