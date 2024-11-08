@@ -36,8 +36,13 @@ vec3 blinnPhong(vec3 Kd, vec3 N) {
     vec3 H = normalize(L + V);                   // Halfway vector
 
     // Distance to the light
-    float distanceToLight = distance(uLightPos_vs, vFragPos);
-    float attenuation = 1.0 / (distanceToLight * distanceToLight);
+    float distanceToLight = length(uLightPos_vs - vFragPos);
+
+    // Attenuation factors
+    float constant = 1.0;
+    float linear = 0.09;
+    float quadratic = 0.032;
+    float attenuation = 1.0 / (constant + linear * distanceToLight + quadratic * (distanceToLight * distanceToLight));
 
     // Apply dynamic light color to diffuse component
     float NdotL = max(dot(N, L), 0.0);

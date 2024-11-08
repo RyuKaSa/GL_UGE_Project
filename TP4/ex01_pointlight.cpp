@@ -744,8 +744,8 @@ int main(int argc, char *argv[])
         std::cerr << "Failed to get 'uKs' location" << std::endl;
     if (uShininessLocation == -1)
         std::cerr << "Failed to get 'uShininess' location" << std::endl;
-    if (uLightDir_vsLocation == -1)
-        std::cerr << "Failed to get 'uLightDir_vs' location" << std::endl;
+    // if (uLightDir_vsLocation == -1)
+    //     std::cerr << "Failed to get 'uLightDir_vs' location" << std::endl;
     if (uLightIntensityLocation == -1)
         std::cerr << "Failed to get 'uLightIntensity' location" << std::endl;
 
@@ -807,7 +807,9 @@ int main(int argc, char *argv[])
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
     // Light properties
-    glm::vec3 lightDirWorld = glm::vec3(-1.0f, -1.0f, -1.0f); // Initial light direction
+    float spiralRadius = 3.0f; // Radius of the spiral
+    float spiralSpeed = 1.0f;   // Speed of the spiral movement
+    float lightHeight = 5.0f;   // Height variation of the light
 
     // Light space matrix for shadows
     glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 50.0f);
@@ -953,15 +955,11 @@ int main(int argc, char *argv[])
         }
 
         // Update light intensity dynamically within the loop
-        float time = windowManager.getTime();
         glm::vec3 lightIntensity = glm::vec3(
-            (sin(time) + 1.0f) / 2.0f,       // Red oscillates between 0 and 1
-            (cos(time) + 1.0f) / 2.0f,       // Green oscillates between 0 and 1
-            (sin(time * 0.5f) + 1.0f) / 2.0f // Blue oscillates more slowly between 0 and 1
+            (sin(currentFrame) + 1.0f) / 2.0f,       // Red oscillates between 0 and 1
+            (cos(currentFrame) + 1.0f) / 2.0f,       // Green oscillates between 0 and 1
+            (sin(currentFrame * 0.5f) + 1.0f) / 2.0f // Blue oscillates more slowly between 0 and 1
         );
-
-        // static white light
-        // glm::vec3 lightIntensity = glm::vec3(1.0f);
 
         // Event handling
         SDL_Event e;
@@ -1068,23 +1066,28 @@ int main(int argc, char *argv[])
             cameraUp                 // Up vector
         );
 
-        // Update light direction to rotate around the scene
-        float rotationSpeed = 0.5f;
-        float angle = time * rotationSpeed;
+        // Update light position to move in a circle at a fixed height
+        float spiralRadius = 2.0f;    // Adjust the radius of the circle
+        float spiralSpeed = 0.5f;      // Adjust the speed of the rotation
+        float fixedHeight = 2.0f;      // Set the fixed height of the light
 
-        lightDirWorld = glm::vec3(
-            cos(angle),
-            -1.0f,
-            sin(angle));
+        glm::vec3 lightPosWorld;
+        lightPosWorld.x = spiralRadius * cos(currentFrame * spiralSpeed);
+        lightPosWorld.y = fixedHeight; // Fixed height
+        lightPosWorld.z = spiralRadius * sin(currentFrame * spiralSpeed);
 
-        float lightDistance = 10.0f;
-        glm::vec3 lightPos = -lightDistance * lightDirWorld;
+        // fixed light position
+        // glm::vec3 lightPosWorld = glm::vec3(2.0f, 0.6f, 2.0f);
 
-        // Recalculate light space matrix
+        // Transform light position to view space
+        glm::vec3 lightPosViewSpace = glm::vec3(ViewMatrix * glm::vec4(lightPosWorld, 1.0f));
+
+        // Recalculate light space matrix (optional, if adjusting shadows)
         glm::mat4 lightProjection = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, 1.0f, 50.0f);
-        glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 lightView = glm::lookAt(lightPosWorld, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 lightSpaceMatrix = lightProjection * lightView;
 
+        // First Pass: Render scene from light's perspective to generate shadow map
         // First Pass: Render scene from light's perspective to generate shadow map
         glViewport(0, 0, 8192, 8192); // Match shadow map resolution
         glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
@@ -1121,17 +1124,14 @@ int main(int argc, char *argv[])
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        // Second Pass: Render the scene normally with shadows
+        // Second Pass: Render the scene normally with point light
         glViewport(0, 0, window_width, window_height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         unifiedProgram.use();
 
-        // Update light direction to view space
-        glm::vec3 lightDirViewSpace = glm::vec3(ViewMatrix * glm::vec4(lightDirWorld, 0.0f));
-
         // Set light properties
-        glUniform3fv(uLightDir_vsLocation, 1, glm::value_ptr(lightDirViewSpace));
+        glUniform3fv(uLightPos_vsLocation, 1, glm::value_ptr(lightPosViewSpace));
         glUniform3fv(uLightIntensityLocation, 1, glm::value_ptr(lightIntensity));
 
         // Set the updated light space matrix
