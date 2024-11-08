@@ -6,6 +6,7 @@ layout(location = 2) in vec2 aTexCoords;    // Texture coordinates
 layout(location = 3) in vec3 aTangent;      // Tangent vector
 layout(location = 4) in vec3 aBitangent;    // Bitangent vector
 
+// Uniforms
 uniform mat4 uMVPMatrix;
 uniform mat4 uMVMatrix;
 uniform mat3 uNormalMatrix;
@@ -16,7 +17,7 @@ out vec3 vNormal;
 out vec3 vFragPos;
 out vec2 vTexCoords;
 out vec4 vFragPosLightSpace;
-out mat3 TBN; // Pass the TBN matrix to the fragment shader
+out mat3 TBN; // Tangent-Bitangent-Normal matrix
 
 void main()
 {
@@ -24,10 +25,10 @@ void main()
     vFragPos = vec3(uMVMatrix * vec4(aPosition, 1.0));
     vTexCoords = aTexCoords;
 
-    // Calculate TBN matrix
-    vec3 T = normalize(vec3(uModelMatrix * vec4(aTangent, 0.0)));
-    vec3 B = normalize(vec3(uModelMatrix * vec4(aBitangent, 0.0)));
-    vec3 N = normalize(vec3(uModelMatrix * vec4(aNormal, 0.0)));
+    // Transform TBN vectors into view space
+    vec3 T = normalize(uNormalMatrix * aTangent);
+    vec3 B = normalize(uNormalMatrix * aBitangent);
+    vec3 N = normalize(uNormalMatrix * aNormal);
     TBN = mat3(T, B, N);
 
     // Transform fragment position to light space

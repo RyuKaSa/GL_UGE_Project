@@ -47,6 +47,14 @@ struct Vertex3D
         : position(pos), normal(norm), texCoords(uv) {}
 };
 
+struct SphereVertex {
+    glm::vec3 position;
+    glm::vec3 normal;
+    glm::vec2 texCoords;
+    glm::vec3 tangent;
+    glm::vec3 bitangent;
+};
+
 enum class ObjectType
 {
     Cube,
@@ -164,6 +172,53 @@ void computeTangents(std::vector<Vertex3D>& vertices, const std::vector<GLuint>&
     }
 
     // Normalize tangents and bitangents
+    for (auto& vertex : vertices) {
+        vertex.tangent = glm::normalize(vertex.tangent);
+        vertex.bitangent = glm::normalize(vertex.bitangent);
+    }
+}
+
+void computeSphereTangents(
+    std::vector<SphereVertex>& vertices,
+    const std::vector<uint32_t>& indices)
+{
+    // Initialize tangents and bitangents to zero
+    for (auto& vertex : vertices) {
+        vertex.tangent = glm::vec3(0.0f);
+        vertex.bitangent = glm::vec3(0.0f);
+    }
+
+    // Compute per-triangle tangents and bitangents
+    for (size_t i = 0; i < indices.size(); i += 3) {
+        uint32_t i0 = indices[i];
+        uint32_t i1 = indices[i + 1];
+        uint32_t i2 = indices[i + 2];
+
+        SphereVertex& v0 = vertices[i0];
+        SphereVertex& v1 = vertices[i1];
+        SphereVertex& v2 = vertices[i2];
+
+        glm::vec3 edge1 = v1.position - v0.position;
+        glm::vec3 edge2 = v2.position - v0.position;
+
+        glm::vec2 deltaUV1 = v1.texCoords - v0.texCoords;
+        glm::vec2 deltaUV2 = v2.texCoords - v0.texCoords;
+
+        float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+        glm::vec3 tangent = f * (deltaUV2.y * edge1 - deltaUV1.y * edge2);
+        glm::vec3 bitangent = f * (-deltaUV2.x * edge1 + deltaUV1.x * edge2);
+
+        v0.tangent += tangent;
+        v1.tangent += tangent;
+        v2.tangent += tangent;
+
+        v0.bitangent += bitangent;
+        v1.bitangent += bitangent;
+        v2.bitangent += bitangent;
+    }
+
+    // Normalize the tangents and bitangents
     for (auto& vertex : vertices) {
         vertex.tangent = glm::normalize(vertex.tangent);
         vertex.bitangent = glm::normalize(vertex.bitangent);
@@ -529,6 +584,26 @@ int main(int argc, char *argv[])
         (void *)offsetof(glimac::ShapeVertex, texCoords) // Offset
     );
 
+    // Tangent attribute
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(
+        3, 
+        3, 
+        GL_FLOAT, 
+        GL_FALSE, 
+        sizeof(SphereVertex), (void*)offsetof(SphereVertex, tangent)
+    );
+
+    // Bitangent attribute
+    glEnableVertexAttribArray(4);
+    glVertexAttribPointer(
+        4, 
+        3, 
+        GL_FLOAT, 
+        GL_FALSE, 
+        sizeof(SphereVertex), (void*)offsetof(SphereVertex, bitangent)
+    );
+
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     std::cout << "Sphere VAO set up" << std::endl;
@@ -630,10 +705,14 @@ int main(int argc, char *argv[])
     GLuint stoneTextureID = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures_HD/stone_8bit.png");
     GLuint brownTerracottaTextureID = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures_HD/brown_glazed_terracotta_8bit.png");
 
+    GLuint soccerTextureID = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures_sphere/soccer_sph_s_8bit.png");
+
     // load normal maps
     GLuint textureID_normalMap = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures_HD/cobblestone_8bit_normal_map.png");
     GLuint stoneTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures_HD/stone_8bit_normal_map.png");
     GLuint brownTerracottaTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures_HD/brown_glazed_terracotta_8bit_normal_map.png");
+
+    GLuint soccerTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures_sphere/soccer_sph_s_8bit_normal_map.png");
 
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
@@ -716,8 +795,8 @@ int main(int argc, char *argv[])
         glm::vec3(0.0f, 0.0f, 0.0f), // Position
         1.0f,                        // Radius
         glm::vec3(1.0f),             // Color (white)
-        false,                       // Use texture
-        0,                           // Texture ID
+        true,                        // Use texture
+        soccerTextureID,             // Texture ID
         sphereVAO,                   // VAO ID
         sphereVertexCount            // Vertex count
     );
