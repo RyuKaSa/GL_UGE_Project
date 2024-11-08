@@ -395,7 +395,8 @@ void addSphere(
     float radius,
     const glm::vec3 &color,
     bool useTexture,
-    GLuint textureID = 0, // Default to 0 if no texture
+    GLuint textureID = 0,    // Default to 0 if no texture
+    GLuint normalMapID = 0,  // Default to 0 if no normal map
     GLuint vaoID = 0,
     GLsizei vertexCount = 0)
 {
@@ -406,6 +407,7 @@ void addSphere(
     sphereObject.color = color;
     sphereObject.useTexture = useTexture;
     sphereObject.textureID = textureID;
+    sphereObject.normalMapID = normalMapID; // Added
     sphereObject.vaoID = vaoID;
     sphereObject.indexCount = vertexCount;
 
@@ -522,6 +524,50 @@ int main(int argc, char *argv[])
     glimac::Sphere sphere(1, 32, 16);
     std::cout << "Sphere created" << std::endl;
 
+    std::vector<SphereVertex> sphereVertices;
+    size_t sphereVertexCount = sphere.getVertexCount();
+    const glimac::ShapeVertex* sphereData = sphere.getDataPointer();
+    sphereVertices.resize(sphereVertexCount);
+
+    for (size_t i = 0; i < sphereVertexCount; ++i) {
+        sphereVertices[i].position = sphereData[i].position;
+        sphereVertices[i].normal = sphereData[i].normal;
+        sphereVertices[i].texCoords = sphereData[i].texCoords;
+        sphereVertices[i].tangent = glm::vec3(0.0f);
+        sphereVertices[i].bitangent = glm::vec3(0.0f);
+    }
+
+    for (size_t i = 0; i < sphereVertexCount; i += 3) {
+        SphereVertex& v0 = sphereVertices[i];
+        SphereVertex& v1 = sphereVertices[i + 1];
+        SphereVertex& v2 = sphereVertices[i + 2];
+
+        glm::vec3 edge1 = v1.position - v0.position;
+        glm::vec3 edge2 = v2.position - v0.position;
+
+        glm::vec2 deltaUV1 = v1.texCoords - v0.texCoords;
+        glm::vec2 deltaUV2 = v2.texCoords - v0.texCoords;
+
+        float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+        glm::vec3 tangent = f * (deltaUV2.y * edge1 - deltaUV1.y * edge2);
+        glm::vec3 bitangent = f * (-deltaUV2.x * edge1 + deltaUV1.x * edge2);
+
+        v0.tangent += tangent;
+        v1.tangent += tangent;
+        v2.tangent += tangent;
+
+        v0.bitangent += bitangent;
+        v1.bitangent += bitangent;
+        v2.bitangent += bitangent;
+    }
+
+    // Normalize tangents and bitangents
+    for (size_t i = 0; i < sphereVertexCount; ++i) {
+        sphereVertices[i].tangent = glm::normalize(sphereVertices[i].tangent);
+        sphereVertices[i].bitangent = glm::normalize(sphereVertices[i].bitangent);
+    }
+
     // Create and bind VBO for sphere
     GLuint sphereVBO;
     glGenBuffers(1, &sphereVBO);
@@ -533,7 +579,7 @@ int main(int argc, char *argv[])
     std::cout << "Sphere VBO generated: " << sphereVBO << std::endl;
 
     glBindBuffer(GL_ARRAY_BUFFER, sphereVBO);
-    glBufferData(GL_ARRAY_BUFFER, sphere.getVertexCount() * sizeof(glimac::ShapeVertex), sphere.getDataPointer(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sphereVertices.size() * sizeof(SphereVertex), sphereVertices.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     std::cout << "Sphere VBO data buffered" << std::endl;
 
@@ -558,8 +604,8 @@ int main(int argc, char *argv[])
         3,                                              // Number of components (x, y, z)
         GL_FLOAT,                                       // Type
         GL_FALSE,                                       // Normalized?
-        sizeof(glimac::ShapeVertex),                    // Stride
-        (void *)offsetof(glimac::ShapeVertex, position) // Offset
+        sizeof(SphereVertex), 
+        (void*)offsetof(SphereVertex, position)
     );
 
     // Normal attribute
@@ -569,8 +615,8 @@ int main(int argc, char *argv[])
         3,                                            // Number of components (x, y, z)
         GL_FLOAT,                                     // Type
         GL_FALSE,                                     // Normalized?
-        sizeof(glimac::ShapeVertex),                  // Stride
-        (void *)offsetof(glimac::ShapeVertex, normal) // Offset
+        sizeof(SphereVertex),                         // Stride
+        (void *)offsetof(SphereVertex, normal)        // Offset
     );
 
     // Texture coordinate attribute
@@ -580,8 +626,8 @@ int main(int argc, char *argv[])
         2,                                               // Number of components (u, v)
         GL_FLOAT,                                        // Type
         GL_FALSE,                                        // Normalized?
-        sizeof(glimac::ShapeVertex),                     // Stride
-        (void *)offsetof(glimac::ShapeVertex, texCoords) // Offset
+        sizeof(SphereVertex),                            // Stride
+        (void *)offsetof(SphereVertex, texCoords)        // Offset
     );
 
     // Tangent attribute
@@ -591,7 +637,8 @@ int main(int argc, char *argv[])
         3, 
         GL_FLOAT, 
         GL_FALSE, 
-        sizeof(SphereVertex), (void*)offsetof(SphereVertex, tangent)
+        sizeof(SphereVertex), 
+        (void*)offsetof(SphereVertex, tangent)
     );
 
     // Bitangent attribute
@@ -601,7 +648,8 @@ int main(int argc, char *argv[])
         3, 
         GL_FLOAT, 
         GL_FALSE, 
-        sizeof(SphereVertex), (void*)offsetof(SphereVertex, bitangent)
+        sizeof(SphereVertex),
+        (void*)offsetof(SphereVertex, bitangent)
     );
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -788,7 +836,7 @@ int main(int argc, char *argv[])
 
     // Prepare to add objects to the scene
     GLsizei cubeIndexCount = static_cast<GLsizei>(cubeIndices.size());
-    GLsizei sphereVertexCount = sphere.getVertexCount();
+    // GLsizei sphereVertexCount = sphere.getVertexCount();
 
     // Add sphere to the scene
     addSphere(
@@ -797,6 +845,7 @@ int main(int argc, char *argv[])
         glm::vec3(1.0f),             // Color (white)
         true,                        // Use texture
         soccerTextureID,             // Texture ID
+        soccerTextureID_normalMap,   // Normal map ID
         sphereVAO,                   // VAO ID
         sphereVertexCount            // Vertex count
     );
@@ -904,14 +953,14 @@ int main(int argc, char *argv[])
 
         // Update light intensity dynamically within the loop
         float time = windowManager.getTime();
-        // glm::vec3 lightIntensity = glm::vec3(
-        //     (sin(time) + 1.0f) / 2.0f,       // Red oscillates between 0 and 1
-        //     (cos(time) + 1.0f) / 2.0f,       // Green oscillates between 0 and 1
-        //     (sin(time * 0.5f) + 1.0f) / 2.0f // Blue oscillates more slowly between 0 and 1
-        // );
+        glm::vec3 lightIntensity = glm::vec3(
+            (sin(time) + 1.0f) / 2.0f,       // Red oscillates between 0 and 1
+            (cos(time) + 1.0f) / 2.0f,       // Green oscillates between 0 and 1
+            (sin(time * 0.5f) + 1.0f) / 2.0f // Blue oscillates more slowly between 0 and 1
+        );
 
         // static white light
-        glm::vec3 lightIntensity = glm::vec3(1.0f);
+        // glm::vec3 lightIntensity = glm::vec3(1.0f);
 
         // Event handling
         SDL_Event e;
