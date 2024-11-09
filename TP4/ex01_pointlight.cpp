@@ -960,11 +960,13 @@ int main(int argc, char *argv[])
         }
 
         // Update light intensity dynamically within the loop
-        glm::vec3 lightIntensity = glm::vec3(
-            (sin(currentFrame) + 1.0f) / 2.0f,       // Red oscillates between 0 and 1
-            (cos(currentFrame) + 1.0f) / 2.0f,       // Green oscillates between 0 and 1
-            (sin(currentFrame * 0.5f) + 1.0f) / 2.0f // Blue oscillates more slowly between 0 and 1
-        );
+        // glm::vec3 lightIntensity = glm::vec3(
+        //     (sin(currentFrame) + 1.0f) / 2.0f,       // Red oscillates between 0 and 1
+        //     (cos(currentFrame) + 1.0f) / 2.0f,       // Green oscillates between 0 and 1
+        //     (sin(currentFrame * 0.5f) + 1.0f) / 2.0f // Blue oscillates more slowly between 0 and 1
+        // );
+        // white light
+        glm::vec3 lightIntensity = glm::vec3(1.0f);
 
         // Event handling
         SDL_Event e;
@@ -1076,18 +1078,18 @@ int main(int argc, char *argv[])
         float spiralSpeed = 0.5f;      // Adjust the speed of the rotation
         float fixedHeight = 2.0f;      // Set the fixed height of the light
 
-        glm::vec3 lightPosWorld;
-        lightPosWorld.x = spiralRadius * cos(currentFrame * spiralSpeed);
-        lightPosWorld.y = fixedHeight; // Fixed height
-        lightPosWorld.z = spiralRadius * sin(currentFrame * spiralSpeed);
+        // glm::vec3 lightPosWorld;
+        // lightPosWorld.x = spiralRadius * cos(currentFrame * spiralSpeed);
+        // lightPosWorld.y = fixedHeight; // Fixed height
+        // lightPosWorld.z = spiralRadius * sin(currentFrame * spiralSpeed);
 
         // fixed light position
-        // glm::vec3 lightPosWorld = glm::vec3(2.0f, 0.6f, 2.0f);
+        glm::vec3 lightPosWorld = glm::vec3(2.0f, 0.6f, 2.0f);
 
         // Transform light position to view space
         glm::vec3 lightPosViewSpace = glm::vec3(ViewMatrix * glm::vec4(lightPosWorld, 1.0f));
 
-        // Recalculate light space matrix (optional, if adjusting shadows)
+        // Recalculate light space matrix
         glm::mat4 lightProjection = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, 1.0f, 50.0f);
         glm::mat4 lightView = glm::lookAt(lightPosWorld, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 lightSpaceMatrix = lightProjection * lightView;

@@ -1,6 +1,7 @@
 #version 330 core
 
 in vec3 vNormal;
+in vec3 vFragPos;
 in vec3 vFragPosWorld;
 in vec2 vTexCoords;
 in mat3 TBN;
@@ -13,6 +14,7 @@ uniform vec3 uKs;         // Specular reflection coefficient
 uniform float uShininess; // Shininess exponent
 
 // Light properties
+uniform vec3 uLightPos_vs; // Light position in view space
 uniform vec3 lightPosWorld;    // Light position in world space
 uniform vec3 uLightIntensity;  // Light intensity (color)
 uniform float farPlane;
@@ -31,27 +33,29 @@ uniform float uUseNormalMap; // Use 0.0 for false, 1.0 for true
 // Depth cube map
 uniform samplerCube depthMap;
 
+const vec3 gridSamplingDisk[20] = vec3[](
+    vec3( 1,  0,  0), vec3(-1,  0,  0), vec3( 0,  1,  0), vec3( 0, -1,  0), 
+    vec3( 0,  0,  1), vec3( 0,  0, -1), vec3( 1,  1,  0), vec3(-1,  1,  0), 
+    vec3( 1, -1,  0), vec3(-1, -1,  0), vec3( 1,  0,  1), vec3(-1,  0,  1), 
+    vec3( 1,  0, -1), vec3(-1,  0, -1), vec3( 0,  1,  1), vec3( 0, -1,  1), 
+    vec3( 0,  1, -1), vec3( 0, -1, -1), vec3( 1,  1,  1), vec3(-1, -1, -1)
+);
+
 float ShadowCalculation(vec3 fragPosWorld) {
     vec3 fragToLight = fragPosWorld - lightPosWorld;
     float currentDepth = length(fragToLight);
     float shadow = 0.0;
     float bias = 0.05;
-    int samples = 8;
-    float diskRadius = 0.1; // Adjust as needed
+    int samples = 20;
+    float viewDistance = length(cameraPosWorld - fragPosWorld);
+    float diskRadius = (1.0 + (viewDistance / farPlane)) / 25.0;
 
-    // Generate random sampling offsets
-    vec3 randomOffset = vec3(0.0);
-    for (int i = 0; i < samples; ++i)
+    for(int i = 0; i < samples; ++i)
     {
-        // Generate a random vector in the unit sphere
-        vec3 offset = normalize(vec3(
-            fract(sin(dot(fragPosWorld.xy, vec2(12.9898, 78.233))) * 43758.5453 + i) * 2.0 - 1.0,
-            fract(sin(dot(fragPosWorld.yz, vec2(12.9898, 78.233))) * 43758.5453 + i) * 2.0 - 1.0,
-            fract(sin(dot(fragPosWorld.zx, vec2(12.9898, 78.233))) * 43758.5453 + i) * 2.0 - 1.0
-        ));
-        float closestDepth = texture(depthMap, fragToLight + offset * diskRadius).r;
-        closestDepth *= farPlane;
-        if (currentDepth - bias > closestDepth)
+        // Sample shadow map with a slight offset
+        float closestDepth = texture(depthMap, fragToLight + gridSamplingDisk[i] * diskRadius).r;
+        closestDepth *= farPlane; // Undo mapping [0,1]
+        if(currentDepth - bias > closestDepth)
             shadow += 1.0;
     }
     shadow /= float(samples);
@@ -60,17 +64,17 @@ float ShadowCalculation(vec3 fragPosWorld) {
 }
 
 vec3 blinnPhong(vec3 Kd, vec3 N) {
-    vec3 L = normalize(lightPosWorld - vFragPosWorld); // Light direction vector from light to fragment
-    vec3 V = normalize(cameraPosWorld - vFragPosWorld); // View direction vector from fragment to camera
+    vec3 L = normalize(uLightPos_vs - vFragPos); // Light direction in view space
+    vec3 V = normalize(-vFragPos); // View direction in view space (camera at origin)
     vec3 H = normalize(L + V); // Halfway vector
 
-    // Correct the attenuation calculation
-    float distanceToLight = length(lightPosWorld - vFragPosWorld);
+    // Distance to the light
+    float distanceToLight = length(uLightPos_vs - vFragPos);
 
-    // Attenuation factors (adjust as necessary)
+    // Attenuation factors
     float constant = 1.0;
-    float linear = 0.14;
-    float quadratic = 0.07;
+    float linear = 0.09;
+    float quadratic = 0.032;
     float attenuation = 1.0 / (constant + linear * distanceToLight + quadratic * (distanceToLight * distanceToLight));
 
     // Apply dynamic light color to diffuse component
