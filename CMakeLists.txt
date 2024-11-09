@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 cmake_policy(SET CMP0072 NEW)
 
-project(TP4)
+project(deux_salles_deux_ambiances)
 
 # Set the folder where the executables are created
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
@@ -9,12 +9,12 @@ set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
 # Include glimac
 add_subdirectory(glimac)
 
-file(GLOB TP_DIRECTORIES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "TP*")
-list(REMOVE_ITEM TP_DIRECTORIES "TP1" "TP2")
+file(GLOB APP_DIRECTORIES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "APP*")
+# list(REMOVE_ITEM TP_DIRECTORIES "TP1" "TP2")
 
-foreach(TP ${TP_DIRECTORIES})
-    message(WARNING "Configuring ${CMAKE_CURRENT_SOURCE_DIR}/${TP}")
-    add_subdirectory(${TP})
+foreach(APP ${APP_DIRECTORIES})
+    message(WARNING "Configuring ${CMAKE_CURRENT_SOURCE_DIR}/${APP}")
+    add_subdirectory(${APP})
 endforeach()
 
 # Create a target for each TP

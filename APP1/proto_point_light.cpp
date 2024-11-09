@@ -676,8 +676,8 @@ int main(int argc, char *argv[])
     glimac::FilePath applicationPath(argv[0]);
 
     // Load unified shader
-    std::string unifiedVertexShaderPath = applicationPath.dirPath() + "TP4/shaders/" + "unified_shader.vs.glsl";
-    std::string unifiedFragmentShaderPath = applicationPath.dirPath() + "TP4/shaders/" + "pointlight.fs.glsl";
+    std::string unifiedVertexShaderPath = applicationPath.dirPath() + "APP1/shaders/" + "unified_shader.vs.glsl";
+    std::string unifiedFragmentShaderPath = applicationPath.dirPath() + "APP1/shaders/" + "pointlight.fs.glsl";
 
     std::cout << "Unified Vertex shader path: " << unifiedVertexShaderPath << std::endl;
     std::cout << "Unified Fragment shader path: " << unifiedFragmentShaderPath << std::endl;
@@ -691,9 +691,9 @@ int main(int argc, char *argv[])
     std::cout << "Unified shaders loaded successfully" << std::endl;
 
     // Load depth shader program for shadow mapping
-    std::string depthVertexShaderPath = applicationPath.dirPath() + "TP4/shaders/" + "point_shadow_depth.vs.glsl";
-    std::string depthFragmentShaderPath = applicationPath.dirPath() + "TP4/shaders/" + "point_shadow_depth.fs.glsl";
-    std::string depthGeometryShaderPath = applicationPath.dirPath() + "TP4/shaders/" + "point_shadow_depth.gs.glsl";
+    std::string depthVertexShaderPath = applicationPath.dirPath() + "APP1/shaders/" + "point_shadow_depth.vs.glsl";
+    std::string depthFragmentShaderPath = applicationPath.dirPath() + "APP1/shaders/" + "point_shadow_depth.fs.glsl";
+    std::string depthGeometryShaderPath = applicationPath.dirPath() + "APP1/shaders/" + "point_shadow_depth.gs.glsl";
 
     glimac::Program depthProgram = glimac::loadProgram(depthVertexShaderPath, depthFragmentShaderPath);
     if (depthProgram.getGLId() == 0)
@@ -755,18 +755,18 @@ int main(int argc, char *argv[])
         std::cerr << "Failed to get 'uLightIntensity' location" << std::endl;
 
     // Load textures
-    GLuint textureID = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures_HD/cobblestone_8bit.png");
-    GLuint stoneTextureID = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures_HD/stone_8bit.png");
-    GLuint brownTerracottaTextureID = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures_HD/brown_glazed_terracotta_8bit.png");
+    GLuint textureID = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_HD/cobblestone_8bit.png");
+    GLuint stoneTextureID = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_HD/stone_8bit.png");
+    GLuint brownTerracottaTextureID = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_HD/brown_glazed_terracotta_8bit.png");
 
-    GLuint soccerTextureID = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures_sphere/soccer_sph_s_8bit.png");
+    GLuint soccerTextureID = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_sphere/soccer_sph_s_8bit.png");
 
     // load normal maps
-    GLuint textureID_normalMap = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures_HD/cobblestone_8bit_normal_map.png");
-    GLuint stoneTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures_HD/stone_8bit_normal_map.png");
-    GLuint brownTerracottaTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures_HD/brown_glazed_terracotta_8bit_normal_map.png");
+    GLuint textureID_normalMap = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_HD/cobblestone_8bit_normal_map.png");
+    GLuint stoneTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_HD/stone_8bit_normal_map.png");
+    GLuint brownTerracottaTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_HD/brown_glazed_terracotta_8bit_normal_map.png");
 
-    GLuint soccerTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../TP4/assets/textures_sphere/soccer_sph_s_8bit_normal_map.png");
+    GLuint soccerTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_sphere/soccer_sph_s_8bit_normal_map.png");
 
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
