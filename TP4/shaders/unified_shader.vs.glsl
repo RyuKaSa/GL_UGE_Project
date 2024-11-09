@@ -18,12 +18,16 @@ out vec3 vFragPos;
 out vec2 vTexCoords;
 out vec4 vFragPosLightSpace;
 out mat3 TBN; // Tangent-Bitangent-Normal matrix
+out vec3 vFragPosWorld;
 
 void main()
 {
     vNormal = normalize(uNormalMatrix * aNormal);
     vFragPos = vec3(uMVMatrix * vec4(aPosition, 1.0));
     vTexCoords = aTexCoords;
+    
+    // Calculate world space fragment position
+    vFragPosWorld = vec3(uModelMatrix * vec4(aPosition, 1.0));
 
     // Transform TBN vectors into view space
     vec3 T = normalize(uNormalMatrix * aTangent);

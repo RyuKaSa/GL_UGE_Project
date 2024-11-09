@@ -1,10 +1,8 @@
-// pointlight.fs.glsl
 #version 330 core
 
 in vec3 vNormal;
-in vec3 vFragPos;
+in vec3 vFragPosWorld;
 in vec2 vTexCoords;
-in vec4 vFragPosLightSpace;
 in mat3 TBN;
 
 out vec4 FragColor;
@@ -15,33 +13,64 @@ uniform vec3 uKs;         // Specular reflection coefficient
 uniform float uShininess; // Shininess exponent
 
 // Light properties
-uniform vec3 uLightPos_vs;    // Light position in view space
-uniform vec3 uLightIntensity; // Light intensity (color)
+uniform vec3 lightPosWorld;    // Light position in world space
+uniform vec3 uLightIntensity;  // Light intensity (color)
+uniform float farPlane;
+
+// Camera position
+uniform vec3 cameraPosWorld;
 
 // Texture sampler
 uniform sampler2D uTexture;
 uniform float uUseTexture; // Use 0.0 for false, 1.0 for true
 
-// Shadow map
-uniform sampler2D shadowMap;
-
 // Normal map
 uniform sampler2D uNormalMap;
 uniform float uUseNormalMap; // Use 0.0 for false, 1.0 for true
 
-// Function to calculate Blinn-Phong lighting
+// Depth cube map
+uniform samplerCube depthMap;
+
+float ShadowCalculation(vec3 fragPosWorld) {
+    vec3 fragToLight = fragPosWorld - lightPosWorld;
+    float currentDepth = length(fragToLight);
+    float shadow = 0.0;
+    float bias = 0.05;
+    int samples = 8;
+    float diskRadius = 0.1; // Adjust as needed
+
+    // Generate random sampling offsets
+    vec3 randomOffset = vec3(0.0);
+    for (int i = 0; i < samples; ++i)
+    {
+        // Generate a random vector in the unit sphere
+        vec3 offset = normalize(vec3(
+            fract(sin(dot(fragPosWorld.xy, vec2(12.9898, 78.233))) * 43758.5453 + i) * 2.0 - 1.0,
+            fract(sin(dot(fragPosWorld.yz, vec2(12.9898, 78.233))) * 43758.5453 + i) * 2.0 - 1.0,
+            fract(sin(dot(fragPosWorld.zx, vec2(12.9898, 78.233))) * 43758.5453 + i) * 2.0 - 1.0
+        ));
+        float closestDepth = texture(depthMap, fragToLight + offset * diskRadius).r;
+        closestDepth *= farPlane;
+        if (currentDepth - bias > closestDepth)
+            shadow += 1.0;
+    }
+    shadow /= float(samples);
+
+    return shadow;
+}
+
 vec3 blinnPhong(vec3 Kd, vec3 N) {
-    vec3 L = normalize(uLightPos_vs - vFragPos); // Light direction vector from fragment to light
-    vec3 V = normalize(-vFragPos);               // View direction vector from fragment to camera
-    vec3 H = normalize(L + V);                   // Halfway vector
+    vec3 L = normalize(lightPosWorld - vFragPosWorld); // Light direction vector from light to fragment
+    vec3 V = normalize(cameraPosWorld - vFragPosWorld); // View direction vector from fragment to camera
+    vec3 H = normalize(L + V); // Halfway vector
 
-    // Distance to the light
-    float distanceToLight = length(uLightPos_vs - vFragPos);
+    // Correct the attenuation calculation
+    float distanceToLight = length(lightPosWorld - vFragPosWorld);
 
-    // Attenuation factors
+    // Attenuation factors (adjust as necessary)
     float constant = 1.0;
-    float linear = 0.09;
-    float quadratic = 0.032;
+    float linear = 0.14;
+    float quadratic = 0.07;
     float attenuation = 1.0 / (constant + linear * distanceToLight + quadratic * (distanceToLight * distanceToLight));
 
     // Apply dynamic light color to diffuse component
@@ -54,36 +83,6 @@ vec3 blinnPhong(vec3 Kd, vec3 N) {
 
     // Final color
     return diffuse + specular;
-}
-
-// Function to calculate shadow factor with Percentage-Closer Filtering (PCF)
-float calculateShadowPCF(vec4 fragPosLightSpace, vec3 N, vec3 L) {
-    // Perform perspective divide to get normalized device coordinates
-    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-    // Transform to [0,1] range for texture coordinates
-    projCoords = projCoords * 0.5 + 0.5;
-
-    // Check if fragment is outside the light's orthographic frustum
-    if (projCoords.z > 1.0)
-        return 1.0;
-
-    // Add a small bias to prevent shadow acne
-    float bias = max(0.005 * (1.0 - dot(N, L)), 0.0005);
-
-    // PCF parameters
-    float shadow = 0.0;
-    float texelSize = 1.0 / 8192.0; // Assuming a shadow map resolution of 8192x8192
-
-    // PCF loop for a 3x3 sample grid
-    for (int x = -1; x <= 1; ++x) {
-        for (int y = -1; y <= 1; ++y) {
-            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
-            shadow += (projCoords.z - bias > pcfDepth) ? 0.0 : 1.0;
-        }
-    }
-    shadow /= 9.0; // Average the shadow factor
-
-    return shadow;
 }
 
 void main() {
@@ -107,14 +106,11 @@ void main() {
     vec3 ambientLight = vec3(0.1);
     vec3 ambient = ambientLight * Kd;
 
-    // Recalculate L (light direction) for shadow calculation
-    vec3 L = normalize(uLightPos_vs - vFragPos);
-
-    // Calculate shadow factor using PCF
-    float shadow = calculateShadowPCF(vFragPosLightSpace, N, L);
+    // Calculate shadow using the ShadowCalculation function
+    float shadow = ShadowCalculation(vFragPosWorld);
 
     // Combine Blinn-Phong color, ambient, and shadow factor
-    color = ambient + (color * shadow);
+    color = ambient + (1.0 - shadow) * color;
 
     FragColor = vec4(color, 1.0);
 }

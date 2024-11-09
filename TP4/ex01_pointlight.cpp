@@ -25,6 +25,8 @@ int numCubesZ = 15;    // Number of cubes along the z-axis
 float spacingX = 1.0f; // Distance between each cube along the x-axis
 float spacingZ = 1.0f; // Distance between each cube along the z-axis
 
+const GLuint SHADOW_WIDTH = 4096, SHADOW_HEIGHT = 4096;
+
 struct AABB
 {
     glm::vec3 min;
@@ -568,6 +570,8 @@ int main(int argc, char *argv[])
         sphereVertices[i].bitangent = glm::normalize(sphereVertices[i].bitangent);
     }
 
+    GLsizei sphereVertexCountGL = static_cast<GLsizei>(sphereVertexCount);
+
     // Create and bind VBO for sphere
     GLuint sphereVBO;
     glGenBuffers(1, &sphereVBO);
@@ -687,8 +691,9 @@ int main(int argc, char *argv[])
     std::cout << "Unified shaders loaded successfully" << std::endl;
 
     // Load depth shader program for shadow mapping
-    std::string depthVertexShaderPath = applicationPath.dirPath() + "TP4/shaders/" + "shadow_mapping_depth.vs.glsl";
-    std::string depthFragmentShaderPath = applicationPath.dirPath() + "TP4/shaders/" + "shadow_mapping_depth.fs.glsl";
+    std::string depthVertexShaderPath = applicationPath.dirPath() + "TP4/shaders/" + "point_shadow_depth.vs.glsl";
+    std::string depthFragmentShaderPath = applicationPath.dirPath() + "TP4/shaders/" + "point_shadow_depth.fs.glsl";
+    std::string depthGeometryShaderPath = applicationPath.dirPath() + "TP4/shaders/" + "point_shadow_depth.gs.glsl";
 
     glimac::Program depthProgram = glimac::loadProgram(depthVertexShaderPath, depthFragmentShaderPath);
     if (depthProgram.getGLId() == 0)
@@ -784,24 +789,19 @@ int main(int argc, char *argv[])
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // Unbind after check
 
-    GLuint shadowMap;
-    // Generate shadow map texture
-    glGenTextures(1, &shadowMap);
-    glBindTexture(GL_TEXTURE_2D, shadowMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 8192, 8192, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    GLfloat borderColor[] = {1.0, 1.0, 1.0, 1.0};
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap, 0);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // New depth cube map creation
+    GLuint depthCubeMap;
+    glGenTextures(1, &depthCubeMap);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap);
+    for (unsigned int i = 0; i < 6; ++i) {
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT32F,
+                    4096, 4096, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
     // Set the clear color to a dark gray
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -815,6 +815,11 @@ int main(int argc, char *argv[])
     glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 50.0f);
     glm::mat4 lightView = glm::lookAt(glm::vec3(5.0f, 10.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+
+    // Setup projection matrix for cube map
+    float nearPlane = 1.0f;
+    float farPlane = 25.0f;
+    glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), 1.0f, nearPlane, farPlane);
 
     // Camera parameters
     glm::vec3 cameraPos(0.0f, 0.0f, 5.0f);    // Initial position of the camera
@@ -1087,7 +1092,15 @@ int main(int argc, char *argv[])
         glm::mat4 lightView = glm::lookAt(lightPosWorld, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 lightSpaceMatrix = lightProjection * lightView;
 
-        // First Pass: Render scene from light's perspective to generate shadow map
+        // Create six view matrices for the cube map faces
+        std::vector<glm::mat4> shadowTransforms;
+        shadowTransforms.push_back(shadowProj * glm::lookAt(lightPosWorld, lightPosWorld + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
+        shadowTransforms.push_back(shadowProj * glm::lookAt(lightPosWorld, lightPosWorld + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
+        shadowTransforms.push_back(shadowProj * glm::lookAt(lightPosWorld, lightPosWorld + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));
+        shadowTransforms.push_back(shadowProj * glm::lookAt(lightPosWorld, lightPosWorld + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, -1.0)));
+        shadowTransforms.push_back(shadowProj * glm::lookAt(lightPosWorld, lightPosWorld + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0)));
+        shadowTransforms.push_back(shadowProj * glm::lookAt(lightPosWorld, lightPosWorld + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0)));
+
         // First Pass: Render scene from light's perspective to generate shadow map
         glViewport(0, 0, 8192, 8192); // Match shadow map resolution
         glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
@@ -1095,34 +1108,53 @@ int main(int argc, char *argv[])
 
         // Use the depth shader program
         depthProgram.use();
-        glUniformMatrix4fv(uDepth_LightSpaceMatrixLocation, 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+        glUniform1f(glGetUniformLocation(depthProgram.getGLId(), "farPlane"), farPlane);
+        glUniform3fv(glGetUniformLocation(depthProgram.getGLId(), "lightPos"), 1, glm::value_ptr(lightPosWorld));
 
-        // Render scene objects to shadow map
-        for (const auto &object : sceneObjects)
-        {
-            glm::mat4 modelMatrix = glm::mat4(1.0f);
-            modelMatrix = glm::translate(modelMatrix, object.position);
-            if (object.rotationAngle != 0.0f)
-            {
-                modelMatrix = glm::rotate(modelMatrix, glm::radians(object.rotationAngle), object.rotationAxis);
-            }
-            modelMatrix = glm::scale(modelMatrix, object.scale);
+        // First Pass: Render scene to depth cube map
+        for (unsigned int i = 0; i < 6; ++i) {
+            // Bind the framebuffer and attach the current cube map face
+            glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, depthCubeMap, 0);
+            glDrawBuffer(GL_NONE);
+            glReadBuffer(GL_NONE);
 
-            // Set model matrix for depth shader
-            glUniformMatrix4fv(uDepth_ModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+            // Set viewport and clear depth buffer
+            glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+            glClear(GL_DEPTH_BUFFER_BIT);
 
-            glBindVertexArray(object.vaoID);
-            if (object.type == ObjectType::Cube)
-            {
-                glDrawElements(GL_TRIANGLES, object.indexCount, GL_UNSIGNED_INT, 0);
+            // Use the depth shader program
+            depthProgram.use();
+            glUniform1f(glGetUniformLocation(depthProgram.getGLId(), "farPlane"), farPlane);
+            glUniform3fv(glGetUniformLocation(depthProgram.getGLId(), "lightPos"), 1, glm::value_ptr(lightPosWorld));
+
+            // Set the shadow matrix for the current face
+            glUniformMatrix4fv(glGetUniformLocation(depthProgram.getGLId(), "shadowMatrix"), 1, GL_FALSE, glm::value_ptr(shadowTransforms[i]));
+
+            // Render scene objects
+            for (const auto &object : sceneObjects) {
+                glm::mat4 modelMatrix = glm::mat4(1.0f);
+                modelMatrix = glm::translate(modelMatrix, object.position);
+                if (object.rotationAngle != 0.0f) {
+                    modelMatrix = glm::rotate(modelMatrix, glm::radians(object.rotationAngle), object.rotationAxis);
+                }
+                modelMatrix = glm::scale(modelMatrix, object.scale);
+
+                // Set model matrix for depth shader
+                glUniformMatrix4fv(glGetUniformLocation(depthProgram.getGLId(), "model"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+
+                glBindVertexArray(object.vaoID);
+                if (object.type == ObjectType::Cube) {
+                    glDrawElements(GL_TRIANGLES, object.indexCount, GL_UNSIGNED_INT, 0);
+                } else if (object.type == ObjectType::Sphere) {
+                    glDrawArrays(GL_TRIANGLES, 0, object.indexCount);
+                }
+                glBindVertexArray(0);
             }
-            else if (object.type == ObjectType::Sphere)
-            {
-                glDrawArrays(GL_TRIANGLES, 0, object.indexCount);
-            }
-            glBindVertexArray(0);
+
+            // Optional: Unbind the framebuffer after each face
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         // Second Pass: Render the scene normally with point light
         glViewport(0, 0, window_width, window_height);
@@ -1137,10 +1169,19 @@ int main(int argc, char *argv[])
         // Set the updated light space matrix
         glUniformMatrix4fv(glGetUniformLocation(unifiedProgram.getGLId(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 
-        // Bind the shadow map to texture unit 1
+        // Bind the depth cube map to texture unit 1
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, shadowMap);
-        glUniform1i(glGetUniformLocation(unifiedProgram.getGLId(), "shadowMap"), 1);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap);
+        glUniform1i(glGetUniformLocation(unifiedProgram.getGLId(), "depthMap"), 1);
+
+        // Set light position in world space
+        glUniform3fv(glGetUniformLocation(unifiedProgram.getGLId(), "lightPosWorld"), 1, glm::value_ptr(lightPosWorld));
+
+        // Set camera position in world space
+        glUniform3fv(glGetUniformLocation(unifiedProgram.getGLId(), "cameraPosWorld"), 1, glm::value_ptr(cameraPos));
+
+        // Set far plane
+        glUniform1f(glGetUniformLocation(unifiedProgram.getGLId(), "farPlane"), farPlane);
 
         // Render all scene objects
         for (const auto &object : sceneObjects)
@@ -1217,6 +1258,63 @@ int main(int argc, char *argv[])
                 glActiveTexture(GL_TEXTURE2);
                 glBindTexture(GL_TEXTURE_2D, 0); // Unbind normal map texture
             }
+        }
+
+        // Render a small sphere to represent the light source
+        {
+            // Create model matrix for the light sphere
+            glm::mat4 modelMatrix = glm::mat4(1.0f);
+            modelMatrix = glm::translate(modelMatrix, lightPosWorld);
+            modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f)); // Adjust the size as needed
+
+            // Calculate matrices
+            glm::mat4 mvMatrix = ViewMatrix * modelMatrix;
+            glm::mat4 mvpMatrix = ProjMatrix * mvMatrix;
+            glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(mvMatrix)));
+
+            // Use the unified shader program
+            unifiedProgram.use();
+
+            // **Set transformation matrices**
+            glUniformMatrix4fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+            glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
+            glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+            glUniformMatrix3fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+
+            // **Set camera position in world space (for lighting calculations)**
+            glUniform3fv(glGetUniformLocation(unifiedProgram.getGLId(), "cameraPosWorld"), 1, glm::value_ptr(cameraPos));
+
+            // **Set light position in world space (even if not needed for the light sphere)**
+            glUniform3fv(glGetUniformLocation(unifiedProgram.getGLId(), "lightPosWorld"), 1, glm::value_ptr(lightPosWorld));
+
+            // **Set light properties**
+            glUniform3fv(uLightPos_vsLocation, 1, glm::value_ptr(lightPosViewSpace));
+            glUniform3fv(uLightIntensityLocation, 1, glm::value_ptr(lightIntensity));
+
+            // **Set far plane**
+            glUniform1f(glGetUniformLocation(unifiedProgram.getGLId(), "farPlane"), farPlane);
+
+            // Bind depth cube map
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap);
+            glUniform1i(glGetUniformLocation(unifiedProgram.getGLId(), "depthMap"), 1);
+
+            // Set material properties (emissive)
+            glm::vec3 Kd = lightIntensity / 5.0f; // Adjust as needed
+            glm::vec3 Ks = glm::vec3(0.0f);       // No specular for the light indicator
+            float shininess = 0.0f;
+            glUniform3fv(uKdLocation, 1, glm::value_ptr(Kd));
+            glUniform3fv(uKsLocation, 1, glm::value_ptr(Ks));
+            glUniform1f(uShininessLocation, shininess);
+
+            // Disable textures
+            glUniform1f(uUseTextureLocation, 0.0f);
+            glUniform1f(glGetUniformLocation(unifiedProgram.getGLId(), "uUseNormalMap"), 0.0f);
+
+            // Draw the sphere
+            glBindVertexArray(sphereVAO);
+            glDrawArrays(GL_TRIANGLES, 0, sphereVertexCountGL);
+            glBindVertexArray(0);
         }
 
         // Swap buffers
