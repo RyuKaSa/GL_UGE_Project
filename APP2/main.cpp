@@ -79,143 +79,18 @@ int main(int argc, char *argv[])
     /*********************************
      * Initialization code
      *********************************/
+
     // Sphere creation
     glimac::Sphere sphere(1, 32, 16);
-    std::cout << "Sphere created" << std::endl;
-
     std::vector<SphereVertex> sphereVertices;
-    size_t sphereVertexCount = sphere.getVertexCount();
-    const glimac::ShapeVertex* sphereData = sphere.getDataPointer();
-    sphereVertices.resize(sphereVertexCount);
 
-    for (size_t i = 0; i < sphereVertexCount; ++i) {
-        sphereVertices[i].position = sphereData[i].position;
-        sphereVertices[i].normal = sphereData[i].normal;
-        sphereVertices[i].texCoords = sphereData[i].texCoords;
-        sphereVertices[i].tangent = glm::vec3(0.0f);
-        sphereVertices[i].bitangent = glm::vec3(0.0f);
-    }
+    size_t sphereVertexCount = createSphereVertices(sphereVertices, sphere);
+    computeSphereTangents(sphereVertices);
 
-    for (size_t i = 0; i < sphereVertexCount; i += 3) {
-        SphereVertex& v0 = sphereVertices[i];
-        SphereVertex& v1 = sphereVertices[i + 1];
-        SphereVertex& v2 = sphereVertices[i + 2];
-
-        glm::vec3 edge1 = v1.position - v0.position;
-        glm::vec3 edge2 = v2.position - v0.position;
-
-        glm::vec2 deltaUV1 = v1.texCoords - v0.texCoords;
-        glm::vec2 deltaUV2 = v2.texCoords - v0.texCoords;
-
-        float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
-
-        glm::vec3 tangent = f * (deltaUV2.y * edge1 - deltaUV1.y * edge2);
-        glm::vec3 bitangent = f * (-deltaUV2.x * edge1 + deltaUV1.x * edge2);
-
-        v0.tangent += tangent;
-        v1.tangent += tangent;
-        v2.tangent += tangent;
-
-        v0.bitangent += bitangent;
-        v1.bitangent += bitangent;
-        v2.bitangent += bitangent;
-    }
-
-    // Normalize tangents and bitangents
-    for (size_t i = 0; i < sphereVertexCount; ++i) {
-        sphereVertices[i].tangent = glm::normalize(sphereVertices[i].tangent);
-        sphereVertices[i].bitangent = glm::normalize(sphereVertices[i].bitangent);
-    }
+    GLuint sphereVBO, sphereVAO;
+    setupSphereBuffers(sphereVertices, sphereVBO, sphereVAO);
 
     GLsizei sphereVertexCountGL = static_cast<GLsizei>(sphereVertexCount);
-
-    // Create and bind VBO for sphere
-    GLuint sphereVBO;
-    glGenBuffers(1, &sphereVBO);
-    if (sphereVBO == 0)
-    {
-        std::cerr << "Failed to generate VBO" << std::endl;
-        return -1;
-    }
-    std::cout << "Sphere VBO generated: " << sphereVBO << std::endl;
-
-    glBindBuffer(GL_ARRAY_BUFFER, sphereVBO);
-    glBufferData(GL_ARRAY_BUFFER, sphereVertices.size() * sizeof(SphereVertex), sphereVertices.data(), GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    std::cout << "Sphere VBO data buffered" << std::endl;
-
-    // Create VAO for sphere
-    GLuint sphereVAO;
-    glGenVertexArrays(1, &sphereVAO);
-    if (sphereVAO == 0)
-    {
-        std::cerr << "Failed to generate VAO" << std::endl;
-        return -1;
-    }
-    std::cout << "Sphere VAO generated: " << sphereVAO << std::endl;
-
-    // Bind VAO and set up vertex attributes for sphere
-    glBindVertexArray(sphereVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, sphereVBO);
-
-    // Position attribute
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(
-        0,                                              // Attribute index (layout location in shader)
-        3,                                              // Number of components (x, y, z)
-        GL_FLOAT,                                       // Type
-        GL_FALSE,                                       // Normalized?
-        sizeof(SphereVertex), 
-        (void*)offsetof(SphereVertex, position)
-    );
-
-    // Normal attribute
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(
-        1,                                            // Attribute index
-        3,                                            // Number of components (x, y, z)
-        GL_FLOAT,                                     // Type
-        GL_FALSE,                                     // Normalized?
-        sizeof(SphereVertex),                         // Stride
-        (void *)offsetof(SphereVertex, normal)        // Offset
-    );
-
-    // Texture coordinate attribute
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(
-        2,                                               // Attribute index
-        2,                                               // Number of components (u, v)
-        GL_FLOAT,                                        // Type
-        GL_FALSE,                                        // Normalized?
-        sizeof(SphereVertex),                            // Stride
-        (void *)offsetof(SphereVertex, texCoords)        // Offset
-    );
-
-    // Tangent attribute
-    glEnableVertexAttribArray(3);
-    glVertexAttribPointer(
-        3, 
-        3, 
-        GL_FLOAT, 
-        GL_FALSE, 
-        sizeof(SphereVertex), 
-        (void*)offsetof(SphereVertex, tangent)
-    );
-
-    // Bitangent attribute
-    glEnableVertexAttribArray(4);
-    glVertexAttribPointer(
-        4, 
-        3, 
-        GL_FLOAT, 
-        GL_FALSE, 
-        sizeof(SphereVertex),
-        (void*)offsetof(SphereVertex, bitangent)
-    );
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-    std::cout << "Sphere VAO set up" << std::endl;
 
     // Cube setup
     // Create cube vertices and indices
@@ -250,7 +125,6 @@ int main(int argc, char *argv[])
     // Load depth shader program for shadow mapping
     std::string depthVertexShaderPath = applicationPath.dirPath() + "APP1/shaders/" + "point_shadow_depth.vs.glsl";
     std::string depthFragmentShaderPath = applicationPath.dirPath() + "APP1/shaders/" + "point_shadow_depth.fs.glsl";
-    std::string depthGeometryShaderPath = applicationPath.dirPath() + "APP1/shaders/" + "point_shadow_depth.gs.glsl";
 
     glimac::Program depthProgram = glimac::loadProgram(depthVertexShaderPath, depthFragmentShaderPath);
     if (depthProgram.getGLId() == 0)
