@@ -16,3 +16,9 @@ next steps will include :
 ## note
 
 If i implemente a big thing, i can try to test it in APP2, to keep APP1 working on previous version.
+
+# How to run the thing
+
+```bash
+mkdir bin; cd bin; cmake ..; make -j4; ./main_executable
+```

@@ -16,8 +16,8 @@
 #include <vector>
 #include <map>
 
-int window_width = 1200;
-int window_height = 800;
+int window_width = 1600;
+int window_height = 1000;
 
 // Stone floor coordinates
 int numCubesX = 15;    // Number of cubes along the x-axis
