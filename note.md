@@ -64,6 +64,8 @@ assignment :
 
 ---
 
+The walls are named follwing their axis, Z'n' and X'n' are the walls in the Z and X axis respectively.
+
 ![Room Structure](assets/images/Room_Structure.png)
 
 ---

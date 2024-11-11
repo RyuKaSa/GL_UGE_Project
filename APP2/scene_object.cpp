@@ -40,3 +40,39 @@ void addSphere(const glm::vec3& position, float radius, const glm::vec3& color, 
 
     sceneObjects.push_back(sphereObject);
 }
+
+void createCompositeCube(
+    const glm::vec3& origin, 
+    const glm::vec3& size, 
+    GLuint textureID, 
+    GLuint normalMapID, 
+    GLuint vaoID, 
+    GLsizei indexCount)
+{
+    int numCubesX = static_cast<int>(size.x);
+    int numCubesY = static_cast<int>(size.y);
+    int numCubesZ = static_cast<int>(size.z);
+
+    for (int x = 0; x < numCubesX; ++x)
+    {
+        for (int y = 0; y < numCubesY; ++y)
+        {
+            for (int z = 0; z < numCubesZ; ++z)
+            {
+                glm::vec3 position = origin + glm::vec3(x, y, z);
+                addCube(
+                    position,                  // Position
+                    glm::vec3(1.0f),          // Scale (individual cubes are 1x1x1 units)
+                    glm::vec3(1.0f),          // Color (white, not used if texture is applied)
+                    true,                     // Use texture
+                    textureID,                // Texture ID
+                    normalMapID,              // Normal map ID
+                    glm::vec3(0.0f),          // Rotation axis
+                    0.0f,                     // Rotation angle
+                    vaoID,                    // VAO ID
+                    indexCount                // Index count
+                );
+            }
+        }
+    }
+}

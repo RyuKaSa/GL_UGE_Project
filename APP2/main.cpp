@@ -197,7 +197,7 @@ int main(int argc, char *argv[])
     glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), 1.0f, nearPlane, farPlane);
 
     // Camera parameters
-    glm::vec3 cameraPos(0.0f, 0.0f, 5.0f);    // Initial position of the camera
+    glm::vec3 cameraPos(1.0f, 2.0f, 1.0f);    // Initial position of the camera
     glm::vec3 cameraFront(0.0f, 0.0f, -1.0f); // Direction the camera is looking at
     glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);     // Up vector
 
@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
     float yaw = -90.0f; // Yaw angle initialized to -90 degrees to look towards negative Z
     float pitch = 0.0f; // Pitch angle
 
-    float cameraSpeed = 5.0f; // Adjust accordingly
+    float cameraSpeed = 10.0f; // Adjust accordingly
     float deltaTime = 0.0f;   // Time between current frame and last frame
     float lastFrame = 0.0f;   // Time of last frame
 
@@ -224,92 +224,40 @@ int main(int argc, char *argv[])
     GLsizei cubeIndexCount = static_cast<GLsizei>(cubeIndices.size());
     // GLsizei sphereVertexCount = sphere.getVertexCount();
 
-    // Add sphere to the scene
-    addSphere(
-        glm::vec3(0.0f, 0.0f, 0.0f), // Position
-        1.0f,                        // Radius
-        glm::vec3(1.0f),             // Color (white)
-        true,                        // Use texture
-        soccerTextureID,             // Texture ID
-        soccerTextureID_normalMap,   // Normal map ID
-        sphereVAO,                   // VAO ID
-        sphereVertexCount            // Vertex count
-    );
+    // floor
+    glm::vec3 origin(0.0f, 0.0f, 0.0f);
+    glm::vec3 floorSize(42.0f, 1.0f, 24.0f);
+    createCompositeCube(origin, floorSize, stoneTextureID, stoneTextureID_normalMap, cubeVAO, cubeIndexCount);
 
-    addCube(
-        glm::vec3(-2.0f, -1.0f, 0.0f), // Position
-        glm::vec3(1.0f),              // Scale
-        glm::vec3(0.2f, 1.0f, 0.1f),  // Color
-        false,                        // Use texture
-        0,                            // Texture ID
-        0,                            // Normal map ID
-        glm::vec3(0.0f),              // Rotation axis
-        0.0f,                         // Rotation angle
-        cubeVAO,                      // VAO ID
-        cubeIndexCount                // Index count
-    );
+    // wall X1
+    glm::vec3 wallPosition1(0.0f, 1.0f, 0.0f);
+    glm::vec3 wallSizeX(42.0f, 3.0f, 1.0f);
+    createCompositeCube(wallPosition1, wallSizeX, stoneTextureID, stoneTextureID_normalMap, cubeVAO, cubeIndexCount);
 
-    addCube(
-        glm::vec3(0.0f, -1.0f, 0.0f), // Position
-        glm::vec3(0.5f, 1.0f, 0.5f), // Scale (non-uniform)
-        glm::vec3(0.3f),             // Color (gray)
-        false,                       // Use texture
-        0,                           // Texture ID
-        0,                           // Normal map ID
-        glm::vec3(1.0f),             // Rotation axis
-        0.0f,                        // Rotation angle
-        cubeVAO,                     // VAO ID
-        cubeIndexCount               // Index count
-    );
+    // wall X2
+    glm::vec3 wallPosition2(0.0f, 1.0f, 23.0f);
+    createCompositeCube(wallPosition2, wallSizeX, stoneTextureID, stoneTextureID_normalMap, cubeVAO, cubeIndexCount);
 
-    // Add textured cube
-    addCube(
-        glm::vec3(0.0f, 0.0f, 2.0f), // Position
-        glm::vec3(1.0f),             // Scale
-        glm::vec3(1.0f),             // Color (white, not used)
-        true,                        // Use texture
-        textureID,                   // Texture ID
-        textureID_normalMap,         // Normal map ID
-        glm::vec3(0.0f),             // Rotation axis
-        0.0f,                        // Rotation angle
-        cubeVAO,                     // VAO ID
-        cubeIndexCount               // Index count
-    );
+    // wall Z1
+    glm::vec3 wallPosition3(0.0f, 1.0f, 1.0f);
+    glm::vec3 wallSizeZ1(1.0f, 3.0f, 22.0f);
+    createCompositeCube(wallPosition3, wallSizeZ1, stoneTextureID, stoneTextureID_normalMap, cubeVAO, cubeIndexCount);
 
-    // Add textured cube
-    addCube(
-        glm::vec3(0.0f, -1.0f, 3.0f), // Position
-        glm::vec3(1.0f),             // Scale
-        glm::vec3(1.0f),             // Color (white, not used)
-        true,                        // Use texture
-        brownTerracottaTextureID,    // Texture ID
-        brownTerracottaTextureID_normalMap,
-        glm::vec3(0.0f),             // Rotation axis
-        0.0f,                        // Rotation angle
-        cubeVAO,                     // VAO ID
-        cubeIndexCount               // Index count
-    );
+    // wall Z2
+    glm::vec3 wallPosition4(41.0f, 1.0f, 1.0f);
+    createCompositeCube(wallPosition4, wallSizeZ1, stoneTextureID, stoneTextureID_normalMap, cubeVAO, cubeIndexCount);
 
-    // Add floor grid cubes
-    for (int x = 0; x < numCubesX; ++x)
-    {
-        for (int z = 0; z < numCubesZ; ++z)
-        {
-            glm::vec3 position(-7.0f + x * spacingX, -2.0f, 7.0f - z * spacingZ);
-            addCube(
-                position,        // Position
-                glm::vec3(1.0f), // Scale
-                glm::vec3(1.0f), // Color (white, not used)
-                true,            // Use texture
-                stoneTextureID,  // Texture ID
-                stoneTextureID_normalMap,
-                glm::vec3(0.0f), // Rotation axis
-                0.0f,            // Rotation angle
-                cubeVAO,         // VAO ID
-                cubeIndexCount   // Index count
-            );
-        }
-    }
+    // separation wall, Z3
+    glm::vec3 wallPosition5(20.0f, 1.0f, 1.0f);
+    glm::vec3 wallSizeZ2(2.0f, 3.0f, 9.0f);
+    createCompositeCube(wallPosition5, wallSizeZ2, stoneTextureID, stoneTextureID_normalMap, cubeVAO, cubeIndexCount);
+
+    // separation wall, Z4
+    glm::vec3 wallPosition6(20.0f, 1.0f, 14.0f);
+    createCompositeCube(wallPosition6, wallSizeZ2, stoneTextureID, stoneTextureID_normalMap, cubeVAO, cubeIndexCount);
+
+
+    // =======================
 
     // Main loop variables
     bool done = false;
@@ -331,20 +279,21 @@ int main(int argc, char *argv[])
             fps = frameCount;
             frameCount = 0;
             fpsTimer -= 1.0f;
-
-            // Update window title with FPS
-            std::string newTitle = "Boules - FPS: " + std::to_string(fps);
-            SDL_SetWindowTitle(windowManager.getWindow(), newTitle.c_str());
         }
 
+        // Update window title with camera position every frame
+        // std::string newTitle = "Boules - FPS: " + std::to_string(fps) + " - Position: (" + std::to_string(cameraPos.x) + ", " + std::to_string(cameraPos.z) + ")";
+        std::string newTitle = std::to_string(cameraPos.x) + ", " + std::to_string(cameraPos.z);
+        SDL_SetWindowTitle(windowManager.getWindow(), newTitle.c_str());
+
         // Update light intensity dynamically within the loop
-        glm::vec3 lightIntensity = glm::vec3(
-            (sin(currentFrame) + 1.0f) / 2.0f,       // Red oscillates between 0 and 1
-            (cos(currentFrame) + 1.0f) / 2.0f,       // Green oscillates between 0 and 1
-            (sin(currentFrame * 0.5f) + 1.0f) / 2.0f // Blue oscillates more slowly between 0 and 1
-        );
+        // glm::vec3 lightIntensity = glm::vec3(
+        //     (sin(currentFrame) + 1.0f) / 2.0f,       // Red oscillates between 0 and 1
+        //     (cos(currentFrame) + 1.0f) / 2.0f,       // Green oscillates between 0 and 1
+        //     (sin(currentFrame * 0.5f) + 1.0f) / 2.0f // Blue oscillates more slowly between 0 and 1
+        // );
         // white light
-        // glm::vec3 lightIntensity = glm::vec3(1.0f);
+        glm::vec3 lightIntensity = glm::vec3(1.0f);
 
         // Event handling
         SDL_Event e;
@@ -456,13 +405,16 @@ int main(int argc, char *argv[])
         float spiralSpeed = 0.5f;      // Adjust the speed of the rotation
         float fixedHeight = 2.0f;      // Set the fixed height of the light
 
-        glm::vec3 lightPosWorld;
-        lightPosWorld.x = spiralRadius * cos(currentFrame * spiralSpeed);
-        lightPosWorld.y = fixedHeight; // Fixed height
-        lightPosWorld.z = spiralRadius * sin(currentFrame * spiralSpeed);
+        // glm::vec3 lightPosWorld;
+        // lightPosWorld.x = spiralRadius * cos(currentFrame * spiralSpeed);
+        // lightPosWorld.y = fixedHeight; // Fixed height
+        // lightPosWorld.z = spiralRadius * sin(currentFrame * spiralSpeed);
 
         // fixed light position
         // glm::vec3 lightPosWorld = glm::vec3(2.0f, 0.6f, 2.0f);
+
+        // light position on the camera
+        glm::vec3 lightPosWorld = cameraPos + glm::vec3(0.0f, 1.0f, 0.0f); // Slightly elevate the light position above the camera
 
         // Transform light position to view space
         glm::vec3 lightPosViewSpace = glm::vec3(ViewMatrix * glm::vec4(lightPosWorld, 1.0f));
@@ -680,9 +632,9 @@ int main(int argc, char *argv[])
             glUniform1i(glGetUniformLocation(unifiedProgram.getGLId(), "depthMap"), 1);
 
             // Set material properties (emissive)
-            glm::vec3 Kd = lightIntensity / 5.0f; // Adjust as needed
+            glm::vec3 Kd = lightIntensity / 5.0f; // Adjustable
             glm::vec3 Ks = glm::vec3(0.0f);       // No specular for the light indicator
-            float shininess = 0.0f;
+            float shininess = 1.0f;
             glUniform3fv(uKdLocation, 1, glm::value_ptr(Kd));
             glUniform3fv(uKsLocation, 1, glm::value_ptr(Ks));
             glUniform1f(uShininessLocation, shininess);

@@ -31,4 +31,6 @@ void addCube(const glm::vec3& position, const glm::vec3& scale, const glm::vec3&
 
 void addSphere(const glm::vec3& position, float radius, const glm::vec3& color, bool useTexture, GLuint textureID = 0, GLuint normalMapID = 0, GLuint vaoID = 0, GLsizei vertexCount = 0);
 
+void createCompositeCube(const glm::vec3& origin, const glm::vec3& size, GLuint textureID, GLuint normalMapID, GLuint vaoID, GLsizei indexCount);
+
 #endif // SCENE_OBJECT_HPP
