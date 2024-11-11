@@ -9,15 +9,181 @@
 
 #include <glad/glad.h>
 #include <iostream>
+#include <filesystem>
 #include <glimac/Program.hpp>
 #include <glimac/Image.hpp>
 #include <glimac/SDLWindowManager.hpp>
 #include <SDL2/SDL.h>
+#include <src/tiny_obj_loader.h>
 #include <cstddef> // For offsetof
 #include <vector>
 #include <map>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/glm.hpp> // For vector calculations
+
+// load models obj
+
+struct ModelData {
+    std::vector<float> vertices;
+    std::vector<float> normals;
+    std::vector<float> texcoords;
+    std::vector<float> colors;
+    std::vector<unsigned int> indices;
+    GLuint vao, vbo, ebo;
+};
+
+bool loadOBJ(const std::string& filePath, const std::string& basePath, ModelData &modelData) {
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+    std::string err = tinyobj::LoadObj(shapes, materials, filePath.c_str(), basePath.c_str());
+
+    if (!err.empty()) {
+        std::cerr << "Error loading OBJ file: " << err << std::endl;
+        return false; // Or handle the error as needed
+    }
+
+    // Initialize vectors
+    modelData.vertices.clear();
+    modelData.normals.clear();
+    modelData.texcoords.clear();
+    modelData.indices.clear();
+
+    // Loop over shapes
+    for (const auto& shape : shapes) {
+        const auto& mesh = shape.mesh;
+
+        // Append positions
+        modelData.vertices.insert(modelData.vertices.end(), mesh.positions.begin(), mesh.positions.end());
+
+        // Append normals if available, otherwise compute them
+        if (!mesh.normals.empty()) {
+            modelData.normals.insert(modelData.normals.end(), mesh.normals.begin(), mesh.normals.end());
+        } else {
+            // Initialize normals
+            modelData.normals.resize(mesh.positions.size(), 0.0f);
+            // Compute normals later
+        }
+
+        // Append texture coordinates if available
+        if (!mesh.texcoords.empty()) {
+            modelData.texcoords.insert(modelData.texcoords.end(), mesh.texcoords.begin(), mesh.texcoords.end());
+        } else {
+            // No texture coordinates; we can leave texcoords empty or fill with zeros
+            modelData.texcoords.resize(mesh.positions.size() / 3 * 2, 0.0f);
+        }
+
+        // Append indices (offset by current number of vertices)
+        size_t indexOffset = modelData.vertices.size() / 3 - mesh.positions.size() / 3;
+        for (size_t idx : mesh.indices) {
+            modelData.indices.push_back(static_cast<unsigned int>(idx + indexOffset));
+        }
+    }
+
+    // If normals are empty, compute them
+    if (modelData.normals.empty()) {
+        // Initialize normals
+        modelData.normals.resize(modelData.vertices.size(), 0.0f);
+
+        // For each face (assumes triangles)
+        for (size_t i = 0; i < modelData.indices.size(); i += 3) {
+            unsigned int idx0 = modelData.indices[i];
+            unsigned int idx1 = modelData.indices[i + 1];
+            unsigned int idx2 = modelData.indices[i + 2];
+
+            glm::vec3 v0(modelData.vertices[3 * idx0], modelData.vertices[3 * idx0 + 1], modelData.vertices[3 * idx0 + 2]);
+            glm::vec3 v1(modelData.vertices[3 * idx1], modelData.vertices[3 * idx1 + 1], modelData.vertices[3 * idx1 + 2]);
+            glm::vec3 v2(modelData.vertices[3 * idx2], modelData.vertices[3 * idx2 + 1], modelData.vertices[3 * idx2 + 2]);
+
+            glm::vec3 faceNormal = glm::normalize(glm::cross(v1 - v0, v2 - v0));
+
+            // Accumulate normals
+            modelData.normals[3 * idx0] += faceNormal.x;
+            modelData.normals[3 * idx0 + 1] += faceNormal.y;
+            modelData.normals[3 * idx0 + 2] += faceNormal.z;
+
+            modelData.normals[3 * idx1] += faceNormal.x;
+            modelData.normals[3 * idx1 + 1] += faceNormal.y;
+            modelData.normals[3 * idx1 + 2] += faceNormal.z;
+
+            modelData.normals[3 * idx2] += faceNormal.x;
+            modelData.normals[3 * idx2 + 1] += faceNormal.y;
+            modelData.normals[3 * idx2 + 2] += faceNormal.z;
+        }
+
+        // Normalize normals
+        size_t numVertices = modelData.vertices.size() / 3;
+        for (size_t i = 0; i < numVertices; ++i) {
+            glm::vec3 normal(
+                modelData.normals[3 * i],
+                modelData.normals[3 * i + 1],
+                modelData.normals[3 * i + 2]);
+            normal = glm::normalize(normal);
+
+            modelData.normals[3 * i] = normal.x;
+            modelData.normals[3 * i + 1] = normal.y;
+            modelData.normals[3 * i + 2] = normal.z;
+        }
+    }
+
+    return true;
+}
+
+void setupModelBuffers(ModelData &modelData) {
+    glGenVertexArrays(1, &modelData.vao);
+    glGenBuffers(1, &modelData.vbo);
+    glGenBuffers(1, &modelData.ebo);
+
+    glBindVertexArray(modelData.vao);
+
+    // Interleave data
+    std::vector<float> interleavedData;
+    size_t numVertices = modelData.vertices.size() / 3; // Assuming positions are x,y,z
+
+    for (size_t i = 0; i < numVertices; ++i) {
+        // Positions (x, y, z)
+        interleavedData.push_back(modelData.vertices[3 * i]);
+        interleavedData.push_back(modelData.vertices[3 * i + 1]);
+        interleavedData.push_back(modelData.vertices[3 * i + 2]);
+
+        // Normals (nx, ny, nz)
+        interleavedData.push_back(modelData.normals[3 * i]);
+        interleavedData.push_back(modelData.normals[3 * i + 1]);
+        interleavedData.push_back(modelData.normals[3 * i + 2]);
+
+        // Texture Coordinates (u, v) - zeroed (since we have none)
+        interleavedData.push_back(0.0f);
+        interleavedData.push_back(0.0f);
+    }
+
+    // Upload interleaved data to VBO
+    glBindBuffer(GL_ARRAY_BUFFER, modelData.vbo);
+    glBufferData(GL_ARRAY_BUFFER, interleavedData.size() * sizeof(float), interleavedData.data(), GL_STATIC_DRAW);
+
+    // Upload index data to EBO
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, modelData.ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, modelData.indices.size() * sizeof(unsigned int), modelData.indices.data(), GL_STATIC_DRAW);
+
+    // Set up vertex attributes
+    GLsizei stride = (3 + 3 + 2) * sizeof(float); // Position (3) + Normal (3) + Texcoord (2)
+    size_t offset = 0;
+
+    // Position attribute
+    glEnableVertexAttribArray(0); // Assuming location 0 in shader
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)offset);
+    offset += 3 * sizeof(float);
+
+    // Normal attribute
+    glEnableVertexAttribArray(1); // Assuming location 1 in shader
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void*)offset);
+    offset += 3 * sizeof(float);
+
+    // Texture coordinate attribute (unused but set up)
+    glEnableVertexAttribArray(2); // Assuming location 2 in shader
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void*)offset);
+
+    glBindVertexArray(0);
+}
 
 int main(int argc, char *argv[])
 {
@@ -232,30 +398,52 @@ int main(int argc, char *argv[])
     // wall X1
     glm::vec3 wallPosition1(0.0f, 1.0f, 0.0f);
     glm::vec3 wallSizeX(42.0f, 3.0f, 1.0f);
-    createCompositeCube(wallPosition1, wallSizeX, stoneTextureID, stoneTextureID_normalMap, cubeVAO, cubeIndexCount);
+    createCompositeCube(wallPosition1, wallSizeX, textureID, textureID_normalMap, cubeVAO, cubeIndexCount);
 
     // wall X2
     glm::vec3 wallPosition2(0.0f, 1.0f, 23.0f);
-    createCompositeCube(wallPosition2, wallSizeX, stoneTextureID, stoneTextureID_normalMap, cubeVAO, cubeIndexCount);
+    createCompositeCube(wallPosition2, wallSizeX, textureID, textureID_normalMap, cubeVAO, cubeIndexCount);
 
     // wall Z1
     glm::vec3 wallPosition3(0.0f, 1.0f, 1.0f);
     glm::vec3 wallSizeZ1(1.0f, 3.0f, 22.0f);
-    createCompositeCube(wallPosition3, wallSizeZ1, stoneTextureID, stoneTextureID_normalMap, cubeVAO, cubeIndexCount);
+    createCompositeCube(wallPosition3, wallSizeZ1, textureID, textureID_normalMap, cubeVAO, cubeIndexCount);
 
     // wall Z2
     glm::vec3 wallPosition4(41.0f, 1.0f, 1.0f);
-    createCompositeCube(wallPosition4, wallSizeZ1, stoneTextureID, stoneTextureID_normalMap, cubeVAO, cubeIndexCount);
+    createCompositeCube(wallPosition4, wallSizeZ1, textureID, textureID_normalMap, cubeVAO, cubeIndexCount);
 
     // separation wall, Z3
     glm::vec3 wallPosition5(20.0f, 1.0f, 1.0f);
     glm::vec3 wallSizeZ2(2.0f, 3.0f, 9.0f);
-    createCompositeCube(wallPosition5, wallSizeZ2, stoneTextureID, stoneTextureID_normalMap, cubeVAO, cubeIndexCount);
+    createCompositeCube(wallPosition5, wallSizeZ2, brownTerracottaTextureID, brownTerracottaTextureID_normalMap, cubeVAO, cubeIndexCount);
 
     // separation wall, Z4
     glm::vec3 wallPosition6(20.0f, 1.0f, 14.0f);
-    createCompositeCube(wallPosition6, wallSizeZ2, stoneTextureID, stoneTextureID_normalMap, cubeVAO, cubeIndexCount);
+    createCompositeCube(wallPosition6, wallSizeZ2, brownTerracottaTextureID, brownTerracottaTextureID_normalMap, cubeVAO, cubeIndexCount);
 
+    // load a soccer ball as sophisticated object
+    // Add sphere to the scene
+    addSphere(
+        glm::vec3(5.0f, 1.5f, 5.0f), // Position
+        0.3f,                        // Radius
+        glm::vec3(1.0f),             // Color (white)
+        true,                        // Use texture
+        soccerTextureID,             // Texture ID
+        soccerTextureID_normalMap,   // Normal map ID
+        sphereVAO,                   // VAO ID
+        sphereVertexCount            // Vertex count
+    );
+
+    // Load the .obj model
+    ModelData modelData;
+    std::string modelPath = applicationPath.dirPath() + "assets/models/HeaterOBJ/Heater.obj";
+    if (!loadOBJ(modelPath, applicationPath.dirPath() + "assets/models/HeaterOBJ/", modelData)) {
+        std::cerr << "Failed to load model" << std::endl;
+    }
+
+    // Set up OpenGL buffers for the model
+    setupModelBuffers(modelData);
 
     // =======================
 
@@ -592,6 +780,48 @@ int main(int argc, char *argv[])
             }
         }
 
+        // Set material properties (specular and shininess)
+        glm::vec3 Kd = glm::vec3(1.0f, 1.0f, 1.0f);
+        glm::vec3 Ks = glm::vec3(0.5f); 
+        float shininess = 10.0f;
+        glUniform3fv(uKdLocation, 1, glm::value_ptr(Kd));
+        glUniform3fv(uKsLocation, 1, glm::value_ptr(Ks));
+        glUniform1f(uShininessLocation, shininess);
+
+        // Disable textures and normal maps for this model
+        glUniform1f(uUseTextureLocation, 0.0f);
+        glUniform1f(glGetUniformLocation(unifiedProgram.getGLId(), "uUseNormalMap"), 0.0f);
+
+        // Transformation matrices
+        glm::mat4 modelMatrix = glm::mat4(1.0f);
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(0.75f, 1.1f, 5.0f)); // Adjust position as needed
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.7f)); // Adjust scale as needed
+        // Optional rotation
+        // modelMatrix = glm::rotate(modelMatrix, glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+        glm::mat4 mvMatrix = ViewMatrix * modelMatrix;
+        glm::mat4 mvpMatrix = ProjMatrix * mvMatrix;
+        glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(mvMatrix)));
+
+        // Pass matrices to the shader
+        glUniformMatrix4fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+        glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
+        glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+        glUniformMatrix3fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+
+        // Set light properties
+        glUniform3fv(uLightPos_vsLocation, 1, glm::value_ptr(lightPosViewSpace));
+        glUniform3fv(uLightIntensityLocation, 1, glm::value_ptr(lightIntensity));
+
+        // Bind the model's VAO
+        glBindVertexArray(modelData.vao);
+
+        // Render the model
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(modelData.indices.size()), GL_UNSIGNED_INT, 0);
+
+        // Unbind the VAO
+        glBindVertexArray(0);
+
         // Render a small sphere to represent the light source
         {
             // Create model matrix for the light sphere
@@ -665,6 +895,11 @@ int main(int argc, char *argv[])
     {
         glDeleteTextures(1, &tex.second);
     }
+
+    // Clean up model buffers
+    glDeleteBuffers(1, &modelData.vbo);
+    glDeleteBuffers(1, &modelData.ebo);
+    glDeleteVertexArrays(1, &modelData.vao);
 
     std::cout << "Program terminated successfully" << std::endl;
 

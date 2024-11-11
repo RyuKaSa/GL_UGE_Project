@@ -6,7 +6,7 @@ Otherwise, the direcitonal light + shadows work, and the point light + shadows w
 The textures and normal maps work, and there are python converters for 8bit and normal map PNGs.
 # 11-Nov-2024
 The separation of the main file into several parts is done, and the code is now more readable.
-The main.cpp file is still very large, but still better than before.
+The main.cpp file is still very large, but still better than before. Did the 2 rooms in minecraft 64x64 texture blocks, subject to change for more textures, like a minecraft house.
 
 next steps will include :
 
