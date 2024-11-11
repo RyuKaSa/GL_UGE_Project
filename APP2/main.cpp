@@ -5,6 +5,7 @@
 #include "texture.hpp"
 #include "collision.hpp"
 #include "utilities.hpp"
+#include "resource_loader.hpp"
 
 #include <glad/glad.h>
 #include <iostream>
@@ -39,10 +40,10 @@ int main(int argc, char *argv[])
     if (SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE) != 0)
         std::cerr << "Failed to set SDL_GL_CONTEXT_PROFILE_MASK: " << SDL_GetError() << std::endl;
 
-#ifdef __APPLE__
-    if (SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG) != 0)
-        std::cerr << "Failed to set SDL_GL_CONTEXT_FLAGS: " << SDL_GetError() << std::endl;
-#endif
+    #ifdef __APPLE__
+        if (SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG) != 0)
+            std::cerr << "Failed to set SDL_GL_CONTEXT_FLAGS: " << SDL_GetError() << std::endl;
+    #endif
 
     // Initialize SDLWindowManager
     glimac::SDLWindowManager windowManager(window_width, window_height, "Boules");
@@ -107,31 +108,19 @@ int main(int argc, char *argv[])
     // Load shaders
     glimac::FilePath applicationPath(argv[0]);
 
-    // Load unified shader
-    std::string unifiedVertexShaderPath = applicationPath.dirPath() + "APP1/shaders/" + "unified_shader.vs.glsl";
-    std::string unifiedFragmentShaderPath = applicationPath.dirPath() + "APP1/shaders/" + "pointlight.fs.glsl";
+    // Load unified shader program
+    glimac::Program unifiedProgram, depthProgram;
+    unifiedProgram = loadUnifiedShader(applicationPath);
+    depthProgram = loadDepthShader(applicationPath);
 
-    std::cout << "Unified Vertex shader path: " << unifiedVertexShaderPath << std::endl;
-    std::cout << "Unified Fragment shader path: " << unifiedFragmentShaderPath << std::endl;
+    GLuint textureID, stoneTextureID, brownTerracottaTextureID, soccerTextureID;
+    GLuint textureID_normalMap, stoneTextureID_normalMap, brownTerracottaTextureID_normalMap, soccerTextureID_normalMap;
+    loadTextures(textureID, stoneTextureID, brownTerracottaTextureID, soccerTextureID,
+                textureID_normalMap, stoneTextureID_normalMap, brownTerracottaTextureID_normalMap, soccerTextureID_normalMap, applicationPath);
 
-    glimac::Program unifiedProgram = glimac::loadProgram(unifiedVertexShaderPath, unifiedFragmentShaderPath);
-    if (unifiedProgram.getGLId() == 0)
-    {
-        std::cerr << "Failed to load unified shaders" << std::endl;
-        return -1;
-    }
-    std::cout << "Unified shaders loaded successfully" << std::endl;
+    GLuint depthCubeMap, shadowMapFBO;
+    setupDepthCubeMap(depthCubeMap, shadowMapFBO);
 
-    // Load depth shader program for shadow mapping
-    std::string depthVertexShaderPath = applicationPath.dirPath() + "APP1/shaders/" + "point_shadow_depth.vs.glsl";
-    std::string depthFragmentShaderPath = applicationPath.dirPath() + "APP1/shaders/" + "point_shadow_depth.fs.glsl";
-
-    glimac::Program depthProgram = glimac::loadProgram(depthVertexShaderPath, depthFragmentShaderPath);
-    if (depthProgram.getGLId() == 0)
-    {
-        std::cerr << "Failed to load depth shaders" << std::endl;
-        return -1;
-    }
     // Check depth shader uniforms
     std::cout << "Checking depth shader uniforms..." << std::endl;
     GLint uDepth_LightSpaceMatrixLocation = glGetUniformLocation(depthProgram.getGLId(), "uLightSpaceMatrix");
@@ -185,54 +174,9 @@ int main(int argc, char *argv[])
     if (uLightIntensityLocation == -1)
         std::cerr << "Failed to get 'uLightIntensity' location" << std::endl;
 
-    // Load textures
-    GLuint textureID = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_HD/cobblestone_8bit.png");
-    GLuint stoneTextureID = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_HD/stone_8bit.png");
-    GLuint brownTerracottaTextureID = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_HD/brown_glazed_terracotta_8bit.png");
-
-    GLuint soccerTextureID = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_sphere/soccer_sph_s_8bit.png");
-
-    // load normal maps
-    GLuint textureID_normalMap = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_HD/cobblestone_8bit_normal_map.png");
-    GLuint stoneTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_HD/stone_8bit_normal_map.png");
-    GLuint brownTerracottaTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_HD/brown_glazed_terracotta_8bit_normal_map.png");
-
-    GLuint soccerTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_sphere/soccer_sph_s_8bit_normal_map.png");
-
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
     std::cout << "Depth test enabled" << std::endl;
-
-    // Set up shadow map framebuffer
-    GLuint shadowMapFBO;
-    glGenFramebuffers(1, &shadowMapFBO);
-
-    // Check framebuffer completeness
-    glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
-    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if (status != GL_FRAMEBUFFER_COMPLETE)
-    {
-        std::cerr << "Framebuffer not complete: " << status << std::endl;
-    }
-    else
-    {
-        std::cout << "Framebuffer setup complete for shadow map" << std::endl;
-    }
-    glBindFramebuffer(GL_FRAMEBUFFER, 0); // Unbind after check
-
-    // New depth cube map creation
-    GLuint depthCubeMap;
-    glGenTextures(1, &depthCubeMap);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap);
-    for (unsigned int i = 0; i < 6; ++i) {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT32F,
-                    4096, 4096, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    }
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
     // Set the clear color to a dark gray
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -272,6 +216,9 @@ int main(int argc, char *argv[])
     int frameCount = 0;
     float fpsTimer = 0.0f;
     int fps = 0;
+
+    // =======================
+    // Scene objects creation
 
     // Prepare to add objects to the scene
     GLsizei cubeIndexCount = static_cast<GLsizei>(cubeIndices.size());
