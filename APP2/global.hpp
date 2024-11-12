@@ -17,11 +17,6 @@ extern float spacingZ;
 extern const GLuint SHADOW_WIDTH;
 extern const GLuint SHADOW_HEIGHT;
 
-struct AABB {
-    glm::vec3 min;
-    glm::vec3 max;
-};
-
 extern float cameraRadius; // Radius of the camera sphere for collision detection
 extern float cameraHeight; // Height of the camera cylinder
 

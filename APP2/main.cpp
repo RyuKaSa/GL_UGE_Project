@@ -7,6 +7,10 @@
 #include "utilities.hpp"
 #include "resource_loader.hpp"
 
+#include <src/stb_image.h>
+
+#include <src/tiny_obj_loader.h>
+
 #include <glad/glad.h>
 #include <iostream>
 #include <filesystem>
@@ -14,7 +18,6 @@
 #include <glimac/Image.hpp>
 #include <glimac/SDLWindowManager.hpp>
 #include <SDL2/SDL.h>
-#include <src/tiny_obj_loader.h>
 #include <cstddef> // For offsetof
 #include <vector>
 #include <map>
@@ -28,19 +31,69 @@ struct ModelData {
     std::vector<float> vertices;
     std::vector<float> normals;
     std::vector<float> texcoords;
-    std::vector<float> colors;
     std::vector<unsigned int> indices;
+    std::vector<tinyobj::material_t> materials;
+    std::vector<tinyobj::shape_t> shapes;
+    std::map<int, GLuint> materialToTexture; // Map material ID to texture ID
     GLuint vao, vbo, ebo;
 };
 
+GLuint LoadTextureFromFile(const char* path) {
+    // Use your preferred image loading library (e.g., stb_image) to load the image
+    int width, height, nrComponents;
+    unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0);
+    if (data) {
+        GLenum format;
+        if (nrComponents == 1)
+            format = GL_RED;
+        else if (nrComponents == 3)
+            format = GL_RGB;
+        else if (nrComponents == 4)
+            format = GL_RGBA;
+
+        GLuint textureID;
+        glGenTextures(1, &textureID);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        // Set texture parameters (wrapping, filtering)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);	
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        stbi_image_free(data);
+
+        return textureID;
+    } else {
+        std::cerr << "Texture failed to load at path: " << path << std::endl;
+        stbi_image_free(data);
+        return 0;
+    }
+}
+
 bool loadOBJ(const std::string& filePath, const std::string& basePath, ModelData &modelData) {
+    tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
-    std::string err = tinyobj::LoadObj(shapes, materials, filePath.c_str(), basePath.c_str());
+    std::string warn, err;
+
+    // **Updated TinyOBJLoader function call**
+    bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filePath.c_str(), basePath.c_str());
+
+    if (!warn.empty()) {
+        std::cerr << "TinyOBJLoader Warning: " << warn << std::endl;
+    }
 
     if (!err.empty()) {
-        std::cerr << "Error loading OBJ file: " << err << std::endl;
-        return false; // Or handle the error as needed
+        std::cerr << "TinyOBJLoader Error: " << err << std::endl;
+        return false;
+    }
+
+    if (!ret) {
+        std::cerr << "Failed to load/parse OBJ file: " << filePath << std::endl;
+        return false;
     }
 
     // Initialize vectors
@@ -49,82 +102,140 @@ bool loadOBJ(const std::string& filePath, const std::string& basePath, ModelData
     modelData.texcoords.clear();
     modelData.indices.clear();
 
+    // Map to store unique vertices
+    // **Use unordered_map with custom hash and equality functions**
+    struct IndexHash {
+        size_t operator()(const tinyobj::index_t& idx) const {
+            return std::hash<int>()(idx.vertex_index) ^
+                   std::hash<int>()(idx.normal_index) ^
+                   std::hash<int>()(idx.texcoord_index);
+        }
+    };
+
+    struct IndexEqual {
+        bool operator()(const tinyobj::index_t& lhs, const tinyobj::index_t& rhs) const {
+            return lhs.vertex_index == rhs.vertex_index &&
+                   lhs.normal_index == rhs.normal_index &&
+                   lhs.texcoord_index == rhs.texcoord_index;
+        }
+    };
+
+    std::unordered_map<tinyobj::index_t, unsigned int, IndexHash, IndexEqual> uniqueVertices;
+
     // Loop over shapes
-    for (const auto& shape : shapes) {
-        const auto& mesh = shape.mesh;
+    for (size_t s = 0; s < shapes.size(); ++s) {
+        const tinyobj::mesh_t& mesh = shapes[s].mesh;
 
-        // Append positions
-        modelData.vertices.insert(modelData.vertices.end(), mesh.positions.begin(), mesh.positions.end());
+        size_t indexOffset = 0;
+        for (size_t f = 0; f < mesh.num_face_vertices.size(); ++f) {
+            int fv = mesh.num_face_vertices[f];
 
-        // Append normals if available, otherwise compute them
-        if (!mesh.normals.empty()) {
-            modelData.normals.insert(modelData.normals.end(), mesh.normals.begin(), mesh.normals.end());
-        } else {
-            // Initialize normals
-            modelData.normals.resize(mesh.positions.size(), 0.0f);
-            // Compute normals later
-        }
+            // For each vertex in the face
+            for (size_t v = 0; v < static_cast<size_t>(fv); ++v) {
+                tinyobj::index_t idx = mesh.indices[indexOffset + v];
 
-        // Append texture coordinates if available
-        if (!mesh.texcoords.empty()) {
-            modelData.texcoords.insert(modelData.texcoords.end(), mesh.texcoords.begin(), mesh.texcoords.end());
-        } else {
-            // No texture coordinates; we can leave texcoords empty or fill with zeros
-            modelData.texcoords.resize(mesh.positions.size() / 3 * 2, 0.0f);
-        }
+                // **Process vertex using attrib arrays**
+                // Positions
+                glm::vec3 position(
+                    attrib.vertices[3 * idx.vertex_index + 0],
+                    attrib.vertices[3 * idx.vertex_index + 1],
+                    attrib.vertices[3 * idx.vertex_index + 2]
+                );
 
-        // Append indices (offset by current number of vertices)
-        size_t indexOffset = modelData.vertices.size() / 3 - mesh.positions.size() / 3;
-        for (size_t idx : mesh.indices) {
-            modelData.indices.push_back(static_cast<unsigned int>(idx + indexOffset));
+                // Normals
+                glm::vec3 normal(0.0f, 0.0f, 0.0f);
+                if (idx.normal_index >= 0) {
+                    normal = glm::vec3(
+                        attrib.normals[3 * idx.normal_index + 0],
+                        attrib.normals[3 * idx.normal_index + 1],
+                        attrib.normals[3 * idx.normal_index + 2]
+                    );
+                }
+
+                // Texture coordinates
+                glm::vec2 texcoord(0.0f, 0.0f);
+                if (idx.texcoord_index >= 0) {
+                    texcoord = glm::vec2(
+                        attrib.texcoords[2 * idx.texcoord_index + 0],
+                        attrib.texcoords[2 * idx.texcoord_index + 1]
+                    );
+                }
+
+                // Avoid duplicate vertices
+                if (uniqueVertices.count(idx) == 0) {
+                    uniqueVertices[idx] = static_cast<unsigned int>(modelData.vertices.size() / 3);
+
+                    // Add vertex data
+                    modelData.vertices.push_back(position.x);
+                    modelData.vertices.push_back(position.y);
+                    modelData.vertices.push_back(position.z);
+
+                    modelData.normals.push_back(normal.x);
+                    modelData.normals.push_back(normal.y);
+                    modelData.normals.push_back(normal.z);
+
+                    modelData.texcoords.push_back(texcoord.x);
+                    modelData.texcoords.push_back(texcoord.y);
+                }
+
+                modelData.indices.push_back(uniqueVertices[idx]);
+            }
+            indexOffset += fv;
         }
     }
 
-    // If normals are empty, compute them
-    if (modelData.normals.empty()) {
-        // Initialize normals
-        modelData.normals.resize(modelData.vertices.size(), 0.0f);
+    // If normals are empty or zero, compute them
+    if (modelData.normals.empty() || modelData.normals[0] == 0.0f) {
+        // Compute normals
+        size_t numFaces = modelData.indices.size() / 3;
+        for (size_t i = 0; i < numFaces; ++i) {
+            unsigned int idx0 = modelData.indices[3 * i + 0];
+            unsigned int idx1 = modelData.indices[3 * i + 1];
+            unsigned int idx2 = modelData.indices[3 * i + 2];
 
-        // For each face (assumes triangles)
-        for (size_t i = 0; i < modelData.indices.size(); i += 3) {
-            unsigned int idx0 = modelData.indices[i];
-            unsigned int idx1 = modelData.indices[i + 1];
-            unsigned int idx2 = modelData.indices[i + 2];
+            glm::vec3 v0(modelData.vertices[3 * idx0 + 0], modelData.vertices[3 * idx0 + 1], modelData.vertices[3 * idx0 + 2]);
+            glm::vec3 v1(modelData.vertices[3 * idx1 + 0], modelData.vertices[3 * idx1 + 1], modelData.vertices[3 * idx1 + 2]);
+            glm::vec3 v2(modelData.vertices[3 * idx2 + 0], modelData.vertices[3 * idx2 + 1], modelData.vertices[3 * idx2 + 2]);
 
-            glm::vec3 v0(modelData.vertices[3 * idx0], modelData.vertices[3 * idx0 + 1], modelData.vertices[3 * idx0 + 2]);
-            glm::vec3 v1(modelData.vertices[3 * idx1], modelData.vertices[3 * idx1 + 1], modelData.vertices[3 * idx1 + 2]);
-            glm::vec3 v2(modelData.vertices[3 * idx2], modelData.vertices[3 * idx2 + 1], modelData.vertices[3 * idx2 + 2]);
+            glm::vec3 normal = glm::normalize(glm::cross(v1 - v0, v2 - v0));
 
-            glm::vec3 faceNormal = glm::normalize(glm::cross(v1 - v0, v2 - v0));
-
-            // Accumulate normals
-            modelData.normals[3 * idx0] += faceNormal.x;
-            modelData.normals[3 * idx0 + 1] += faceNormal.y;
-            modelData.normals[3 * idx0 + 2] += faceNormal.z;
-
-            modelData.normals[3 * idx1] += faceNormal.x;
-            modelData.normals[3 * idx1 + 1] += faceNormal.y;
-            modelData.normals[3 * idx1 + 2] += faceNormal.z;
-
-            modelData.normals[3 * idx2] += faceNormal.x;
-            modelData.normals[3 * idx2 + 1] += faceNormal.y;
-            modelData.normals[3 * idx2 + 2] += faceNormal.z;
+            for (int j = 0; j < 3; ++j) {
+                modelData.normals[3 * modelData.indices[3 * i + j] + 0] += normal.x;
+                modelData.normals[3 * modelData.indices[3 * i + j] + 1] += normal.y;
+                modelData.normals[3 * modelData.indices[3 * i + j] + 2] += normal.z;
+            }
         }
 
-        // Normalize normals
+        // Normalize the normals
         size_t numVertices = modelData.vertices.size() / 3;
         for (size_t i = 0; i < numVertices; ++i) {
             glm::vec3 normal(
-                modelData.normals[3 * i],
+                modelData.normals[3 * i + 0],
                 modelData.normals[3 * i + 1],
-                modelData.normals[3 * i + 2]);
+                modelData.normals[3 * i + 2]
+            );
             normal = glm::normalize(normal);
-
-            modelData.normals[3 * i] = normal.x;
+            modelData.normals[3 * i + 0] = normal.x;
             modelData.normals[3 * i + 1] = normal.y;
             modelData.normals[3 * i + 2] = normal.z;
         }
     }
+
+    // Load textures for materials
+    for (size_t i = 0; i < materials.size(); ++i) {
+        tinyobj::material_t& mat = materials[i];
+        if (!mat.diffuse_texname.empty()) {
+            std::string texturePath = basePath + mat.diffuse_texname;
+            GLuint textureID = LoadTextureFromFile(texturePath.c_str());
+            modelData.materialToTexture[i] = textureID;
+        } else {
+            modelData.materialToTexture[i] = 0; // No texture
+        }
+    }
+
+    // Store materials and shapes
+    modelData.materials = materials;
+    modelData.shapes = shapes;
 
     return true;
 }
@@ -151,9 +262,9 @@ void setupModelBuffers(ModelData &modelData) {
         interleavedData.push_back(modelData.normals[3 * i + 1]);
         interleavedData.push_back(modelData.normals[3 * i + 2]);
 
-        // Texture Coordinates (u, v) - zeroed (since we have none)
-        interleavedData.push_back(0.0f);
-        interleavedData.push_back(0.0f);
+        // Texture Coordinates (u, v)
+        interleavedData.push_back(modelData.texcoords[2 * i]);
+        interleavedData.push_back(modelData.texcoords[2 * i + 1]);
     }
 
     // Upload interleaved data to VBO
@@ -178,7 +289,7 @@ void setupModelBuffers(ModelData &modelData) {
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void*)offset);
     offset += 3 * sizeof(float);
 
-    // Texture coordinate attribute (unused but set up)
+    // Texture coordinate attribute
     glEnableVertexAttribArray(2); // Assuming location 2 in shader
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void*)offset);
 
@@ -440,12 +551,39 @@ int main(int argc, char *argv[])
     std::string modelPath = applicationPath.dirPath() + "assets/models/HeaterOBJ/Heater.obj";
     if (!loadOBJ(modelPath, applicationPath.dirPath() + "assets/models/HeaterOBJ/", modelData)) {
         std::cerr << "Failed to load model" << std::endl;
+    } else {
+        std::cout << "Heater Model Loaded: " 
+                << modelData.vertices.size() / 3 << " vertices, " 
+                << modelData.indices.size() << " indices." << std::endl;
     }
 
     // Set up OpenGL buffers for the model
     setupModelBuffers(modelData);
 
+    // Compute Bounding Box for the Model
+    AABB modelBoundingBox = computeAABB(modelData.vertices);
+
+    // Add Heater Model to Scene Objects
+    addModel(
+        glm::vec3(2.0f, 1.3f, 2.0f), // Position
+        glm::vec3(0.4f),             // Scale
+        false,                       // Use texture
+        0,
+        0,                           // Normal Map ID (if any; set to 0 if none)
+        modelData.vao,               // VAO ID
+        static_cast<GLsizei>(modelData.indices.size()), // Index Count
+        modelBoundingBox,            // Bounding Box
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation Axis (Y-axis)
+        0.0f                         // Rotation Angle
+    );
+
+    // Print VAO, VBO, EBO IDs
+    std::cout << "Heater VAO: " << modelData.vao 
+            << ", VBO: " << modelData.vbo 
+            << ", EBO: " << modelData.ebo << std::endl;
+
     // =======================
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // Main loop variables
     bool done = false;
@@ -766,6 +904,10 @@ int main(int argc, char *argv[])
             {
                 glDrawArrays(GL_TRIANGLES, 0, object.indexCount);
             }
+            else if (object.type == ObjectType::Model)
+            {
+                glDrawElements(GL_TRIANGLES, object.indexCount, GL_UNSIGNED_INT, 0);
+            }
 
             // Unbind textures if they are used
             if (object.useTexture && object.textureID != 0)
@@ -779,48 +921,6 @@ int main(int argc, char *argv[])
                 glBindTexture(GL_TEXTURE_2D, 0); // Unbind normal map texture
             }
         }
-
-        // Set material properties (specular and shininess)
-        glm::vec3 Kd = glm::vec3(1.0f, 1.0f, 1.0f);
-        glm::vec3 Ks = glm::vec3(0.5f); 
-        float shininess = 10.0f;
-        glUniform3fv(uKdLocation, 1, glm::value_ptr(Kd));
-        glUniform3fv(uKsLocation, 1, glm::value_ptr(Ks));
-        glUniform1f(uShininessLocation, shininess);
-
-        // Disable textures and normal maps for this model
-        glUniform1f(uUseTextureLocation, 0.0f);
-        glUniform1f(glGetUniformLocation(unifiedProgram.getGLId(), "uUseNormalMap"), 0.0f);
-
-        // Transformation matrices
-        glm::mat4 modelMatrix = glm::mat4(1.0f);
-        modelMatrix = glm::translate(modelMatrix, glm::vec3(0.75f, 1.1f, 5.0f)); // Adjust position as needed
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.7f)); // Adjust scale as needed
-        // Optional rotation
-        // modelMatrix = glm::rotate(modelMatrix, glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
-        glm::mat4 mvMatrix = ViewMatrix * modelMatrix;
-        glm::mat4 mvpMatrix = ProjMatrix * mvMatrix;
-        glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(mvMatrix)));
-
-        // Pass matrices to the shader
-        glUniformMatrix4fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
-        glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
-        glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
-        glUniformMatrix3fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
-
-        // Set light properties
-        glUniform3fv(uLightPos_vsLocation, 1, glm::value_ptr(lightPosViewSpace));
-        glUniform3fv(uLightIntensityLocation, 1, glm::value_ptr(lightIntensity));
-
-        // Bind the model's VAO
-        glBindVertexArray(modelData.vao);
-
-        // Render the model
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(modelData.indices.size()), GL_UNSIGNED_INT, 0);
-
-        // Unbind the VAO
-        glBindVertexArray(0);
 
         // Render a small sphere to represent the light source
         {

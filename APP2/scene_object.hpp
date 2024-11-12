@@ -1,13 +1,15 @@
 #ifndef SCENE_OBJECT_HPP
 #define SCENE_OBJECT_HPP
 
+#include "utilities.hpp"
 #include "global.hpp"
 #include <vector>
 #include <map>
 
 enum class ObjectType {
     Cube,
-    Sphere
+    Sphere,
+    Model
 };
 
 struct SceneObject {
@@ -32,5 +34,7 @@ void addCube(const glm::vec3& position, const glm::vec3& scale, const glm::vec3&
 void addSphere(const glm::vec3& position, float radius, const glm::vec3& color, bool useTexture, GLuint textureID = 0, GLuint normalMapID = 0, GLuint vaoID = 0, GLsizei vertexCount = 0);
 
 void createCompositeCube(const glm::vec3& origin, const glm::vec3& size, GLuint textureID, GLuint normalMapID, GLuint vaoID, GLsizei indexCount);
+
+void addModel(const glm::vec3& position, const glm::vec3& scale, bool useTexture, GLuint textureID, GLuint normalMapID, GLuint vaoID, GLsizei indexCount, const AABB& boundingBox, const glm::vec3& rotationAxis = glm::vec3(0.0f), float rotationAngle = 0.0f);
 
 #endif // SCENE_OBJECT_HPP

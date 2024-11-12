@@ -76,3 +76,20 @@ void createCompositeCube(
         }
     }
 }
+
+void addModel(const glm::vec3& position, const glm::vec3& scale, bool useTexture, GLuint textureID, GLuint normalMapID, GLuint vaoID, GLsizei indexCount, const AABB& boundingBox, const glm::vec3& rotationAxis, float rotationAngle) {
+    SceneObject obj;
+    obj.type = ObjectType::Model;
+    obj.position = position;
+    obj.scale = scale;
+    obj.color = glm::vec3(1.0f); // Default color white
+    obj.useTexture = useTexture;
+    obj.textureID = textureID;
+    obj.normalMapID = normalMapID;
+    obj.rotationAxis = rotationAxis;
+    obj.rotationAngle = rotationAngle;
+    obj.boundingBox = boundingBox;
+    obj.vaoID = vaoID;
+    obj.indexCount = indexCount;
+    sceneObjects.push_back(obj);
+}
