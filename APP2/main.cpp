@@ -806,6 +806,8 @@ int main(int argc, char *argv[])
                     glDrawElements(GL_TRIANGLES, object.indexCount, GL_UNSIGNED_INT, 0);
                 } else if (object.type == ObjectType::Sphere) {
                     glDrawArrays(GL_TRIANGLES, 0, object.indexCount);
+                } else if (object.type == ObjectType::Model) {
+                    glDrawElements(GL_TRIANGLES, object.indexCount, GL_UNSIGNED_INT, 0);
                 }
                 glBindVertexArray(0);
             }
