@@ -114,7 +114,7 @@ void main() {
     float shadow = ShadowCalculation(vFragPosWorld);
 
     // Combine Blinn-Phong color, ambient, and shadow factor
-    color = ambient + (1.0 - shadow) * color;
+    color = ambient + (1.0 - shadow) * color ;
 
     FragColor = vec4(color, 1.0);
 }
