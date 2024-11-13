@@ -276,41 +276,51 @@ int main(int argc, char *argv[])
         sphereVertexCount            // Vertex count
     );
 
-    // Load the .obj model
-    ModelData modelData;
+    // Load the Heater .obj model
+    ModelData heaterModelData;
     std::string modelPath = applicationPath.dirPath() + "assets/models/HeaterOBJ/Heater.obj";
-    if (!loadOBJ(modelPath, applicationPath.dirPath() + "assets/models/HeaterOBJ/", modelData)) {
+    if (!loadOBJ(modelPath, applicationPath.dirPath() + "assets/models/HeaterOBJ/", heaterModelData)) {
         std::cerr << "Failed to load model" << std::endl;
     } else {
         std::cout << "Heater Model Loaded: " 
-                << modelData.vertices.size() / 3 << " vertices, " 
-                << modelData.indices.size() << " indices." << std::endl;
+                << heaterModelData.vertices.size() / 3 << " vertices, " 
+                << heaterModelData.indices.size() << " indices." << std::endl;
     }
 
     // Set up OpenGL buffers for the model
-    setupModelBuffers(modelData);
+    setupModelBuffers(heaterModelData);
 
     // Compute Bounding Box for the Model
-    AABB modelBoundingBox = computeAABB(modelData.vertices);
+    AABB heaterModelBoundingBox = computeAABB(heaterModelData.vertices);
+
+    // Apply scale
+    glm::vec3 heaterModelScale(0.6f, 0.6f, 0.6f);
+    heaterModelBoundingBox.min *= heaterModelScale;
+    heaterModelBoundingBox.max *= heaterModelScale;
+
+    // Apply translation (position)
+    glm::vec3 heaterModelPosition(0.6f, 1.1f, 6.0f);
+    heaterModelBoundingBox.min += heaterModelPosition;
+    heaterModelBoundingBox.max += heaterModelPosition;
 
     // Add Heater Model to Scene Objects
     addModel(
-        glm::vec3(2.0f, 1.3f, 2.0f), // Position
-        glm::vec3(0.4f),             // Scale
+        heaterModelPosition,               // Position
+        heaterModelScale,                  // Scale
         false,                       // Use texture
         0,
         0,                           // Normal Map ID (if any; set to 0 if none)
-        modelData.vao,               // VAO ID
-        static_cast<GLsizei>(modelData.indices.size()), // Index Count
-        modelBoundingBox,            // Bounding Box
+        heaterModelData.vao,               // VAO ID
+        static_cast<GLsizei>(heaterModelData.indices.size()), // Index Count
+        heaterModelBoundingBox,            // Bounding Box
         glm::vec3(0.0f, 1.0f, 0.0f), // Rotation Axis (Y-axis)
         0.0f                         // Rotation Angle
     );
 
     // Print VAO, VBO, EBO IDs
-    std::cout << "Heater VAO: " << modelData.vao 
-            << ", VBO: " << modelData.vbo 
-            << ", EBO: " << modelData.ebo << std::endl;
+    std::cout << "Heater VAO: " << heaterModelData.vao 
+            << ", VBO: " << heaterModelData.vbo 
+            << ", EBO: " << heaterModelData.ebo << std::endl;
 
     // =======================
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -339,7 +349,8 @@ int main(int argc, char *argv[])
 
         // Update window title with camera position every frame
         // std::string newTitle = "Boules - FPS: " + std::to_string(fps) + " - Position: (" + std::to_string(cameraPos.x) + ", " + std::to_string(cameraPos.z) + ")";
-        std::string newTitle = std::to_string(cameraPos.x) + ", " + std::to_string(cameraPos.z);
+        // std::string newTitle = std::to_string(cameraPos.x) + ", " + std::to_string(cameraPos.z);
+        std::string newTitle = "FPS: " + std::to_string(fps);
         SDL_SetWindowTitle(windowManager.getWindow(), newTitle.c_str());
 
         // Update light intensity dynamically within the loop
@@ -729,9 +740,9 @@ int main(int argc, char *argv[])
     }
 
     // Clean up model buffers
-    glDeleteBuffers(1, &modelData.vbo);
-    glDeleteBuffers(1, &modelData.ebo);
-    glDeleteVertexArrays(1, &modelData.vao);
+    glDeleteBuffers(1, &heaterModelData.vbo);
+    glDeleteBuffers(1, &heaterModelData.ebo);
+    glDeleteVertexArrays(1, &heaterModelData.vao);
 
     std::cout << "Program terminated successfully" << std::endl;
 
