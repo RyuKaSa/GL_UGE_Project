@@ -16,10 +16,14 @@ struct ModelData {
     std::vector<tinyobj::shape_t> shapes;
     std::map<int, GLuint> materialToTexture; // Map material ID to texture ID
     GLuint vao, vbo, ebo;
+    std::vector<float> tangents;
+    std::vector<float> bitangents;
 };
 
 // Function to load a texture from file and return its OpenGL texture ID
 GLuint LoadTextureFromFile(const char* path);
+
+void computeTangents(ModelData &modelData);
 
 // Function to load an OBJ model using TinyOBJLoader
 bool loadOBJ(const std::string& filePath, const std::string& basePath, ModelData &modelData);

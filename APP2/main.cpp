@@ -120,10 +120,14 @@ int main(int argc, char *argv[])
     unifiedProgram = loadUnifiedShader(applicationPath);
     depthProgram = loadDepthShader(applicationPath);
 
+    // Load textures
     GLuint textureID, stoneTextureID, brownTerracottaTextureID, soccerTextureID;
     GLuint textureID_normalMap, stoneTextureID_normalMap, brownTerracottaTextureID_normalMap, soccerTextureID_normalMap;
+    GLuint chairBaseColorTextureID, chairNormalMapTextureID;
     loadTextures(textureID, stoneTextureID, brownTerracottaTextureID, soccerTextureID,
-                textureID_normalMap, stoneTextureID_normalMap, brownTerracottaTextureID_normalMap, soccerTextureID_normalMap, applicationPath);
+                textureID_normalMap, stoneTextureID_normalMap, brownTerracottaTextureID_normalMap, soccerTextureID_normalMap,
+                chairBaseColorTextureID, chairNormalMapTextureID, 
+                applicationPath);
 
     GLuint depthCubeMap, shadowMapFBO;
     setupDepthCubeMap(depthCubeMap, shadowMapFBO);
@@ -280,7 +284,7 @@ int main(int argc, char *argv[])
     ModelData heaterModelData;
     std::string modelPath = applicationPath.dirPath() + "assets/models/HeaterOBJ/Heater.obj";
     if (!loadOBJ(modelPath, applicationPath.dirPath() + "assets/models/HeaterOBJ/", heaterModelData)) {
-        std::cerr << "Failed to load model" << std::endl;
+        std::cerr << "Failed to load model heater" << std::endl;
     } else {
         std::cout << "Heater Model Loaded: " 
                 << heaterModelData.vertices.size() / 3 << " vertices, " 
@@ -317,10 +321,66 @@ int main(int argc, char *argv[])
         0.0f                         // Rotation Angle
     );
 
-    // Print VAO, VBO, EBO IDs
-    std::cout << "Heater VAO: " << heaterModelData.vao 
-            << ", VBO: " << heaterModelData.vbo 
-            << ", EBO: " << heaterModelData.ebo << std::endl;
+    // Load the Rocking Chair model
+    ModelData rockingChairModelData;
+    std::string rockingChairPath = applicationPath.dirPath() + "assets/models/Rocking_Chair/kid_rocking_chair.obj";
+    std::string rockingChairBasePath = applicationPath.dirPath() + "assets/models/Rocking_Chair/Textures/";
+
+    if (!loadOBJ(rockingChairPath, rockingChairBasePath, rockingChairModelData)) {
+        std::cerr << "Failed to load Rocking Chair model." << std::endl;
+    } else {
+        std::cout << "Rocking Chair Model Loaded: " 
+                << rockingChairModelData.vertices.size() / 3 << " vertices, " 
+                << rockingChairModelData.indices.size() << " indices." << std::endl;
+    }
+
+    // Load Rocking Chair Base Color Texture
+    std::string baseColorPath = rockingChairBasePath + "/BaseColor.png";
+    GLuint baseColorTextureID = LoadTextureFromFile(baseColorPath.c_str());
+    if (baseColorTextureID == 0) {
+        std::cerr << "Failed to load BaseColor.png for Rocking Chair." << std::endl;
+    } else {
+        std::cout << "BaseColor.png for Rocking Chair loaded successfully: ID " << baseColorTextureID << std::endl;
+    }
+
+    // Load Rocking Chair Normal Map
+    std::string normalMapPath = rockingChairBasePath + "/Normal.png";
+    GLuint normalMapTextureID = LoadTextureFromFile(normalMapPath.c_str());
+    if (normalMapTextureID == 0) {
+        std::cerr << "Failed to load Normal.png for Rocking Chair." << std::endl;
+    } else {
+        std::cout << "Normal.png for Rocking Chair loaded successfully: ID " << normalMapTextureID << std::endl;
+    }
+
+    // Set up OpenGL buffers for the Rocking Chair model
+    setupModelBuffers(rockingChairModelData);
+
+    // Compute Bounding Box for the Rocking Chair model
+    AABB rockingChairModelBoundingBox = computeAABB(rockingChairModelData.vertices);
+
+    // Apply scale
+    glm::vec3 rockingChairModelScale(0.08f, 0.08f, 0.08f);
+    rockingChairModelBoundingBox.min *= rockingChairModelScale;
+    rockingChairModelBoundingBox.max *= rockingChairModelScale;
+
+    // Apply translation (position)
+    glm::vec3 rockingChairModelPosition(5.0f, 0.59f, 6.0f);
+    rockingChairModelBoundingBox.min += rockingChairModelPosition;
+    rockingChairModelBoundingBox.max += rockingChairModelPosition;
+
+    // Add Rocking Chair Model to Scene Objects
+    addModel(
+        rockingChairModelPosition,               // Position
+        rockingChairModelScale,                  // Scale
+        true,                                    // Use texture
+        baseColorTextureID,                      // Texture ID (Base Color)
+        normalMapTextureID,                      // Normal Map ID
+        rockingChairModelData.vao,               // VAO ID
+        static_cast<GLsizei>(rockingChairModelData.indices.size()), // Index Count
+        rockingChairModelBoundingBox,            // Bounding Box
+        glm::vec3(0.0f, 1.0f, 0.0f),             // Rotation Axis (Y-axis)
+        0.0f                                     // Rotation Angle
+    );
 
     // =======================
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -360,7 +420,7 @@ int main(int argc, char *argv[])
         //     (sin(currentFrame * 0.5f) + 1.0f) / 2.0f // Blue oscillates more slowly between 0 and 1
         // );
         // white light
-        glm::vec3 lightIntensity = glm::vec3(1.0f);
+        glm::vec3 lightIntensity = glm::vec3(2.0f);
 
         // Event handling
         SDL_Event e;
@@ -472,16 +532,16 @@ int main(int argc, char *argv[])
         float spiralSpeed = 0.5f;      // Adjust the speed of the rotation
         float fixedHeight = 6.0f;      // Set the fixed height of the light
 
-        glm::vec3 lightPosWorld;
-        lightPosWorld.x = spiralRadius * cos(currentFrame * spiralSpeed);
-        lightPosWorld.y = fixedHeight; // Fixed height
-        lightPosWorld.z = spiralRadius * sin(currentFrame * spiralSpeed);
+        // glm::vec3 lightPosWorld;
+        // lightPosWorld.x = spiralRadius * cos(currentFrame * spiralSpeed);
+        // lightPosWorld.y = fixedHeight; // Fixed height
+        // lightPosWorld.z = spiralRadius * sin(currentFrame * spiralSpeed);
 
         // fixed light position
         // glm::vec3 lightPosWorld = glm::vec3(2.0f, 0.6f, 2.0f);
 
         // light position on the camera
-        // glm::vec3 lightPosWorld = cameraPos + glm::vec3(0.0f, 1.0f, 0.0f); // Slightly elevate the light position above the camera
+        glm::vec3 lightPosWorld = cameraPos + glm::vec3(0.0f, 1.0f, 0.0f); // Slightly elevate the light position above the camera
 
         // Transform light position to view space
         glm::vec3 lightPosViewSpace = glm::vec3(ViewMatrix * glm::vec4(lightPosWorld, 1.0f));

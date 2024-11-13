@@ -11,7 +11,9 @@ glimac::Program loadDepthShader(const glimac::FilePath& applicationPath);
 
 // Function to load textures
 void loadTextures(GLuint& textureID, GLuint& stoneTextureID, GLuint& brownTerracottaTextureID, GLuint& soccerTextureID,
-                  GLuint& textureID_normalMap, GLuint& stoneTextureID_normalMap, GLuint& brownTerracottaTextureID_normalMap, GLuint& soccerTextureID_normalMap, const glimac::FilePath& applicationPath);
+                  GLuint& textureID_normalMap, GLuint& stoneTextureID_normalMap, GLuint& brownTerracottaTextureID_normalMap, GLuint& soccerTextureID_normalMap,
+                  GLuint& chairBaseColorTextureID, GLuint& chairNormalMapTextureID,
+                  const glimac::FilePath& applicationPath);
 
 // Function to set up a depth cube map
 void setupDepthCubeMap(GLuint& depthCubeMap, GLuint& shadowMapFBO, int resolution = 4096);

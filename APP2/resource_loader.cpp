@@ -33,18 +33,26 @@ glimac::Program loadDepthShader(const glimac::FilePath& applicationPath) {
 
 // Load textures
 void loadTextures(GLuint& textureID, GLuint& stoneTextureID, GLuint& brownTerracottaTextureID, GLuint& soccerTextureID,
-                  GLuint& textureID_normalMap, GLuint& stoneTextureID_normalMap, GLuint& brownTerracottaTextureID_normalMap, GLuint& soccerTextureID_normalMap, const glimac::FilePath& applicationPath) {
+                  GLuint& textureID_normalMap, GLuint& stoneTextureID_normalMap, GLuint& brownTerracottaTextureID_normalMap, GLuint& soccerTextureID_normalMap,
+                  GLuint& chairBaseColorTextureID, GLuint& chairNormalMapTextureID,
+                  const glimac::FilePath& applicationPath) {
     textureID = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_HD/cobblestone_8bit.png");
     stoneTextureID = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_HD/stone_8bit.png");
     brownTerracottaTextureID = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_HD/brown_glazed_terracotta_8bit.png");
     soccerTextureID = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_sphere/soccer_sph_s_8bit.png");
+    chairBaseColorTextureID = loadTexture(applicationPath.dirPath() + "../assets/models/Rocking_Chair/Textures/BaseColor.png");
 
     textureID_normalMap = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_HD/cobblestone_8bit_normal_map.png");
     stoneTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_HD/stone_8bit_normal_map.png");
     brownTerracottaTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_HD/brown_glazed_terracotta_8bit_normal_map.png");
     soccerTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_sphere/soccer_sph_s_8bit_normal_map.png");
+    chairNormalMapTextureID = loadTexture(applicationPath.dirPath() + "../assets/models/Rocking_Chair/Textures/Normal.png");
 
     std::cout << "Textures loaded successfully" << std::endl;
+
+    // check textures and normals fir the chair : 
+    std::cout << "Chair Base Color Texture ID: " << chairBaseColorTextureID << std::endl;
+    std::cout << "Chair Normal Map Texture ID: " << chairNormalMapTextureID << std::endl;
 }
 
 // Setup depth cube map

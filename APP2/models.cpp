@@ -37,13 +37,82 @@ GLuint LoadTextureFromFile(const char* path) {
     }
 }
 
+void computeTangents(ModelData &model) {
+    size_t vertexCount = model.vertices.size() / 3;
+    size_t indexCount = model.indices.size();
+
+    // Initialize tangents and bitangents
+    model.tangents.assign(vertexCount * 3, 0.0f);
+    model.bitangents.assign(vertexCount * 3, 0.0f);
+
+    // Iterate over each triangle
+    for (size_t i = 0; i < indexCount; i += 3) {
+        unsigned int index0 = model.indices[i];
+        unsigned int index1 = model.indices[i + 1];
+        unsigned int index2 = model.indices[i + 2];
+
+        // Positions
+        glm::vec3 pos0(model.vertices[index0 * 3 + 0], model.vertices[index0 * 3 + 1], model.vertices[index0 * 3 + 2]);
+        glm::vec3 pos1(model.vertices[index1 * 3 + 0], model.vertices[index1 * 3 + 1], model.vertices[index1 * 3 + 2]);
+        glm::vec3 pos2(model.vertices[index2 * 3 + 0], model.vertices[index2 * 3 + 1], model.vertices[index2 * 3 + 2]);
+
+        // Texture coordinates
+        glm::vec2 uv0(model.texcoords[index0 * 2 + 0], model.texcoords[index0 * 2 + 1]);
+        glm::vec2 uv1(model.texcoords[index1 * 2 + 0], model.texcoords[index1 * 2 + 1]);
+        glm::vec2 uv2(model.texcoords[index2 * 2 + 0], model.texcoords[index2 * 2 + 1]);
+
+        // Edges of the triangle
+        glm::vec3 edge1 = pos1 - pos0;
+        glm::vec3 edge2 = pos2 - pos0;
+
+        glm::vec2 deltaUV1 = uv1 - uv0;
+        glm::vec2 deltaUV2 = uv2 - uv0;
+
+        float f = 1.0f;
+        float denominator = (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+        if (denominator != 0.0f) {
+            f = 1.0f / denominator;
+        }
+
+        glm::vec3 tangent = f * (deltaUV2.y * edge1 - deltaUV1.y * edge2);
+        glm::vec3 bitangent = f * (-deltaUV2.x * edge1 + deltaUV1.x * edge2);
+
+        // Accumulate the tangents and bitangents
+        for (int j = 0; j < 3; ++j) {
+            unsigned int idx = model.indices[i + j];
+            model.tangents[idx * 3 + 0] += tangent.x;
+            model.tangents[idx * 3 + 1] += tangent.y;
+            model.tangents[idx * 3 + 2] += tangent.z;
+
+            model.bitangents[idx * 3 + 0] += bitangent.x;
+            model.bitangents[idx * 3 + 1] += bitangent.y;
+            model.bitangents[idx * 3 + 2] += bitangent.z;
+        }
+    }
+
+    // Normalize the tangents and bitangents
+    for (size_t i = 0; i < vertexCount; ++i) {
+        glm::vec3 tangent(model.tangents[i * 3 + 0], model.tangents[i * 3 + 1], model.tangents[i * 3 + 2]);
+        tangent = glm::normalize(tangent);
+        model.tangents[i * 3 + 0] = tangent.x;
+        model.tangents[i * 3 + 1] = tangent.y;
+        model.tangents[i * 3 + 2] = tangent.z;
+
+        glm::vec3 bitangent(model.bitangents[i * 3 + 0], model.bitangents[i * 3 + 1], model.bitangents[i * 3 + 2]);
+        bitangent = glm::normalize(bitangent);
+        model.bitangents[i * 3 + 0] = bitangent.x;
+        model.bitangents[i * 3 + 1] = bitangent.y;
+        model.bitangents[i * 3 + 2] = bitangent.z;
+    }
+}
+
 bool loadOBJ(const std::string& filePath, const std::string& basePath, ModelData &modelData) {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
     std::string warn, err;
 
-    // **Updated TinyOBJLoader function call**
+    // Load OBJ file
     bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filePath.c_str(), basePath.c_str());
 
     if (!warn.empty()) {
@@ -65,9 +134,10 @@ bool loadOBJ(const std::string& filePath, const std::string& basePath, ModelData
     modelData.normals.clear();
     modelData.texcoords.clear();
     modelData.indices.clear();
+    modelData.tangents.clear();
+    modelData.bitangents.clear();
 
     // Map to store unique vertices
-    // **Use unordered_map with custom hash and equality functions**
     struct IndexHash {
         size_t operator()(const tinyobj::index_t& idx) const {
             return std::hash<int>()(idx.vertex_index) ^
@@ -98,7 +168,7 @@ bool loadOBJ(const std::string& filePath, const std::string& basePath, ModelData
             for (size_t v = 0; v < static_cast<size_t>(fv); ++v) {
                 tinyobj::index_t idx = mesh.indices[indexOffset + v];
 
-                // **Process vertex using attrib arrays**
+                // Process vertex using attrib arrays
                 // Positions
                 glm::vec3 position(
                     attrib.vertices[3 * idx.vertex_index + 0],
@@ -140,6 +210,15 @@ bool loadOBJ(const std::string& filePath, const std::string& basePath, ModelData
 
                     modelData.texcoords.push_back(texcoord.x);
                     modelData.texcoords.push_back(texcoord.y);
+
+                    // Initialize tangents and bitangents
+                    modelData.tangents.push_back(0.0f);
+                    modelData.tangents.push_back(0.0f);
+                    modelData.tangents.push_back(0.0f);
+
+                    modelData.bitangents.push_back(0.0f);
+                    modelData.bitangents.push_back(0.0f);
+                    modelData.bitangents.push_back(0.0f);
                 }
 
                 modelData.indices.push_back(uniqueVertices[idx]);
@@ -201,6 +280,9 @@ bool loadOBJ(const std::string& filePath, const std::string& basePath, ModelData
     modelData.materials = materials;
     modelData.shapes = shapes;
 
+    // Compute tangents and bitangents
+    computeTangents(modelData);
+
     return true;
 }
 
@@ -211,7 +293,7 @@ void setupModelBuffers(ModelData &modelData) {
 
     glBindVertexArray(modelData.vao);
 
-    // Interleave data
+    // Interleave data: Position (3) + Normal (3) + Texcoord (2) + Tangent (3) + Bitangent (3)
     std::vector<float> interleavedData;
     size_t numVertices = modelData.vertices.size() / 3; // Assuming positions are x,y,z
 
@@ -229,6 +311,16 @@ void setupModelBuffers(ModelData &modelData) {
         // Texture Coordinates (u, v)
         interleavedData.push_back(modelData.texcoords[2 * i]);
         interleavedData.push_back(modelData.texcoords[2 * i + 1]);
+
+        // Tangents (tx, ty, tz)
+        interleavedData.push_back(modelData.tangents[3 * i]);
+        interleavedData.push_back(modelData.tangents[3 * i + 1]);
+        interleavedData.push_back(modelData.tangents[3 * i + 2]);
+
+        // Bitangents (bx, by, bz)
+        interleavedData.push_back(modelData.bitangents[3 * i]);
+        interleavedData.push_back(modelData.bitangents[3 * i + 1]);
+        interleavedData.push_back(modelData.bitangents[3 * i + 2]);
     }
 
     // Upload interleaved data to VBO
@@ -240,22 +332,33 @@ void setupModelBuffers(ModelData &modelData) {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, modelData.indices.size() * sizeof(unsigned int), modelData.indices.data(), GL_STATIC_DRAW);
 
     // Set up vertex attributes
-    GLsizei stride = (3 + 3 + 2) * sizeof(float); // Position (3) + Normal (3) + Texcoord (2)
+    GLsizei stride = (3 + 3 + 2 + 3 + 3) * sizeof(float); // Position, Normal, Texcoord, Tangent, Bitangent
     size_t offset = 0;
 
-    // Position attribute
-    glEnableVertexAttribArray(0); // Assuming location 0 in shader
+    // Position attribute (location = 0)
+    glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)offset);
     offset += 3 * sizeof(float);
 
-    // Normal attribute
-    glEnableVertexAttribArray(1); // Assuming location 1 in shader
+    // Normal attribute (location = 1)
+    glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void*)offset);
     offset += 3 * sizeof(float);
 
-    // Texture coordinate attribute
-    glEnableVertexAttribArray(2); // Assuming location 2 in shader
+    // Texture Coordinate attribute (location = 2)
+    glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void*)offset);
+    offset += 2 * sizeof(float);
+
+    // Tangent attribute (location = 3)
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, stride, (void*)offset);
+    offset += 3 * sizeof(float);
+
+    // Bitangent attribute (location = 4)
+    glEnableVertexAttribArray(4);
+    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, stride, (void*)offset);
+    offset += 3 * sizeof(float);
 
     glBindVertexArray(0);
 }
