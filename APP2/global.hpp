@@ -20,6 +20,10 @@ extern const GLuint SHADOW_HEIGHT;
 extern float cameraRadius; // Radius of the camera sphere for collision detection
 extern float cameraHeight; // Height of the camera cylinder
 
+extern bool isRockingChairPaused;
+extern double rockingChairPausedTime;
+extern double rockingChairStartTime;
+
 // Structure for 3D vertices with position, normal, and texture coordinates
 struct Vertex3D {
     glm::vec3 position;  // Vertex position

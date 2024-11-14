@@ -14,3 +14,7 @@ const GLuint SHADOW_WIDTH = 4096, SHADOW_HEIGHT = 4096;
 
 float cameraRadius = 0.15f; // Radius of the camera sphere for collision detection
 float cameraHeight = 2.0f;  // Height of the camera cylinder
+
+bool isRockingChairPaused = false;
+double rockingChairPausedTime = 0.0;
+double rockingChairStartTime = 0.0;

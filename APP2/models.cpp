@@ -2,12 +2,47 @@
 #include <src/tiny_obj_loader.h>
 #include <src/stb_image.h>
 #include <iostream>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/constants.hpp> 
+#include <cmath> 
+
+void GetRockingChairPositionAndRotation(
+    double frequency,
+    double currentTime,
+    double maxAngleDeg,
+    glm::vec3& position,
+    glm::vec3& rotation,
+    double length = 0.8)
+{
+    const double DEG_TO_RAD = glm::pi<double>() / 180.0;
+    const double RAD_TO_DEG = 180.0 / glm::pi<double>();
+
+    // Convert maximum angle to radians
+    double maxAngleRad = maxAngleDeg * DEG_TO_RAD;
+
+    // Calculate angular displacement θ(t)
+    double omega = 2.0 * glm::pi<double>() * frequency; // Angular frequency
+    double theta = maxAngleRad * sin(omega * currentTime); // θ(t)
+
+    // Compute position using a parabolic-like U-shape function based on sine squared
+    double sinTerm = sin(omega * currentTime);
+    double heightFactor = length * sqrt(sinTerm * sinTerm); // Squared sine creates a parabolic-like shape
+
+    position.x = 0.0;
+    position.y = heightFactor; // U-shaped motion with peaks at both ends
+    position.z = length * sin(theta);
+
+    // Compute rotation vector (rotation around X-axis)
+    rotation.x = theta * RAD_TO_DEG; // Convert back to degrees
+    rotation.y = 0.0;
+    rotation.z = 0.0;
+}
 
 GLuint LoadTextureFromFile(const char* path) {
     int width, height, nrComponents;
     unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0);
     if (data) {
-        GLenum format;
+        GLenum format = GL_RGB;
         if (nrComponents == 1)
             format = GL_RED;
         else if (nrComponents == 3)

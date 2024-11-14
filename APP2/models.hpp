@@ -20,6 +20,15 @@ struct ModelData {
     std::vector<float> bitangents;
 };
 
+void GetRockingChairPositionAndRotation(
+    double frequency,
+    double currentTime,
+    double maxAngleDeg,
+    glm::vec3& position,
+    glm::vec3& rotation,
+    double length
+);
+
 // Function to load a texture from file and return its OpenGL texture ID
 GLuint LoadTextureFromFile(const char* path);
 

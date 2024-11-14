@@ -238,38 +238,39 @@ int main(int argc, char *argv[])
     // floor
     glm::vec3 origin(0.0f, 0.0f, 0.0f);
     glm::vec3 floorSize(42.0f, 1.0f, 24.0f);
-    createCompositeCube(origin, floorSize, stoneTextureID, stoneTextureID_normalMap, cubeVAO, cubeIndexCount);
+    createCompositeCube("floor", origin, floorSize, stoneTextureID, stoneTextureID_normalMap, cubeVAO, cubeIndexCount, true);
 
     // wall X1
     glm::vec3 wallPosition1(0.0f, 1.0f, 0.0f);
     glm::vec3 wallSizeX(42.0f, 3.0f, 1.0f);
-    createCompositeCube(wallPosition1, wallSizeX, textureID, textureID_normalMap, cubeVAO, cubeIndexCount);
+    createCompositeCube("wall_X1", wallPosition1, wallSizeX, textureID, textureID_normalMap, cubeVAO, cubeIndexCount, true);
 
     // wall X2
     glm::vec3 wallPosition2(0.0f, 1.0f, 23.0f);
-    createCompositeCube(wallPosition2, wallSizeX, textureID, textureID_normalMap, cubeVAO, cubeIndexCount);
+    createCompositeCube("wall_X2", wallPosition2, wallSizeX, textureID, textureID_normalMap, cubeVAO, cubeIndexCount, true);
 
     // wall Z1
     glm::vec3 wallPosition3(0.0f, 1.0f, 1.0f);
     glm::vec3 wallSizeZ1(1.0f, 3.0f, 22.0f);
-    createCompositeCube(wallPosition3, wallSizeZ1, textureID, textureID_normalMap, cubeVAO, cubeIndexCount);
+    createCompositeCube("wall_Z1", wallPosition3, wallSizeZ1, textureID, textureID_normalMap, cubeVAO, cubeIndexCount, true);
 
     // wall Z2
     glm::vec3 wallPosition4(41.0f, 1.0f, 1.0f);
-    createCompositeCube(wallPosition4, wallSizeZ1, textureID, textureID_normalMap, cubeVAO, cubeIndexCount);
+    createCompositeCube("wall_Z2",wallPosition4, wallSizeZ1, textureID, textureID_normalMap, cubeVAO, cubeIndexCount, true);
 
     // separation wall, Z3
     glm::vec3 wallPosition5(20.0f, 1.0f, 1.0f);
     glm::vec3 wallSizeZ2(2.0f, 3.0f, 9.0f);
-    createCompositeCube(wallPosition5, wallSizeZ2, brownTerracottaTextureID, brownTerracottaTextureID_normalMap, cubeVAO, cubeIndexCount);
+    createCompositeCube("wall_Z3",wallPosition5, wallSizeZ2, brownTerracottaTextureID, brownTerracottaTextureID_normalMap, cubeVAO, cubeIndexCount, true);
 
     // separation wall, Z4
     glm::vec3 wallPosition6(20.0f, 1.0f, 14.0f);
-    createCompositeCube(wallPosition6, wallSizeZ2, brownTerracottaTextureID, brownTerracottaTextureID_normalMap, cubeVAO, cubeIndexCount);
+    createCompositeCube("wall_Z4",wallPosition6, wallSizeZ2, brownTerracottaTextureID, brownTerracottaTextureID_normalMap, cubeVAO, cubeIndexCount, true);
 
     // load a soccer ball as sophisticated object
     // Add sphere to the scene
     addSphere(
+        "soccer_ball",               // Name
         glm::vec3(5.0f, 1.5f, 5.0f), // Position
         0.3f,                        // Radius
         glm::vec3(1.0f),             // Color (white)
@@ -277,7 +278,8 @@ int main(int argc, char *argv[])
         soccerTextureID,             // Texture ID
         soccerTextureID_normalMap,   // Normal map ID
         sphereVAO,                   // VAO ID
-        sphereVertexCount            // Vertex count
+        sphereVertexCount,           // Vertex count
+        true                         // Is static
     );
 
     // Load the Heater .obj model
@@ -309,6 +311,7 @@ int main(int argc, char *argv[])
 
     // Add Heater Model to Scene Objects
     addModel(
+        "heater",                         // Name
         heaterModelPosition,               // Position
         heaterModelScale,                  // Scale
         false,                       // Use texture
@@ -318,7 +321,8 @@ int main(int argc, char *argv[])
         static_cast<GLsizei>(heaterModelData.indices.size()), // Index Count
         heaterModelBoundingBox,            // Bounding Box
         glm::vec3(0.0f, 1.0f, 0.0f), // Rotation Axis (Y-axis)
-        0.0f                         // Rotation Angle
+        0.0f,                        // Rotation Angle
+        true
     );
 
     // Load the Rocking Chair model
@@ -370,6 +374,7 @@ int main(int argc, char *argv[])
 
     // Add Rocking Chair Model to Scene Objects
     addModel(
+        "rocking_chair",                         // Name
         rockingChairModelPosition,               // Position
         rockingChairModelScale,                  // Scale
         true,                                    // Use texture
@@ -379,8 +384,14 @@ int main(int argc, char *argv[])
         static_cast<GLsizei>(rockingChairModelData.indices.size()), // Index Count
         rockingChairModelBoundingBox,            // Bounding Box
         glm::vec3(0.0f, 1.0f, 0.0f),             // Rotation Axis (Y-axis)
-        0.0f                                     // Rotation Angle
+        0.0f,                                    // Rotation Angle
+        false
     );
+
+    // Rocking chair parameters
+    double frequency = 0.2;           // Rocking frequency (cycles per second)
+    double maxAngleDegrees = 15.0;    // Maximum rocking angle in degrees
+    double length = 1.0;              // Length from pivot to reference point
 
     // =======================
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -426,7 +437,7 @@ int main(int argc, char *argv[])
         SDL_Event e;
         while (windowManager.pollEvent(e))
         {
-            if (e.type == SDL_QUIT)
+        if (e.type == SDL_QUIT)
             {
                 done = true;
             }
@@ -435,6 +446,21 @@ int main(int argc, char *argv[])
                 if (e.key.keysym.sym == SDLK_ESCAPE)
                 {
                     done = true;
+                }
+                else if (e.key.keysym.sym == SDLK_t)
+                {
+                    isRockingChairPaused = !isRockingChairPaused;
+                    if (isRockingChairPaused)
+                    {
+                        // Record the time when paused
+                        rockingChairPausedTime = currentFrame;
+                    }
+                    else
+                    {
+                        // Adjust the start time when unpausing
+                        double pauseDuration = currentFrame - rockingChairPausedTime;
+                        rockingChairStartTime += pauseDuration;
+                    }
                 }
             }
 
@@ -569,6 +595,39 @@ int main(int argc, char *argv[])
         depthProgram.use();
         glUniform1f(glGetUniformLocation(depthProgram.getGLId(), "farPlane"), farPlane);
         glUniform3fv(glGetUniformLocation(depthProgram.getGLId(), "lightPos"), 1, glm::value_ptr(lightPosWorld));
+
+        // Update dynamic only objects before rendering
+        for (auto& object : sceneObjects) {
+            if (!object.isStatic) {
+                // we place here all objects that we want to move
+                if (object.name == "rocking_chair") {
+                    double adjustedTime = currentFrame - rockingChairStartTime;
+                    if (isRockingChairPaused) {
+                        adjustedTime = rockingChairPausedTime - rockingChairStartTime;
+                    }
+
+                    glm::vec3 offsetPosition;
+                    glm::vec3 rotation;
+                    GetRockingChairPositionAndRotation(
+                        frequency,
+                        adjustedTime,
+                        maxAngleDegrees,
+                        offsetPosition,
+                        rotation,
+                        length
+                    );
+
+                    // Update position and rotation
+                    object.position = object.initialPosition + offsetPosition;
+                    object.rotationAngle = rotation.x; // Rotation around X-axis
+                    object.rotationAxis = glm::vec3(1.0f, 0.0f, 0.0f);
+
+                }
+                // if (object.name == "") {
+                    
+                // }
+            }
+        }
 
         // First Pass: Render scene to depth cube map
         for (unsigned int i = 0; i < 6; ++i) {
