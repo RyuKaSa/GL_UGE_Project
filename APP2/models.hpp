@@ -26,7 +26,10 @@ void GetRockingChairPositionAndRotation(
     double maxAngleDeg,
     glm::vec3& position,
     glm::vec3& rotation,
-    double length
+    double frontEndLength,
+    double backEndLength,
+    double minHeight,
+    double maxHeight
 );
 
 // Function to load a texture from file and return its OpenGL texture ID

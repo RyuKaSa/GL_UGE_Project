@@ -12,30 +12,27 @@ void GetRockingChairPositionAndRotation(
     double maxAngleDeg,
     glm::vec3& position,
     glm::vec3& rotation,
-    double length = 0.8)
+    double frontEndLength,
+    double backEndLength,
+    double minHeight,
+    double maxHeight)
 {
     const double DEG_TO_RAD = glm::pi<double>() / 180.0;
-    const double RAD_TO_DEG = 180.0 / glm::pi<double>();
-
-    // Convert maximum angle to radians
-    double maxAngleRad = maxAngleDeg * DEG_TO_RAD;
 
     // Calculate angular displacement θ(t)
     double omega = 2.0 * glm::pi<double>() * frequency; // Angular frequency
-    double theta = maxAngleRad * sin(omega * currentTime); // θ(t)
+    double theta = maxAngleDeg * sin(omega * currentTime); // θ(t) in degrees
 
-    // Compute position using a parabolic-like U-shape function based on sine squared
-    double sinTerm = sin(omega * currentTime);
-    double heightFactor = length * sqrt(sinTerm * sinTerm); // Squared sine creates a parabolic-like shape
+    // Compute height based on forward rotation
+    double height = 0.0;
+    if (theta > 0) // Only add height when rotating forward
+    {
+        height = maxHeight * (theta / maxAngleDeg); // Linearly interpolate height based on angle
+    }
 
-    position.x = 0.0;
-    position.y = heightFactor; // U-shaped motion with peaks at both ends
-    position.z = length * sin(theta);
-
-    // Compute rotation vector (rotation around X-axis)
-    rotation.x = theta * RAD_TO_DEG; // Convert back to degrees
-    rotation.y = 0.0;
-    rotation.z = 0.0;
+    // Apply position and rotation
+    position = glm::vec3(0.0f, height, 0.0f); // Height added to Y-axis
+    rotation = glm::vec3(theta, 0.0, 0.0); // Rotation around X-axis
 }
 
 GLuint LoadTextureFromFile(const char* path) {

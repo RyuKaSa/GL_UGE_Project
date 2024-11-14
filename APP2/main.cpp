@@ -368,7 +368,7 @@ int main(int argc, char *argv[])
     rockingChairModelBoundingBox.max *= rockingChairModelScale;
 
     // Apply translation (position)
-    glm::vec3 rockingChairModelPosition(5.0f, 0.59f, 6.0f);
+    glm::vec3 rockingChairModelPosition(5.0f, 0.40f, 6.0f);
     rockingChairModelBoundingBox.min += rockingChairModelPosition;
     rockingChairModelBoundingBox.max += rockingChairModelPosition;
 
@@ -392,6 +392,11 @@ int main(int argc, char *argv[])
     double frequency = 0.2;           // Rocking frequency (cycles per second)
     double maxAngleDegrees = 15.0;    // Maximum rocking angle in degrees
     double length = 1.0;              // Length from pivot to reference point
+    double frontEndLength = 0.3;      // Length from pivot to front end
+    double backEndLength = 0.7;       // Length from pivot to back end
+    double minHeight = 0.30;          // Minimum height of the rocking chair
+    double maxHeight = 0.40;          // Maximum height of the rocking chair
+
 
     // =======================
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -614,7 +619,10 @@ int main(int argc, char *argv[])
                         maxAngleDegrees,
                         offsetPosition,
                         rotation,
-                        length
+                        frontEndLength,
+                        backEndLength,
+                        minHeight,
+                        maxHeight
                     );
 
                     // Update position and rotation
