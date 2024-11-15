@@ -363,12 +363,12 @@ int main(int argc, char *argv[])
     AABB rockingChairModelBoundingBox = computeAABB(rockingChairModelData.vertices);
 
     // Apply scale
-    glm::vec3 rockingChairModelScale(0.08f, 0.08f, 0.08f);
+    glm::vec3 rockingChairModelScale(0.8f, 0.8f, 0.8f);
     rockingChairModelBoundingBox.min *= rockingChairModelScale;
     rockingChairModelBoundingBox.max *= rockingChairModelScale;
 
     // Apply translation (position)
-    glm::vec3 rockingChairModelPosition(5.0f, 1.35f, 6.0f);
+    glm::vec3 rockingChairModelPosition(5.0f, 0.56f, 9.0f);
     rockingChairModelBoundingBox.min += rockingChairModelPosition;
     rockingChairModelBoundingBox.max += rockingChairModelPosition;
 
@@ -383,20 +383,10 @@ int main(int argc, char *argv[])
         rockingChairModelData.vao,               // VAO ID
         static_cast<GLsizei>(rockingChairModelData.indices.size()), // Index Count
         rockingChairModelBoundingBox,            // Bounding Box
-        glm::vec3(0.0f, 1.0f, 0.0f),             // Rotation Axis (Y-axis)
+        glm::vec3(0.0f, 0.0f, 0.0f),             // Rotation Axis (Y-axis)
         0.0f,                                    // Rotation Angle
         false
     );
-
-    // Rocking chair parameters
-    double frequency = 0.2;           // Rocking frequency (cycles per second)
-    double maxAngleDegrees = 15.0;    // Maximum rocking angle in degrees
-    double length = 1.0;              // Length from pivot to reference point
-    double frontEndLength = 0.3;      // Length from pivot to front end
-    double backEndLength = 0.7;       // Length from pivot to back end
-    double minHeight = 0.30;          // Minimum height of the rocking chair
-    double maxHeight = 0.40;          // Maximum height of the rocking chair
-
 
     // =======================
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -601,8 +591,10 @@ int main(int argc, char *argv[])
         glUniform1f(glGetUniformLocation(depthProgram.getGLId(), "farPlane"), farPlane);
         glUniform3fv(glGetUniformLocation(depthProgram.getGLId(), "lightPos"), 1, glm::value_ptr(lightPosWorld));
 
-        double maxAngleDegrees = 15.0;    // Maximum angle in degrees
-        double radius = 0.5;              // Radius of the rocking base
+        // Rocking chair parameters
+        double frequency = 0.30;           // Rocking frequency (cycles per second)
+        double length = 0.08;    // Maximum angle in degrees
+        double radius = 0.3;              // Radius of the rocking base
 
         // Update dynamic only objects before rendering
         for (auto& object : sceneObjects) {
@@ -620,18 +612,17 @@ int main(int argc, char *argv[])
                     GetRockingChairPositionAndRotation(
                         adjustedTime,
                         frequency,
-                        maxAngleDegrees,
                         radius,
+                        length,
                         offsetPosition,
-                        rotation,
-                        rotationAngleRadians
+                        rotation
                     );
 
                     // Update position and rotation
                     object.position = object.initialPosition + offsetPosition;
-                    object.rotationAngle = rotation.x; // Rotation around X-axis
-                    object.rotationAxis = glm::vec3(1.0f, 0.0f, 0.0f);
 
+                    object.rotationAngle = rotation.z; // Rotation around Z-axis
+                    object.rotationAxis = glm::vec3(1.0f, 0.0f, 0.0f); // Rotation around X-axis
                 }
                 // if (object.name == "") {
                     

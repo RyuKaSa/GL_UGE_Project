@@ -9,29 +9,23 @@
 void GetRockingChairPositionAndRotation(
     double currentTime,
     double frequency,
-    double maxAngleDegrees,
     double radius,
+    double length,
     glm::vec3& position,
-    glm::vec3& rotation,
-    float& rotationAngleRadians)
+    glm::vec3& rotation)
 {
-    // Convert maximum angle to radians
-    double thetaMax = glm::radians(maxAngleDegrees);
+    // Calculate angular frequency and time-dependent angle for rolling motion
+    double omega = 2.0 * glm::pi<double>() * frequency; // Angular frequency
+    double displacement = length * 0.5 * sin(omega * currentTime); // Point P's back and forth motion, clamped to [-length/2, length/2]
 
-    // Angular frequency
-    double omega = 2.0 * glm::pi<double>() * frequency;
+    // Compute the angle of rotation based on the displacement of point P
+    double theta = displacement / radius; // Rotation angle in radians, derived from s = r * theta
 
-    // Compute angular displacement θ(t)
-    double theta = thetaMax * cos(omega * currentTime);
+    // Set position (displacement along the X-axis, assuming rolling along X-axis)
+    position = glm::vec3(0.0, 0.0, -displacement); // Adjust axes as necessary for your specific setup
 
-    // Compute position to keep base in contact with ground
-    double x = 0.0; // Assuming rocking around X-axis; adjust if needed
-    double y = radius * (1.0 - cos(theta)) * -1.0f;
-    double z = radius * sin(theta);
-
-    // Set position and rotation
-    position = glm::vec3(x, y, z); // Adjust axes if necessary
-    rotationAngleRadians = static_cast<float>(theta);
+    // Set rotation around the Z-axis to simulate rolling (assuming circle rolls along X-axis)
+    rotation = glm::vec3(0.0, 0.0, -1.0 * static_cast<float>(glm::degrees(theta))); // Convert theta to degrees for rotation
 }
 
 GLuint LoadTextureFromFile(const char* path) {
@@ -343,7 +337,7 @@ bool loadOBJ(const std::string& filePath, const std::string& basePath, ModelData
     // Compute tangents and bitangents
     computeTangents(modelData);
 
-    centerModel(modelData);
+    // centerModel(modelData);
 
     return true;
 }
