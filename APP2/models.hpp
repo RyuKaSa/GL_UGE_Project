@@ -21,15 +21,13 @@ struct ModelData {
 };
 
 void GetRockingChairPositionAndRotation(
-    double frequency,
     double currentTime,
-    double maxAngleDeg,
+    double frequency,
+    double maxAngleDegrees,
+    double radius,
     glm::vec3& position,
     glm::vec3& rotation,
-    double frontEndLength,
-    double backEndLength,
-    double minHeight,
-    double maxHeight
+    float& rotationAngleRadians
 );
 
 // Function to load a texture from file and return its OpenGL texture ID

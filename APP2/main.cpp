@@ -368,7 +368,7 @@ int main(int argc, char *argv[])
     rockingChairModelBoundingBox.max *= rockingChairModelScale;
 
     // Apply translation (position)
-    glm::vec3 rockingChairModelPosition(5.0f, 0.40f, 6.0f);
+    glm::vec3 rockingChairModelPosition(5.0f, 1.35f, 6.0f);
     rockingChairModelBoundingBox.min += rockingChairModelPosition;
     rockingChairModelBoundingBox.max += rockingChairModelPosition;
 
@@ -601,6 +601,9 @@ int main(int argc, char *argv[])
         glUniform1f(glGetUniformLocation(depthProgram.getGLId(), "farPlane"), farPlane);
         glUniform3fv(glGetUniformLocation(depthProgram.getGLId(), "lightPos"), 1, glm::value_ptr(lightPosWorld));
 
+        double maxAngleDegrees = 15.0;    // Maximum angle in degrees
+        double radius = 0.5;              // Radius of the rocking base
+
         // Update dynamic only objects before rendering
         for (auto& object : sceneObjects) {
             if (!object.isStatic) {
@@ -613,16 +616,15 @@ int main(int argc, char *argv[])
 
                     glm::vec3 offsetPosition;
                     glm::vec3 rotation;
+                    float rotationAngleRadians;
                     GetRockingChairPositionAndRotation(
-                        frequency,
                         adjustedTime,
+                        frequency,
                         maxAngleDegrees,
+                        radius,
                         offsetPosition,
                         rotation,
-                        frontEndLength,
-                        backEndLength,
-                        minHeight,
-                        maxHeight
+                        rotationAngleRadians
                     );
 
                     // Update position and rotation

@@ -7,32 +7,31 @@
 #include <cmath> 
 
 void GetRockingChairPositionAndRotation(
-    double frequency,
     double currentTime,
-    double maxAngleDeg,
+    double frequency,
+    double maxAngleDegrees,
+    double radius,
     glm::vec3& position,
     glm::vec3& rotation,
-    double frontEndLength,
-    double backEndLength,
-    double minHeight,
-    double maxHeight)
+    float& rotationAngleRadians)
 {
-    const double DEG_TO_RAD = glm::pi<double>() / 180.0;
+    // Convert maximum angle to radians
+    double thetaMax = glm::radians(maxAngleDegrees);
 
-    // Calculate angular displacement θ(t)
-    double omega = 2.0 * glm::pi<double>() * frequency; // Angular frequency
-    double theta = maxAngleDeg * sin(omega * currentTime); // θ(t) in degrees
+    // Angular frequency
+    double omega = 2.0 * glm::pi<double>() * frequency;
 
-    // Compute height based on forward rotation
-    double height = 0.0;
-    if (theta > 0) // Only add height when rotating forward
-    {
-        height = maxHeight * (theta / maxAngleDeg); // Linearly interpolate height based on angle
-    }
+    // Compute angular displacement θ(t)
+    double theta = thetaMax * cos(omega * currentTime);
 
-    // Apply position and rotation
-    position = glm::vec3(0.0f, height, 0.0f); // Height added to Y-axis
-    rotation = glm::vec3(theta, 0.0, 0.0); // Rotation around X-axis
+    // Compute position to keep base in contact with ground
+    double x = 0.0; // Assuming rocking around X-axis; adjust if needed
+    double y = radius * (1.0 - cos(theta)) * -1.0f;
+    double z = radius * sin(theta);
+
+    // Set position and rotation
+    position = glm::vec3(x, y, z); // Adjust axes if necessary
+    rotationAngleRadians = static_cast<float>(theta);
 }
 
 GLuint LoadTextureFromFile(const char* path) {
@@ -135,6 +134,35 @@ void computeTangents(ModelData &model) {
         model.bitangents[i * 3 + 0] = bitangent.x;
         model.bitangents[i * 3 + 1] = bitangent.y;
         model.bitangents[i * 3 + 2] = bitangent.z;
+    }
+}
+
+void centerModel(ModelData& modelData) {
+    // Compute the centroid of the model
+    glm::vec3 centroid(0.0f);
+    size_t vertexCount = modelData.vertices.size() / 3;
+
+    for (size_t i = 0; i < vertexCount; ++i) {
+        centroid.x += modelData.vertices[3 * i + 0];
+        centroid.y += modelData.vertices[3 * i + 1];
+        centroid.z += modelData.vertices[3 * i + 2];
+    }
+    centroid /= static_cast<float>(vertexCount);
+
+    // Find the minimum Z (height) value among all vertices
+    float minZ = std::numeric_limits<float>::max();
+    for (size_t i = 0; i < vertexCount; ++i) {
+        minZ = std::min(minZ, modelData.vertices[3 * i + 2]);
+    }
+
+    // Calculate the height adjustment needed to move the centroid to the minimum Z height
+    float heightAdjustment = centroid.z - minZ;
+
+    // Translate vertices to move the centroid to (centroid.x, centroid.y, minZ)
+    for (size_t i = 0; i < vertexCount; ++i) {
+        modelData.vertices[3 * i + 0] -= centroid.x; // Center X
+        modelData.vertices[3 * i + 1] -= centroid.y; // Center Y
+        modelData.vertices[3 * i + 2] -= heightAdjustment; // Move Z to minZ
     }
 }
 
@@ -314,6 +342,8 @@ bool loadOBJ(const std::string& filePath, const std::string& basePath, ModelData
 
     // Compute tangents and bitangents
     computeTangents(modelData);
+
+    centerModel(modelData);
 
     return true;
 }
