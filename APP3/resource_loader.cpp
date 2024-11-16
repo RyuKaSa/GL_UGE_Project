@@ -1,5 +1,4 @@
 #include "resource_loader.hpp"
-#include "texture.hpp"
 #include <glimac/Image.hpp>
 #include <iostream>
 #include <map>
@@ -46,6 +45,19 @@ glimac::Program loadDepthShader(const glimac::FilePath& applicationPath) {
         std::cout << "Depth shaders loaded successfully" << std::endl;
     }
     return depthProgram;
+}
+
+glimac::Program loadLightingShader(const glimac::FilePath& applicationPath) {
+    std::string lightingVertexShaderPath = applicationPath.dirPath() + "APP3/shaders/lighting/" + "lighting.vs.glsl";
+    std::string lightingFragmentShaderPath = applicationPath.dirPath() + "APP3/shaders/lighting/" + "lighting.fs.glsl";
+
+    glimac::Program lightingProgram = glimac::loadProgram(lightingVertexShaderPath, lightingFragmentShaderPath);
+    if (lightingProgram.getGLId() == 0) {
+        std::cerr << "Failed to load lighting shaders" << std::endl;
+    } else {
+        std::cout << "Lighting shaders loaded successfully" << std::endl;
+    }
+    return lightingProgram;
 }
 
 GLuint loadTexture(const std::string& texturePath) {
@@ -97,10 +109,10 @@ void loadTextures(
     GLuint& chairNormalMapTextureID,
     const glimac::FilePath& applicationPath)
 {
-    brownTerracottaTextureID = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures/brown_glazed_terracotta_8bit.png");
+    brownTerracottaTextureID = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures/brown_terracotta_8bit.png");
     chairBaseColorTextureID = loadTexture(applicationPath.dirPath() + "../assets/models/Rocking_Chair/Textures/BaseColor.png");
 
-    brownTerracottaTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures/brown_glazed_terracotta_8bit_normal_map.png");
+    brownTerracottaTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures/brown_terracotta_8bit_normal_map.png");
     chairNormalMapTextureID = loadTexture(applicationPath.dirPath() + "../assets/models/Rocking_Chair/Textures/Normal.png");
 
     std::cout << "Textures loaded" << std::endl;

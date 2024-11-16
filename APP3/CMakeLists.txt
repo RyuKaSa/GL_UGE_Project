@@ -4,7 +4,7 @@ file(GLOB SRC_FILES *.cpp)
 list(REMOVE_ITEM SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
 
 # Define the main executable name
-set(OUTPUT APP3)
+set(OUTPUT APP3_executable)
 message(STATUS "Configuring executable ${OUTPUT}")
 
 # Create the executable with Main.cpp and all other source and header files

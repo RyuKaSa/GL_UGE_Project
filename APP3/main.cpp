@@ -13,6 +13,51 @@
 #include <glimac/SDLWindowManager.hpp>
 #include <SDL2/SDL.h>
 
+// window dimensions
+int window_width = 1600;
+int window_height = 1000;
+
+void renderScreenQuad() {
+    static unsigned int quadVAO = 0;
+    static unsigned int quadVBO;
+
+    // Create VAO/VBO if not already done
+    if (quadVAO == 0) {
+        float quadVertices[] = {
+            // Positions   // Texture Coords
+            -1.0f,  1.0f,  0.0f, 1.0f,
+            -1.0f, -1.0f,  0.0f, 0.0f,
+             1.0f, -1.0f,  1.0f, 0.0f,
+
+            -1.0f,  1.0f,  0.0f, 1.0f,
+             1.0f, -1.0f,  1.0f, 0.0f,
+             1.0f,  1.0f,  1.0f, 1.0f
+        };
+
+        // Generate and bind VAO
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glBindVertexArray(quadVAO);
+
+        // Fill buffer data
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+
+        // Position attribute
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+
+        // Texture coordinate attribute
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+    }
+
+    // Render the quad
+    glBindVertexArray(quadVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
+}
+
 int main(int argc, char *argv[])
 {
     (void)argc;
@@ -108,12 +153,20 @@ int main(int argc, char *argv[])
                  applicationPath);
 
     // shaders init
-    glimac::Program room_1Program, room_2Program, depthProgram;
+    glimac::Program room_1Program, room_2Program, depthProgram, lightingProgram;
 
     // Load shaders
-    room_1Program = loadRoom1Shader(applicationPath);
-    room_2Program = loadRoom2Shader(applicationPath);
+    room_1Program = loadRoom_1Shader(applicationPath);
+    room_2Program = loadRoom_2Shader(applicationPath);
     depthProgram = loadDepthShader(applicationPath);
+    lightingProgram = loadLightingShader(applicationPath);
+
+    // check
+    if (room_1Program.getGLId() == 0 || room_2Program.getGLId() == 0 || depthProgram.getGLId() == 0)
+    {
+        std::cerr << "Failed to load shaders" << std::endl;
+        return -1;
+    }
 
 
     // ========================================
@@ -127,6 +180,11 @@ int main(int argc, char *argv[])
     std::cout << "Setting up lights" << std::endl;
 
     // light 1
+    Point_Light::PointLight pointLight1;
+    pointLight1.position = glm::vec3(0.0f, 4.0f, 0.0f);
+    pointLight1.color = glm::vec3(1.0f, 1.0f, 1.0f);
+    pointLight1.intensity = 1.0f;
+    pointLight1.direction = glm::vec3(0.0f, -1.0f, 0.0f);
 
     // light 2
 
@@ -252,7 +310,7 @@ int main(int argc, char *argv[])
     double rockingChairPausedTime;
 
     // ============= Camera parameters =============
-    glm::vec3 cameraPos(1.0f, 2.0f, 1.0f);    // Initial position of the camera
+    glm::vec3 cameraPos(0.0f, 2.0f, -1.0f);    // Initial position of the camera
     glm::vec3 cameraFront(0.0f, 0.0f, -1.0f); // Direction the camera is looking at
     glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);     // Up vector
 
@@ -269,6 +327,9 @@ int main(int argc, char *argv[])
     float cameraRadius = 0.3f; // Radius of the camera for collision detection
     float cameraHeight = 1.8f; // Height of the camera cylinder
 
+    glm::mat4 viewMatrix = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+    glm::mat4 projectionMatrix = glm::perspective(glm::radians(45.0f), (float)window_width / (float)window_height, 0.1f, 100.0f);
+
     // =============== FPS variables ===============
     int frameCount = 0;
     float fpsTimer = 0.0f;
@@ -277,6 +338,10 @@ int main(int argc, char *argv[])
     // ============ relative mosue mvmt ============
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
+
+    // ============= shadow parameters =============
+    const GLuint SHADOW_WIDTH = 1024;
+    const GLuint SHADOW_HEIGHT = 1024;
 
     // ========================================
     // Main loop variables END
@@ -467,10 +532,9 @@ int main(int argc, char *argv[])
                         rotation);
 
                     // Update position and rotation
-                    object.position = object.initialPosition + offsetPosition;
-
-                    object.rotationAngle = rotation.z;                 // Rotation around Z-axis
-                    object.rotationAxis = glm::vec3(1.0f, 0.0f, 0.0f); // Rotation around X-axis
+                    obj->position = obj->initialPosition + offsetPosition;
+                    obj->rotationAngle = rotation.z;
+                    obj->rotationAxis = glm::vec3(1.0f, 0.0f, 0.0f);
 
                     // in this case, we won't update the boundign box,
                     // easier to handle because we know the scope of the animation
@@ -496,7 +560,14 @@ int main(int argc, char *argv[])
         // First pass: Culling START
         // ========================================
         // camera perspective culling, into a list of visible objects to render
+        // go through allObjects, and push references to visibleObjects if they are in the camera view
 
+        for (SceneObjectManager::SceneObject& obj : SceneObjectManager::allObjects) {
+            // Check if the object's bounding box is in the frustum
+            if (SceneObjectManager::isBoxInFrustum(obj.boundingBox, obj.position, obj.scale)) {
+                SceneObjectManager::visibleObjects.push_back(&obj);
+            }
+        }
 
         // ========================================
         // First pass: Culling END
@@ -507,6 +578,75 @@ int main(int argc, char *argv[])
         // ========================================
         // render the scene from all lights' point of view
 
+        // Shadow mapping pass
+        if (pointLight1.shadowMapFBO == 0) {
+            // Generate shadow map framebuffer if not already done
+            glGenFramebuffers(1, &pointLight1.shadowMapFBO);
+
+            // Create depth texture for shadow mapping
+            glGenTextures(1, &pointLight1.shadowMap);
+            glBindTexture(GL_TEXTURE_2D, pointLight1.shadowMap);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+            float borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
+            glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+            // Attach depth texture as FBO's depth buffer
+            glBindFramebuffer(GL_FRAMEBUFFER, pointLight1.shadowMapFBO);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, pointLight1.shadowMap, 0);
+            glDrawBuffer(GL_NONE);
+            glReadBuffer(GL_NONE);
+            if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+                std::cerr << "Shadow Framebuffer not complete!" << std::endl;
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
+
+        // Set up the shadow shader and matrices
+        depthProgram.use();
+
+        // Compute light matrices
+        float near_plane = 1.0f, far_plane = 25.0f;
+        glm::mat4 lightProjection = glm::perspective(glm::radians(90.0f), 1.0f, near_plane, far_plane);
+        glm::mat4 lightView = glm::lookAt(pointLight1.position, pointLight1.position + pointLight1.direction, glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+
+        // Get uniform location for lightSpaceMatrix in the depth shader program
+        GLint lightSpaceMatrixLoc = glGetUniformLocation(depthProgram.getGLId(), "lightSpaceMatrix");
+        if (lightSpaceMatrixLoc != -1) {
+            glUniformMatrix4fv(lightSpaceMatrixLoc, 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+        }
+
+        // Render objects to create the shadow map
+        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        glBindFramebuffer(GL_FRAMEBUFFER, pointLight1.shadowMapFBO);
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        for (SceneObjectManager::SceneObject& obj : SceneObjectManager::allObjects) { // Render all objects for shadow mapping
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, obj.position);
+            model = glm::rotate(model, glm::radians(obj.rotationAngle), obj.rotationAxis);
+            model = glm::scale(model, obj.scale);
+
+            // Get uniform location for model matrix in the depth shader program
+            GLint modelLoc = glGetUniformLocation(depthProgram.getGLId(), "model");
+            if (modelLoc != -1) {
+                glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+            }
+
+            // Bind the object's VAO and render
+            glBindVertexArray(obj.vaoID);
+            glDrawElements(GL_TRIANGLES, obj.indexCount, GL_UNSIGNED_INT, 0);
+            glBindVertexArray(0);
+        }
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        // Restore viewport
+        glViewport(0, 0, gBufferWidth, gBufferHeight);
+
 
         // ========================================
         // Second pass: Shadow mapping END
@@ -516,6 +656,88 @@ int main(int argc, char *argv[])
         // ========================================
         // Third pass: G buffer rendering START
         // ========================================
+
+        // Activate the shader program for rendering the scene
+        room_1Program.use(); 
+
+        // Set the view matrix uniform
+        GLint viewLoc = glGetUniformLocation(room_1Program.getGLId(), "view");
+        if (viewLoc != -1) {
+            glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
+        }
+
+        // Set the projection matrix uniform
+        GLint projLoc = glGetUniformLocation(room_1Program.getGLId(), "projection");
+        if (projLoc != -1) {
+            glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+        }
+
+        // Set the light position uniform
+        GLint lightPosLocRoom = glGetUniformLocation(room_1Program.getGLId(), "lightPos");
+        if (lightPosLocRoom != -1) {
+            glUniform3fv(lightPosLocRoom, 1, glm::value_ptr(pointLight1.position));
+        }
+
+        // Set the light color uniform
+        GLint lightColorLocRoom = glGetUniformLocation(room_1Program.getGLId(), "lightColor");
+        if (lightColorLocRoom != -1) {
+            glUniform3fv(lightColorLocRoom, 1, glm::value_ptr(pointLight1.color));
+        }
+
+        // Set the light intensity uniform
+        GLint lightIntensityLocRoom = glGetUniformLocation(room_1Program.getGLId(), "lightIntensity");
+        if (lightIntensityLocRoom != -1) {
+            glUniform1f(lightIntensityLocRoom, pointLight1.intensity);
+        }
+
+        // Set the camera/view position uniform
+        GLint viewPosLocRoom = glGetUniformLocation(room_1Program.getGLId(), "viewPos");
+        if (viewPosLocRoom != -1) {
+            glUniform3fv(viewPosLocRoom, 1, glm::value_ptr(cameraPos));
+        }
+
+        // Bind shadow map and set shadow map sampler uniform
+        glActiveTexture(GL_TEXTURE1); // Bind shadow map to texture unit 1
+        glBindTexture(GL_TEXTURE_2D, pointLight1.shadowMap);
+        GLint shadowMapLocRoom = glGetUniformLocation(room_1Program.getGLId(), "shadowMap");
+        if (shadowMapLocRoom != -1) {
+            glUniform1i(shadowMapLocRoom, 1); // Set the shadow map sampler to texture unit 1
+        }
+
+        // Render all visible objects
+        for (SceneObjectManager::SceneObject* obj : SceneObjectManager::visibleObjects) {
+            // Set the model matrix for transforming this object
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, obj->position);
+            model = glm::rotate(model, glm::radians(obj->rotationAngle), obj->rotationAxis);
+            model = glm::scale(model, obj->scale);
+            // Set the model matrix uniform
+            GLint modelLoc = glGetUniformLocation(room_1Program.getGLId(), "model");
+            if (modelLoc != -1) {
+                glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+            }
+
+            // Bind diffuse texture if the object uses one
+            if (obj->useTexture) {
+                glActiveTexture(GL_TEXTURE0); // Bind to texture unit 0
+                glBindTexture(GL_TEXTURE_2D, obj->textureID);
+                // Set diffuse texture sampler to use texture unit 0
+                GLint textureLoc = glGetUniformLocation(room_1Program.getGLId(), "diffuseTexture");
+
+                // bind a normal map if present
+                if (obj->normalMapID) {
+                    glActiveTexture(GL_TEXTURE2); // Bind to texture unit 2
+                    glBindTexture(GL_TEXTURE_2D, obj->normalMapID);
+                    // Set normal map sampler to use texture unit 2
+                    GLint normalMapLoc = glGetUniformLocation(room_1Program.getGLId(), "normalMap");
+                }
+            }
+
+            // Render the object using its VAO and index count
+            glBindVertexArray(obj->vaoID);
+            glDrawElements(GL_TRIANGLES, obj->indexCount, GL_UNSIGNED_INT, 0);
+            glBindVertexArray(0);
+        }
 
         // ========================================
         // Third pass: G buffer rendering END
@@ -528,6 +750,56 @@ int main(int argc, char *argv[])
         // ========================================
         // Fourth pass: Lighting START
         // ========================================
+
+        lightingProgram.use();
+
+        GLuint shaderProgramID = lightingProgram.getGLId(); // Get the program ID
+
+        // Set the camera/view position
+        GLint viewPosLocLighting = glGetUniformLocation(shaderProgramID, "viewPos");
+        if (viewPosLocLighting != -1) {
+            glUniform3fv(viewPosLocLighting, 1, glm::value_ptr(cameraPos));
+        }
+        glUniform3f(viewPosLocLighting, cameraPos.x, cameraPos.y, cameraPos.z);
+
+        // Pass the light's transformation matrix to the shader
+        GLint lightSpaceMatrixLocLighting = glGetUniformLocation(shaderProgramID, "lightSpaceMatrix");
+        glUniformMatrix4fv(lightSpaceMatrixLocLighting, 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+
+        // Bind G-buffer textures (assuming these methods provide valid OpenGL texture IDs)
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, gBuffer.getPositionTexture()); // Position texture from G-buffer
+        GLint gPositionLoc = glGetUniformLocation(shaderProgramID, "gPosition");
+        glUniform1i(gPositionLoc, 0); // Tell the shader that texture unit 0 is gPosition
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, gBuffer.getNormalTexture()); // Normal texture from G-buffer
+        GLint gNormalLoc = glGetUniformLocation(shaderProgramID, "gNormal");
+        glUniform1i(gNormalLoc, 1); // Tell the shader that texture unit 1 is gNormal
+
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, gBuffer.getAlbedoSpecTexture()); // Albedo + Specular texture from G-buffer
+        GLint gAlbedoSpecLoc = glGetUniformLocation(shaderProgramID, "gAlbedoSpec");
+        glUniform1i(gAlbedoSpecLoc, 2); // Tell the shader that texture unit 2 is gAlbedoSpec
+
+        // Bind shadow map
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, pointLight1.shadowMap);
+        GLint shadowMapLocLighting = glGetUniformLocation(shaderProgramID, "shadowMap");
+        glUniform1i(shadowMapLocLighting, 3); // Tell the shader that texture unit 3 is the shadow map
+
+        // Set light properties
+        GLint lightPosLocLighting = glGetUniformLocation(shaderProgramID, "light.Position");
+        glUniform3f(lightPosLocLighting, pointLight1.position.x, pointLight1.position.y, pointLight1.position.z);
+
+        GLint lightColorLocLighting = glGetUniformLocation(shaderProgramID, "light.Color");
+        glUniform3f(lightColorLocLighting, pointLight1.color.x, pointLight1.color.y, pointLight1.color.z);
+
+        GLint lightIntensityLocLighting = glGetUniformLocation(shaderProgramID, "light.Intensity");
+        glUniform1f(lightIntensityLocLighting, pointLight1.intensity);
+
+        // Render a screen-filling quad (assumes you have a function or VAO for this)
+        renderScreenQuad(); // This function should render a full-screen quad using your lighting shader
 
         // ========================================
         // Fourth pass: Lighting END
@@ -587,9 +859,14 @@ int main(int argc, char *argv[])
     Graphics::deleteTexture(chairNormalMapTextureID);
 
     // Delete shader programs using Graphics functions
-    Graphics::deleteProgram(room_1Program.getGLId());
-    Graphics::deleteProgram(room_2Program.getGLId());
-    Graphics::deleteProgram(depthProgram.getGLId());
+    GLuint room1ID = room_1Program.getGLId();
+    Graphics::deleteProgram(room1ID);
+    GLuint room2ID = room_2Program.getGLId();
+    Graphics::deleteProgram(room2ID);
+    GLuint depthID = depthProgram.getGLId();
+    Graphics::deleteProgram(depthID);
+    GLuint lightingID = lightingProgram.getGLId();
+    Graphics::deleteProgram(lightingID);
 
     // Delete VAOs, VBOs, and EBOs for all scene objects using Graphics functions
     for (SceneObjectManager::SceneObject& obj : SceneObjectManager::allObjects)
@@ -606,9 +883,4 @@ int main(int argc, char *argv[])
     // Clean up resources END
     // ========================================
 
-}
-
-
-
-
-
+} // end of main

@@ -1,4 +1,4 @@
-#include "scene_object.hpp"
+#include "scene_objects.hpp"
 
 AABB computeAABB(const std::vector<float>& vertices) {
     if (vertices.empty()) {
@@ -27,6 +27,7 @@ namespace SceneObjectManager {
     std::vector<SceneObject> allObjects;
     std::vector<SceneObject*> dynamicObjects;
     std::vector<SceneObject*> visibleObjects;
+    Plane planes[6]; // Define the planes array
 
     void addCube(const std::string& name, const glm::vec3& position, const glm::vec3& scale, const glm::vec3& color, bool useTexture, GLuint textureID, GLuint normalMapID, const glm::vec3& rotationAxis, float rotationAngle, GLuint vaoID, GLsizei indexCount, bool isStatic) {
         SceneObject cube;
@@ -49,7 +50,7 @@ namespace SceneObjectManager {
         cube.boundingBox.min = position - halfSize;
         cube.boundingBox.max = position + halfSize;
 
-        sceneObjects.push_back(cube);
+        SceneObjectManager::allObjects.push_back(cube);
     }
 
 
@@ -120,7 +121,7 @@ namespace SceneObjectManager {
         sphereObject.boundingBox.min = position - glm::vec3(radius);
         sphereObject.boundingBox.max = position + glm::vec3(radius);
 
-        sceneObjects.push_back(sphereObject);
+        SceneObjectManager::allObjects.push_back(sphereObject);
     }
 
     void addModel(
@@ -154,7 +155,7 @@ namespace SceneObjectManager {
         obj.indexCount = indexCount;
         obj.isStatic = isStatic;
 
-        sceneObjects.push_back(obj);
+        SceneObjectManager::allObjects.push_back(obj);
     }
 
     bool checkCollision(const glm::vec3& cylinderBaseCenter, float radius, float height, const AABB& box) {
@@ -181,4 +182,66 @@ namespace SceneObjectManager {
         return true;
     }
 
+
+
+    void extractPlanes(const glm::mat4& vpMatrix) {
+        // Extract and normalize each frustum plane from the view-projection matrix
+        planes[0].normal.x = vpMatrix[0][3] + vpMatrix[0][0];
+        planes[0].normal.y = vpMatrix[1][3] + vpMatrix[1][0];
+        planes[0].normal.z = vpMatrix[2][3] + vpMatrix[2][0];
+        planes[0].d        = vpMatrix[3][3] + vpMatrix[3][0];
+        planes[0].normalize();
+
+        planes[1].normal.x = vpMatrix[0][3] - vpMatrix[0][0];
+        planes[1].normal.y = vpMatrix[1][3] - vpMatrix[1][0];
+        planes[1].normal.z = vpMatrix[2][3] - vpMatrix[2][0];
+        planes[1].d        = vpMatrix[3][3] - vpMatrix[3][0];
+        planes[1].normalize();
+
+        planes[2].normal.x = vpMatrix[0][3] + vpMatrix[0][1];
+        planes[2].normal.y = vpMatrix[1][3] + vpMatrix[1][1];
+        planes[2].normal.z = vpMatrix[2][3] + vpMatrix[2][1];
+        planes[2].d        = vpMatrix[3][3] + vpMatrix[3][1];
+        planes[2].normalize();
+
+        planes[3].normal.x = vpMatrix[0][3] - vpMatrix[0][1];
+        planes[3].normal.y = vpMatrix[1][3] - vpMatrix[1][1];
+        planes[3].normal.z = vpMatrix[2][3] - vpMatrix[2][1];
+        planes[3].d        = vpMatrix[3][3] - vpMatrix[3][1];
+        planes[3].normalize();
+
+        planes[4].normal.x = vpMatrix[0][3] + vpMatrix[0][2];
+        planes[4].normal.y = vpMatrix[1][3] + vpMatrix[1][2];
+        planes[4].normal.z = vpMatrix[2][3] + vpMatrix[2][2];
+        planes[4].d        = vpMatrix[3][3] + vpMatrix[3][2];
+        planes[4].normalize();
+
+        planes[5].normal.x = vpMatrix[0][3] - vpMatrix[0][2];
+        planes[5].normal.y = vpMatrix[1][3] - vpMatrix[1][2];
+        planes[5].normal.z = vpMatrix[2][3] - vpMatrix[2][2];
+        planes[5].d        = vpMatrix[3][3] - vpMatrix[3][2];
+        planes[5].normalize();
+    }
+
+    bool isBoxInFrustum(const AABB& box, const glm::vec3& position, const glm::vec3& scale) {
+        // Transform AABB based on position and scale
+        glm::vec3 transformedMin = box.min * scale + position;
+        glm::vec3 transformedMax = box.max * scale + position;
+
+        for (int i = 0; i < 6; ++i) {
+            // For each plane, find the positive vertex
+            glm::vec3 positive = transformedMin;
+            if (planes[i].normal.x >= 0)
+                positive.x = transformedMax.x;
+            if (planes[i].normal.y >= 0)
+                positive.y = transformedMax.y;
+            if (planes[i].normal.z >= 0)
+                positive.z = transformedMax.z;
+
+            // If the positive vertex is outside the plane, the box is not in the frustum
+            if (glm::dot(planes[i].normal, positive) + planes[i].d < 0)
+                return false;
+        }
+        return true;
+    }
 }

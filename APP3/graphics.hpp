@@ -13,6 +13,8 @@ namespace Graphics {
         GBuffer();
         ~GBuffer();
 
+        GLuint fbo;
+
         bool initialize(int width, int height);
 
         void cleanup();
@@ -24,7 +26,6 @@ namespace Graphics {
         GLuint getAlbedoSpecTexture() const { return gAlbedoSpec; }
 
     private:
-        GLuint fbo;
         GLuint gPosition;
         GLuint gNormal;
         GLuint gAlbedoSpec;
@@ -35,7 +36,7 @@ namespace Graphics {
 
     void deleteProgram(GLuint& programID);
 
-    void deleteSceneObjectBuffers(SceneObject& obj);
+    void deleteSceneObjectBuffers(SceneObjectManager::SceneObject& obj);
 
 } // namespace Graphics
 
