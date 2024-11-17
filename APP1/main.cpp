@@ -161,13 +161,28 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
+    glm::mat4 ModelMatrix = glm::mat4(1.0f);
+
     gBufferProgram.use();
+
     GLint uMVPMatrixLocation = glGetUniformLocation(gBufferProgram.getGLId(), "uMVPMatrix");
-    GLint uMVMatrixLocation = glGetUniformLocation(gBufferProgram.getGLId(), "uMVMatrix");
     GLint uNormalMatrixLocation = glGetUniformLocation(gBufferProgram.getGLId(), "uNormalMatrix");
-    if (uMVPMatrixLocation == -1 || uMVMatrixLocation == -1 || uNormalMatrixLocation == -1) {
-        std::cerr << "Failed to get uniform locations" << std::endl;
+    GLint uModelMatrixLocation = glGetUniformLocation(gBufferProgram.getGLId(), "uModelMatrix");
+
+    // Debugging Output
+    std::cout << "Uniform Locations gBuffer:\n";
+    std::cout << "uMVPMatrix: " << uMVPMatrixLocation << "\n";
+    std::cout << "uNormalMatrix: " << uNormalMatrixLocation << "\n";
+    std::cout << "uModelMatrix: " << uModelMatrixLocation << "\n";
+
+    if (uMVPMatrixLocation == -1 || uNormalMatrixLocation == -1 || uModelMatrixLocation == -1) {
+        std::cerr << "One or more uniform locations could not be found. Exiting." << std::endl;
         return -1;
+    }
+
+    // If all uniform locations are found, set any required initial values.
+    if (uModelMatrixLocation != -1) {
+        glUniformMatrix4fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(ModelMatrix));
     }
 
     // Setup G-Buffer
@@ -211,13 +226,12 @@ int main(int argc, char* argv[]) {
             glm::mat4 ViewMatrix = camera.getViewMatrix();
             glm::mat4 ModelMatrix = glm::mat4(1.0f);
 
-            glm::mat4 MVMatrix = ViewMatrix * ModelMatrix;
-            glm::mat4 MVPMatrix = ProjMatrix * MVMatrix;
-            glm::mat4 NormalMatrix = glm::transpose(glm::inverse(MVMatrix));
+            glm::mat4 MVPMatrix = ProjMatrix * ViewMatrix * ModelMatrix;
+            glm::mat4 NormalMatrix = glm::transpose(glm::inverse(ModelMatrix));
 
-            glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(MVMatrix));
             glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(MVPMatrix));
             glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+            glUniformMatrix4fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(ModelMatrix));
 
             utils::renderSphere(vao, sphere);
         }
@@ -226,6 +240,32 @@ int main(int argc, char* argv[]) {
         // Lighting Pass
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         lightingProgram.use();
+
+        // Set the lighting uniforms
+        GLint uKsLocation = glGetUniformLocation(lightingProgram.getGLId(), "uKs");
+        GLint uShininessLocation = glGetUniformLocation(lightingProgram.getGLId(), "uShininess");
+        GLint uCameraPosLocation = glGetUniformLocation(lightingProgram.getGLId(), "cameraPosWorld");
+
+        if (uKsLocation != -1) {
+            glUniform3f(uKsLocation, 0.5f, 0.5f, 0.5f); // Example value for Ks (specular reflection coefficient)
+        } else {
+            std::cerr << "Uniform uKs not found!" << std::endl;
+        }
+
+        if (uShininessLocation != -1) {
+            glUniform1f(uShininessLocation, 32.0f); // Example value for shininess
+        } else {
+            std::cerr << "Uniform uShininess not found!" << std::endl;
+        }
+
+        // Passing camera position in world space
+        if (uCameraPosLocation != -1) {
+            glm::vec3 cameraPos = camera.getPosition(); // Ensure this returns world space position
+            glUniform3fv(uCameraPosLocation, 1, glm::value_ptr(cameraPos));
+        } else {
+            std::cerr << "Uniform cameraPosWorld not found!" << std::endl;
+        }
+
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, gPosition);
         glUniform1i(glGetUniformLocation(lightingProgram.getGLId(), "gPosition"), 0);
@@ -250,9 +290,13 @@ int main(int argc, char* argv[]) {
             GLint colorLoc = glGetUniformLocation(lightingProgram.getGLId(), colorName.c_str());
             GLint intensityLoc = glGetUniformLocation(lightingProgram.getGLId(), intensityName.c_str());
 
-            glUniform3fv(positionLoc, 1, glm::value_ptr(pointLights[i].position));
-            glUniform3fv(colorLoc, 1, glm::value_ptr(pointLights[i].color));
-            glUniform1f(intensityLoc, pointLights[i].intensity);
+            if (positionLoc != -1 && colorLoc != -1 && intensityLoc != -1) {
+                glUniform3fv(positionLoc, 1, glm::value_ptr(pointLights[i].position));
+                glUniform3fv(colorLoc, 1, glm::value_ptr(pointLights[i].color));
+                glUniform1f(intensityLoc, pointLights[i].intensity);
+            } else {
+                std::cerr << "Failed to get uniform locations for pointLights[" << i << "]" << std::endl;
+            }
         }
 
         // Draw the quad

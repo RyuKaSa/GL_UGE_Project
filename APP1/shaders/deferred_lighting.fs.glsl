@@ -17,29 +17,55 @@ uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D gAlbedoSpec;
 
+uniform vec3 cameraPosWorld; // Camera position in world space
+
+// Blinn-Phong parameters
+uniform vec3 uKs;          // Specular reflection coefficient
+uniform float uShininess;  // Shininess exponent
+
 void main() {
     vec2 TexCoords = gl_FragCoord.xy / textureSize(gPosition, 0);
     vec3 FragPos = texture(gPosition, TexCoords).rgb;
     vec3 Normal = normalize(texture(gNormal, TexCoords).rgb);
     vec3 Albedo = texture(gAlbedoSpec, TexCoords).rgb;
+    float SpecularIntensity = texture(gAlbedoSpec, TexCoords).a;
 
-    vec3 lighting = vec3(0.0); // Start with no light
-    // Ambient lighting
+    vec3 lighting = vec3(0.0); // Initialize lighting
+
+    // Ambient term
     vec3 ambient = 0.1 * Albedo;
     lighting += ambient;
 
-    // Loop over all point lights
+    // View direction
+    vec3 viewDir = normalize(cameraPosWorld - FragPos);
+
+    // Iterate over all point lights
     for(int i = 0; i < numPointLights; i++) {
+        // Light properties
+        vec3 lightPos = pointLights[i].position;
+        vec3 lightColor = pointLights[i].color;
+        float lightIntensity = pointLights[i].intensity;
+
+        // Light direction
+        vec3 lightDir = normalize(lightPos - FragPos);
+
         // Diffuse shading
-        vec3 lightDir = normalize(pointLights[i].position - FragPos);
         float diff = max(dot(Normal, lightDir), 0.0);
+        vec3 diffuse = diff * Albedo * lightColor * lightIntensity;
+
+        // Specular shading (Blinn-Phong)
+        vec3 halfwayDir = normalize(lightDir + viewDir);
+        float spec = pow(max(dot(Normal, halfwayDir), 0.0), uShininess);
+        vec3 specular = uKs * spec * lightColor * lightIntensity * SpecularIntensity;
+
         // Attenuation
-        float distance = length(pointLights[i].position - FragPos);
-        float attenuation = 1.0 / (distance * distance); // Quadratic attenuation
+        float distance = length(lightPos - FragPos);
+        float attenuation = 1.0 / (distance * distance);
+        diffuse *= attenuation;
+        specular *= attenuation;
 
-        vec3 diffuse = pointLights[i].color * diff * attenuation * pointLights[i].intensity;
-
-        lighting += diffuse;
+        // Accumulate
+        lighting += diffuse + specular;
     }
 
     FragColor = vec4(lighting, 1.0);
