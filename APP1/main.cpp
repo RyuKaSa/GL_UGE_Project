@@ -11,7 +11,7 @@
 #include <glimac/FilePath.hpp>
 #include <vector>
 
-#include "glimac/SDLWindowManager.hpp"
+#include <glimac/SDLWindowManager.hpp>
 #include "utils/Init.hpp"
 #include "utils/Render.hpp"
 #include "utils/Camera.hpp"
@@ -212,10 +212,29 @@ int main(int argc, char* argv[]) {
     utils::Camera camera({0.0f, 0.0f, 5.0f});
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
+    float fps = 0.0f;
+    static float fpsTimer = 0.0f; // Accumulate time
+    static int frameCount = 0;    // Count frames
+
     bool done = false;
     std::cout << "Entering main loop" << std::endl;
     while (!done) {
         float deltaTime = utils::calculateDeltaTime(windowManager);
+
+        // Increment frame count and accumulate time
+        fpsTimer += deltaTime;
+        frameCount++;
+
+        // Update FPS display once every second
+        if (fpsTimer >= 1.0f) {
+            int fps = static_cast<int>(frameCount); // Calculate FPS as an integer
+            frameCount = 0;   // Reset frame count
+            fpsTimer -= 1.0f; // Reset timer (subtract 1.0 to handle any excess time)
+
+            // Update window title with new FPS
+            std::string newTitle = "FPS: " + std::to_string(fps);
+            SDL_SetWindowTitle(windowManager.getWindow(), newTitle.c_str());
+}
 
         // Geometry Pass
         glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
