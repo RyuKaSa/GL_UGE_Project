@@ -9,15 +9,89 @@
 #include <SDL2/SDL.h>
 #include <cstddef> // For offsetof
 #include <glimac/FilePath.hpp>
+#include <vector>
 
 #include "glimac/SDLWindowManager.hpp"
 #include "utils/Init.hpp"
 #include "utils/Render.hpp"
 #include "utils/Camera.hpp"
+#include "utils/Lighting.hpp"
 
 constexpr int window_width = 800;
 constexpr int window_height = 800;
 constexpr float mouseSensitivity = 0.1f;
+
+#define NR_POINT_LIGHTS 10
+
+void setupGBuffer(GLuint &gBuffer, GLuint &gPosition, GLuint &gNormal, GLuint &gAlbedoSpec) {
+    glGenFramebuffers(1, &gBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+
+    // Position buffer
+    glGenTextures(1, &gPosition);
+    glBindTexture(GL_TEXTURE_2D, gPosition);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, window_width, window_height, 0, GL_RGB, GL_FLOAT, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
+
+    // Normal buffer
+    glGenTextures(1, &gNormal);
+    glBindTexture(GL_TEXTURE_2D, gNormal);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, window_width, window_height, 0, GL_RGB, GL_FLOAT, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
+
+    // Albedo + specular buffer
+    glGenTextures(1, &gAlbedoSpec);
+    glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, window_width, window_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedoSpec, 0);
+
+    // Specify the attachments for the framebuffer
+    GLuint attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+    glDrawBuffers(3, attachments);
+
+    // Depth buffer
+    GLuint rboDepth;
+    glGenRenderbuffers(1, &rboDepth);
+    glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, window_width, window_height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+
+    // Check if framebuffer is complete
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cerr << "Framebuffer not complete!" << std::endl;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+GLuint createFullScreenQuad() {
+    GLuint quadVAO, quadVBO;
+    float quadVertices[] = {
+        // positions   // texCoords
+        -1.0f,  1.0f,  0.0f,  1.0f,
+        -1.0f, -1.0f,  0.0f,  0.0f,
+         1.0f, -1.0f,  1.0f,  0.0f,
+
+        -1.0f,  1.0f,  0.0f,  1.0f,
+         1.0f, -1.0f,  1.0f,  0.0f,
+         1.0f,  1.0f,  1.0f,  1.0f
+    };
+    glGenVertexArrays(1, &quadVAO);
+    glGenBuffers(1, &quadVBO);
+    glBindVertexArray(quadVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+    glBindVertexArray(0);
+    return quadVAO;
+}
 
 int main(int argc, char* argv[]) {
     (void)argc;
@@ -43,7 +117,7 @@ int main(int argc, char* argv[]) {
         std::cerr << "Failed to set SDL_GL_CONTEXT_FLAGS: " << SDL_GetError() << std::endl;
 #endif
 
-    glimac::SDLWindowManager windowManager(window_width, window_height, "Boules");
+    glimac::SDLWindowManager windowManager(window_width, window_height, "Deferred Rendering");
     std::cout << "SDLWindowManager initialized" << std::endl;
 
     // Initialize GLAD
@@ -71,23 +145,51 @@ int main(int argc, char* argv[]) {
     utils::createVBOAndVAO(vbo, vao, sphere);
 
     glimac::FilePath applicationPath(argv[0]);
-    std::string vertexShaderPath = applicationPath.dirPath() + "APP1/shaders/" + (argc > 1 ? argv[1] : "sphere.vs.glsl");
-    std::string fragmentShaderPath = applicationPath.dirPath() + "APP1/shaders/" + (argc > 2 ? argv[2] : "sphere.fs.glsl");
-
-    glimac::Program program = glimac::loadProgram(vertexShaderPath, fragmentShaderPath);
-    if (program.getGLId() == 0) {
-        std::cerr << "Failed to load shaders" << std::endl;
+    std::string vertexShaderPath = applicationPath.dirPath() + "APP1/shaders/deferred_gbuffer.vs.glsl";
+    std::string fragmentShaderPath = applicationPath.dirPath() + "APP1/shaders/deferred_gbuffer.fs.glsl";
+    glimac::Program gBufferProgram = glimac::loadProgram(vertexShaderPath, fragmentShaderPath);
+    if (gBufferProgram.getGLId() == 0) {
+        std::cerr << "Failed to load gbuffer shaders" << std::endl;
         return -1;
     }
 
-    program.use();
-    GLint uMVPMatrixLocation = glGetUniformLocation(program.getGLId(), "uMVPMatrix");
-    GLint uMVMatrixLocation = glGetUniformLocation(program.getGLId(), "uMVMatrix");
-    GLint uNormalMatrixLocation = glGetUniformLocation(program.getGLId(), "uNormalMatrix");
+    std::string lightingVertexShaderPath = applicationPath.dirPath() + "APP1/shaders/deferred_lighting.vs.glsl";
+    std::string lightingFragmentShaderPath = applicationPath.dirPath() + "APP1/shaders/deferred_lighting.fs.glsl";
+    glimac::Program lightingProgram = glimac::loadProgram(lightingVertexShaderPath, lightingFragmentShaderPath);
+    if (lightingProgram.getGLId() == 0) {
+        std::cerr << "Failed to load lighting shaders" << std::endl;
+        return -1;
+    }
+
+    gBufferProgram.use();
+    GLint uMVPMatrixLocation = glGetUniformLocation(gBufferProgram.getGLId(), "uMVPMatrix");
+    GLint uMVMatrixLocation = glGetUniformLocation(gBufferProgram.getGLId(), "uMVMatrix");
+    GLint uNormalMatrixLocation = glGetUniformLocation(gBufferProgram.getGLId(), "uNormalMatrix");
     if (uMVPMatrixLocation == -1 || uMVMatrixLocation == -1 || uNormalMatrixLocation == -1) {
         std::cerr << "Failed to get uniform locations" << std::endl;
         return -1;
     }
+
+    // Setup G-Buffer
+    GLuint gBuffer, gPosition, gNormal, gAlbedoSpec;
+    setupGBuffer(gBuffer, gPosition, gNormal, gAlbedoSpec);
+
+    // Full-screen quad for lighting pass
+    GLuint quadVAO = createFullScreenQuad();
+
+    // Setup point lights
+    std::vector<utils::PointLight> pointLights;
+    utils::PointLight light1;
+    light1.position = glm::vec3(2.0f, 2.0f, 2.0f);
+    light1.color = glm::vec3(1.0f, 0.0f, 0.0f); // Red light
+    light1.intensity = 1.0f;
+    pointLights.push_back(light1);
+
+    utils::PointLight light2;
+    light2.position = glm::vec3(-2.0f, 2.0f, 2.0f);
+    light2.color = glm::vec3(0.0f, 1.0f, 0.0f); // Green light
+    light2.intensity = 1.0f;
+    pointLights.push_back(light2);
 
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -100,25 +202,67 @@ int main(int argc, char* argv[]) {
     while (!done) {
         float deltaTime = utils::calculateDeltaTime(windowManager);
 
+        // Geometry Pass
+        glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        done = utils::handleInput(camera, windowManager, deltaTime, mouseSensitivity);
+        gBufferProgram.use();
+        {
+            glm::mat4 ProjMatrix = glm::perspective(glm::radians(70.0f), window_width / (float)window_height, 0.1f, 100.0f);
+            glm::mat4 ViewMatrix = camera.getViewMatrix();
+            glm::mat4 ModelMatrix = glm::mat4(1.0f);
 
-        glm::mat4 ProjMatrix = glm::perspective(
-            glm::radians(70.0f), window_width / (float)window_height, 0.1f, 100.0f);
-        glm::mat4 ViewMatrix = camera.getViewMatrix();
-        glm::mat4 ModelMatrix = glm::mat4(1.0f);
+            glm::mat4 MVMatrix = ViewMatrix * ModelMatrix;
+            glm::mat4 MVPMatrix = ProjMatrix * MVMatrix;
+            glm::mat4 NormalMatrix = glm::transpose(glm::inverse(MVMatrix));
 
-        glm::mat4 MVMatrix = ViewMatrix * ModelMatrix;
-        glm::mat4 MVPMatrix = ProjMatrix * MVMatrix;
-        glm::mat4 NormalMatrix = glm::transpose(glm::inverse(MVMatrix));
+            glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(MVMatrix));
+            glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(MVPMatrix));
+            glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(NormalMatrix));
 
-        glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(MVMatrix));
-        glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(MVPMatrix));
-        glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+            utils::renderSphere(vao, sphere);
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        utils::renderSphere(vao, sphere);
+        // Lighting Pass
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        lightingProgram.use();
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, gPosition);
+        glUniform1i(glGetUniformLocation(lightingProgram.getGLId(), "gPosition"), 0);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, gNormal);
+        glUniform1i(glGetUniformLocation(lightingProgram.getGLId(), "gNormal"), 1);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
+        glUniform1i(glGetUniformLocation(lightingProgram.getGLId(), "gAlbedoSpec"), 2);
 
+        // Set number of point lights
+        glUniform1i(glGetUniformLocation(lightingProgram.getGLId(), "numPointLights"), pointLights.size());
+
+        // Set point lights uniforms
+        for (int i = 0; i < pointLights.size(); ++i) {
+            std::string baseName = "pointLights[" + std::to_string(i) + "]";
+            std::string positionName = baseName + ".position";
+            std::string colorName = baseName + ".color";
+            std::string intensityName = baseName + ".intensity";
+
+            GLint positionLoc = glGetUniformLocation(lightingProgram.getGLId(), positionName.c_str());
+            GLint colorLoc = glGetUniformLocation(lightingProgram.getGLId(), colorName.c_str());
+            GLint intensityLoc = glGetUniformLocation(lightingProgram.getGLId(), intensityName.c_str());
+
+            glUniform3fv(positionLoc, 1, glm::value_ptr(pointLights[i].position));
+            glUniform3fv(colorLoc, 1, glm::value_ptr(pointLights[i].color));
+            glUniform1f(intensityLoc, pointLights[i].intensity);
+        }
+
+        // Draw the quad
+        glBindVertexArray(quadVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
+
+        // Handle input and swap buffers
         windowManager.swapBuffers();
+        done = utils::handleInput(camera, windowManager, deltaTime, mouseSensitivity);
     }
 
     glDeleteBuffers(1, &vbo);

@@ -6,7 +6,6 @@
 #include <glimac/Sphere.hpp>
 #include <iostream>
 
-
 namespace utils {
 
     void createVBOAndVAO(GLuint& vbo, GLuint& vao, const glimac::Sphere& sphere);

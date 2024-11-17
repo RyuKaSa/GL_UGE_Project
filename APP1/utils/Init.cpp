@@ -1,6 +1,4 @@
 #include "Init.hpp"
-#include <glimac/Sphere.hpp>
-#include <glad/glad.h>
 
 namespace utils {
 
