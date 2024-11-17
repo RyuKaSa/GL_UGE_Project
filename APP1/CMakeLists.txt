@@ -1,42 +1,43 @@
-# Collect header and source files
-file(GLOB HEADER_FILES *.hpp)
-file(GLOB SRC_FILES *.cpp)
+# Collect all header and source files (including subdirectories)
+file(GLOB_RECURSE HEADER_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp)
+file(GLOB_RECURSE SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 
-# Iterate over each source file to create an executable
-foreach(SRC_FILE ${SRC_FILES})
-    # Get the filename (without extension) and directory name
-    get_filename_component(FILE ${SRC_FILE} NAME_WE)
-    get_filename_component(DIR ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+# Remove main.cpp from the collected source files list
+list(REMOVE_ITEM SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
 
-    # Define the output executable name
-    set(OUTPUT ${DIR}_${FILE})
-    message(STATUS "Configuring executable ${OUTPUT}")
+# Define the main executable name
+set(OUTPUT APP1_executable)
+message(STATUS "Configuring executable ${OUTPUT}")
 
-    # Create the executable
-    add_executable(${OUTPUT} ${SRC_FILE} ${HEADER_FILES})
+# Debug output for collected files
+message(STATUS "Source files: ${SRC_FILES}")
+message(STATUS "Header files: ${HEADER_FILES}")
 
-    # Link libraries and set include directories
-    target_link_libraries(${OUTPUT} glimac)
-    target_include_directories(${OUTPUT} PUBLIC glimac)
-    target_include_directories(${OUTPUT} PUBLIC glimac/third-party/glad/include)
+# Create the executable with Main.cpp and other source files
+add_executable(${OUTPUT} main.cpp ${SRC_FILES} ${HEADER_FILES})
 
-    # Set properties for the target
-    set_target_properties(${OUTPUT} PROPERTIES
-        CXX_STANDARD 11
-        CXX_STANDARD_REQUIRED YES
-        CXX_EXTENSIONS NO
-    )
-    set_target_properties(${OUTPUT} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+# Link libraries and set include directories
+target_link_libraries(${OUTPUT} PRIVATE glimac)
+target_include_directories(${OUTPUT} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${OUTPUT} PRIVATE ${CMAKE_SOURCE_DIR}/glimac/include)
+target_include_directories(${OUTPUT} PRIVATE ${CMAKE_SOURCE_DIR}/glimac/third-party/glad/include)
 
-    # Add compiler options for different platforms
-    if (MSVC)
-        target_compile_options(${OUTPUT} PRIVATE /W3)
-    else()
-        target_compile_options(${OUTPUT} PRIVATE -Wall -Wextra -Wpedantic -pedantic-errors)
-    endif()
-endforeach()
+# Set properties for the target
+set_target_properties(${OUTPUT} PROPERTIES
+    CXX_STANDARD 11
+    CXX_STANDARD_REQUIRED YES
+    CXX_EXTENSIONS NO
+)
+set_target_properties(${OUTPUT} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
-# Include custom scripts for copying files
-include("../CMakeUtils/files_and_folders.cmake")
+# Add compiler options for different platforms
+if (MSVC)
+    target_compile_options(${OUTPUT} PRIVATE /W3)
+else()
+    target_compile_options(${OUTPUT} PRIVATE -Wall -Wextra -Wpedantic -pedantic-errors)
+endif()
+
+# Include custom scripts for copying files (if needed)
+include("${CMAKE_SOURCE_DIR}/CMakeUtils/files_and_folders.cmake")
 Cool__target_copy_folder(${OUTPUT} ../assets)
 Cool__target_copy_folder(${OUTPUT} shaders)

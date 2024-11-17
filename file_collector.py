@@ -20,4 +20,4 @@ def process_files_to_json(output_json, root_folder):
     save_to_json(data, output_json)
 
 # Example usage:
-process_files_to_json('output.json', 'APP3/')
+process_files_to_json('output.json', 'APP1/')
