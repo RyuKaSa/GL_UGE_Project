@@ -53,10 +53,31 @@ namespace utils {
 
     float calculateDeltaTime(glimac::SDLWindowManager& windowManager) {
         static float lastFrame = 0.0f;
+        static float fpsTimer = 0.0f; // Accumulate time for FPS calculation
+        static int frameCount = 0;    // Count frames
+        static int fps = 0;          // Store FPS value
+
         float currentFrame = windowManager.getTime();
         float deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
+
+        // Increment frame count and accumulate time
+        fpsTimer += deltaTime;
+        frameCount++;
+
+        // Update FPS once every second
+        if (fpsTimer >= 1.0f) {
+            fps = frameCount;      // Calculate FPS as an integer
+            frameCount = 0;       // Reset frame count
+            fpsTimer -= 1.0f;     // Reset timer
+
+            // Update window title with new FPS
+            std::string newTitle = "FPS: " + std::to_string(fps);
+            SDL_SetWindowTitle(windowManager.getWindow(), newTitle.c_str());
+        }
+
         return deltaTime;
     }
+    
 
 } // namespace utils
