@@ -140,8 +140,8 @@ int main(int argc, char* argv[]) {
 
     // Load shaders
     glimac::FilePath applicationPath(argv[0]);
-    std::string vertexShaderPath = applicationPath.dirPath() + "TP4/shaders/" + (argc > 1 ? argv[1] : "sphere.vs.glsl");
-    std::string fragmentShaderPath = applicationPath.dirPath() + "TP4/shaders/" + (argc > 2 ? argv[2] : "sphere.fs.glsl");
+    std::string vertexShaderPath = applicationPath.dirPath() + "APP1/shaders/" + (argc > 1 ? argv[1] : "sphere.vs.glsl");
+    std::string fragmentShaderPath = applicationPath.dirPath() + "APP1/shaders/" + (argc > 2 ? argv[2] : "sphere.fs.glsl");
 
     std::cout << "Vertex shader path: " << vertexShaderPath << std::endl;
     std::cout << "Fragment shader path: " << fragmentShaderPath << std::endl;
