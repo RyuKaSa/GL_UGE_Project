@@ -10,54 +10,34 @@ Renderer::Renderer(int width, int height) : m_gBuffer(width, height) {}
 
 Renderer::~Renderer() {}
 
-void Renderer::geometryPass(const Camera& camera, GLuint vao, const glm::mat4& modelMatrix, Shader& gBufferShader, GLsizei vertexCount, int width, int height) {
-    // Bind G-buffer for writing
+void Renderer::geometryPass(const Camera& camera, GLuint sphereVAO, const std::vector<objects::Sphere>& spheres, Shader& gBufferShader, GLsizei vertexCount, int width, int height) {
     m_gBuffer.bindForWriting();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // Use the G-buffer shader
     gBufferShader.use();
 
-    // Setup transformation matrices
     glm::mat4 ProjMatrix = glm::perspective(glm::radians(70.0f), static_cast<float>(width) / height, 0.1f, 100.0f);
     glm::mat4 ViewMatrix = camera.getViewMatrix();
 
-    // glm::mat4 MVMatrix = ViewMatrix * modelMatrix;
-    // glm::mat4 MVPMatrix = ProjMatrix * MVMatrix;
-    // glm::mat4 NormalMatrix = glm::transpose(glm::inverse(MVMatrix));
+    for (const auto& sphere : spheres) {
+        glm::mat4 ModelMatrix = glm::translate(glm::mat4(1.0f), sphere.position) * glm::scale(glm::mat4(1.0f), glm::vec3(sphere.size));
+        glm::mat4 MVPMatrix = ProjMatrix * ViewMatrix * ModelMatrix;
+        glm::mat4 NormalMatrix = glm::transpose(glm::inverse(ModelMatrix));
 
-    glm::mat4 MVPMatrix = ProjMatrix * ViewMatrix * modelMatrix;
-    glm::mat4 NormalMatrix = glm::transpose(glm::inverse(modelMatrix));
+        GLint uMVPMatrixLocation = gBufferShader.getUniformLocation("uMVPMatrix");
+        GLint uNormalMatrixLocation = gBufferShader.getUniformLocation("uNormalMatrix");
+        GLint uModelMatrixLocation = gBufferShader.getUniformLocation("uModelMatrix");
+        GLint uColorLocation = gBufferShader.getUniformLocation("uColor");
 
-    // Retrieve and set uniform locations
-    GLint uMVPMatrixLocation = gBufferShader.getUniformLocation("uMVPMatrix");
-    GLint uNormalMatrixLocation = gBufferShader.getUniformLocation("uNormalMatrix");
-    GLint uModelMatrixLocation = gBufferShader.getUniformLocation("uModelMatrix");
+        if (uMVPMatrixLocation != -1) glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(MVPMatrix));
+        if (uNormalMatrixLocation != -1) glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+        if (uModelMatrixLocation != -1) glUniformMatrix4fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(ModelMatrix));
+        if (uColorLocation != -1) glUniform3fv(uColorLocation, 1, glm::value_ptr(sphere.color));
 
-    if (uMVPMatrixLocation != -1) {
-        glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(MVPMatrix));
-    } else {
-        std::cerr << "Renderer::geometryPass: uMVPMatrix not found!" << std::endl;
+        glBindVertexArray(sphereVAO);
+        glDrawArrays(GL_TRIANGLES, 0, vertexCount);
+        glBindVertexArray(0);
     }
 
-    if (uNormalMatrixLocation != -1) {
-        glUniformMatrix4fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(NormalMatrix));
-    } else {
-        std::cerr << "Renderer::geometryPass: uNormalMatrix not found!" << std::endl;
-    }
-
-    if (uModelMatrixLocation != -1) {
-        glUniformMatrix4fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
-    } else {
-        std::cerr << "Renderer::geometryPass: uModelMatrix not found!" << std::endl;
-    }
-
-    // Bind and render the geometry
-    glBindVertexArray(vao);
-    glDrawArrays(GL_TRIANGLES, 0, vertexCount); // Use the passed vertexCount
-    glBindVertexArray(0);
-
-    // Unbind the framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 

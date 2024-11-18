@@ -4,11 +4,14 @@
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
+#include <vector>
+
 #include "Shader.hpp"
 #include "GBuffer.hpp"
 #include "Camera.hpp"
 #include "Lighting.hpp"
-#include <vector>
+#include "Objects.hpp"
+
 
 struct ShapeVertex {
     glm::vec3 position;   // Position of the vertex
@@ -23,38 +26,12 @@ namespace utils {
  */
 class Renderer {
 public:
-    /**
-     * @brief Constructs the Renderer with specified window dimensions.
-     * 
-     * @param width The width of the window.
-     * @param height The height of the window.
-     */
     Renderer(int width, int height);
 
-    /**
-     * @brief Destructor.
-     */
     ~Renderer();
 
-    /**
-     * @brief Performs the geometry pass, rendering scene geometry to the G-buffer.
-     * 
-     * @param camera The Camera object representing the current view.
-     * @param vao The Vertex Array Object of the geometry to render.
-     * @param modelMatrix The model transformation matrix.
-     * @param gBufferShader The Shader used for the geometry pass.
-     * @param vertexCount The number of vertices to draw.
-     */
-    void geometryPass(const Camera& camera, GLuint vao, const glm::mat4& modelMatrix, Shader& gBufferShader, GLsizei vertexCount, int width, int height);
-
-    /**
-     * @brief Performs the lighting pass, computing lighting using the G-buffer.
-     * 
-     * @param camera The Camera object representing the current view.
-     * @param quadVAO The Vertex Array Object of the full-screen quad.
-     * @param pointLights A vector of PointLight structs representing the scene's point lights.
-     * @param lightingShader The Shader used for the lighting pass.
-     */
+    void geometryPass(const Camera& camera, GLuint sphereVAO, const std::vector<objects::Sphere>& spheres, Shader& gBufferShader, GLsizei vertexCount, int width, int height);
+    
     void lightingPass(const Camera& camera, GLuint quadVAO, const std::vector<PointLight>& pointLights, Shader& lightingShader);
 
     // Getters for G-buffer textures

@@ -10,6 +10,7 @@
 #include "utils/Camera.hpp"
 #include "utils/Lighting.hpp"
 #include "utils/Buffer.hpp"
+#include "utils/Objects.hpp"
 
 int WINDOW_HEIGHT = 1000;
 int WINDOW_WIDTH = 1600;
@@ -38,7 +39,7 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    // Create a sphere mesh
+    // Create a sphere mesh for all spheres
     glimac::Sphere sphere(1, 32, 16);
     GLuint sphereVBO, sphereVAO;
     utils::createVBOAndVAO(sphereVBO, sphereVAO, sphere);
@@ -53,22 +54,21 @@ int main(int argc, char* argv[]) {
     std::vector<utils::PointLight> pointLights;
 
     utils::PointLight light1;
-    light1.position = glm::vec3(2.0f, 3.0f, 2.0f);
+    light1.position = glm::vec3(4.0f, 1.0f, 1.0f);
     light1.color = glm::vec3(1.0f, 0.0f, 0.0f); // Red light
-    light1.intensity = 2.0f;
+    light1.intensity = 3.0f;
     pointLights.push_back(light1);
 
     utils::PointLight light2;
-    light2.position = glm::vec3(-2.0f, 1.0f, 2.0f);
+    light2.position = glm::vec3(4.0f, 1.0f, -1.0f);
     light2.color = glm::vec3(0.0f, 1.0f, 0.0f); // Green light
     light2.intensity = 2.0f;
     pointLights.push_back(light2);
 
-    utils::PointLight light3;
-    light3.position = glm::vec3(0.0f, 2.0f, -2.0f);
-    light3.color = glm::vec3(0.0f, 0.0f, 1.0f); // Blue light
-    light3.intensity = 2.0f;
-    pointLights.push_back(light3);
+    // create objects here
+    // Initialize spheres using the Objects module
+    objects::addSphere(glm::vec3(0.0f, 0.0f, 0.0f), 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
+    objects::addSphere(glm::vec3(2.0f, 0.0f, 0.0f), 0.5f, glm::vec3(1.0f, 1.0f, 1.0f));
 
     // Enable depth testing
     glEnable(GL_DEPTH_TEST);
@@ -92,7 +92,7 @@ int main(int argc, char* argv[]) {
 
         // Geometry Pass
         glm::mat4 modelMatrix = glm::mat4(1.0f); // Identity matrix (no transformations)
-        renderer.geometryPass(camera, sphereVAO, modelMatrix, gBufferShader, sphere.getVertexCount(), WINDOW_WIDTH, WINDOW_HEIGHT);
+        renderer.geometryPass(camera, sphereVAO, objects::getSpheres(), gBufferShader, sphere.getVertexCount(), WINDOW_WIDTH, WINDOW_HEIGHT);
 
         // Lighting Pass
         renderer.lightingPass(camera, quadVAO, pointLights, lightingShader);
