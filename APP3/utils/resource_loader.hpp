@@ -5,9 +5,7 @@
 #include <glimac/Program.hpp>
 #include <glimac/FilePath.hpp>
 
-// Function to load shaders
-glimac::Program loadUnifiedShader(const glimac::FilePath& applicationPath);
-glimac::Program loadDepthShader(const glimac::FilePath& applicationPath);
+namespace utils_loader {
 
 // Function to load textures
 void loadTextures(GLuint& textureID, GLuint& stoneTextureID, GLuint& brownTerracottaTextureID, GLuint& soccerTextureID,
@@ -17,5 +15,7 @@ void loadTextures(GLuint& textureID, GLuint& stoneTextureID, GLuint& brownTerrac
 
 // Function to set up a depth cube map
 void setupDepthCubeMap(GLuint& depthCubeMap, GLuint& shadowMapFBO, int resolution = 4096);
+
+} // namespace utils_loader
 
 #endif // RESOURCE_LOADER_HPP

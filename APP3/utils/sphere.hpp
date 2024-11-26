@@ -5,8 +5,12 @@
 #include <vector>
 #include <glimac/Sphere.hpp>
 
+namespace utils_object {
+
 size_t createSphereVertices(std::vector<SphereVertex>& sphereVertices, glimac::Sphere& sphere);
 void computeSphereTangents(std::vector<SphereVertex>& vertices);
 void setupSphereBuffers(const std::vector<SphereVertex>& sphereVertices, GLuint& sphereVBO, GLuint& sphereVAO);
+
+}
 
 #endif // SPHERE_HPP

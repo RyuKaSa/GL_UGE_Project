@@ -1,6 +1,8 @@
 #include "sphere.hpp"
 #include <glm/glm.hpp>
 
+namespace utils_object {
+
 size_t createSphereVertices(std::vector<SphereVertex>& sphereVertices, glimac::Sphere& sphere) {
     size_t sphereVertexCount = sphere.getVertexCount();
     const glimac::ShapeVertex* sphereData = sphere.getDataPointer();
@@ -80,3 +82,5 @@ void setupSphereBuffers(const std::vector<SphereVertex>& sphereVertices, GLuint&
 
     glBindVertexArray(0);
 }
+
+} // namespace utils_object

@@ -7,6 +7,8 @@
 #include "global.hpp"
 #include <src/tiny_obj_loader.h>
 
+namespace utils_object {
+
 struct ModelData {
     std::vector<float> vertices;
     std::vector<float> normals;
@@ -39,5 +41,7 @@ bool loadOBJ(const std::string& filePath, const std::string& basePath, ModelData
 
 // Function to set up OpenGL buffers (VAO, VBO, EBO) for the model
 void setupModelBuffers(ModelData &modelData);
+
+}
 
 #endif // MODELS_HPP

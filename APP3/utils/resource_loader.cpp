@@ -3,33 +3,7 @@
 #include <glimac/Image.hpp>
 #include <iostream>
 
-// Load unified shader
-glimac::Program loadUnifiedShader(const glimac::FilePath& applicationPath) {
-    std::string unifiedVertexShaderPath = applicationPath.dirPath() + "APP1/shaders/" + "unified_shader.vs.glsl";
-    std::string unifiedFragmentShaderPath = applicationPath.dirPath() + "APP1/shaders/" + "pointlight.fs.glsl";
-    
-    glimac::Program unifiedProgram = glimac::loadProgram(unifiedVertexShaderPath, unifiedFragmentShaderPath);
-    if (unifiedProgram.getGLId() == 0) {
-        std::cerr << "Failed to load unified shaders" << std::endl;
-    } else {
-        std::cout << "Unified shaders loaded successfully" << std::endl;
-    }
-    return unifiedProgram;
-}
-
-// Load depth shader
-glimac::Program loadDepthShader(const glimac::FilePath& applicationPath) {
-    std::string depthVertexShaderPath = applicationPath.dirPath() + "APP1/shaders/" + "point_shadow_depth.vs.glsl";
-    std::string depthFragmentShaderPath = applicationPath.dirPath() + "APP1/shaders/" + "point_shadow_depth.fs.glsl";
-
-    glimac::Program depthProgram = glimac::loadProgram(depthVertexShaderPath, depthFragmentShaderPath);
-    if (depthProgram.getGLId() == 0) {
-        std::cerr << "Failed to load depth shaders" << std::endl;
-    } else {
-        std::cout << "Depth shaders loaded successfully" << std::endl;
-    }
-    return depthProgram;
-}
+namespace utils_loader {
 
 // Load textures
 void loadTextures(GLuint& textureID, GLuint& stoneTextureID, GLuint& brownTerracottaTextureID, GLuint& soccerTextureID,
@@ -80,3 +54,5 @@ void setupDepthCubeMap(GLuint& depthCubeMap, GLuint& shadowMapFBO, int resolutio
 
     std::cout << "Depth cube map setup complete" << std::endl;
 }
+
+} // namespace utils_loader

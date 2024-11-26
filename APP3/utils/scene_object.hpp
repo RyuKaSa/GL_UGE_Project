@@ -7,6 +7,8 @@
 #include <map>
 #include <string>
 
+namespace utils_scene {
+
 enum class ObjectType {
     Cube,
     Sphere,
@@ -40,5 +42,7 @@ void addSphere(const std::string& name, const glm::vec3& position, float radius,
 void createCompositeCube(const std::string& name, const glm::vec3& origin, const glm::vec3& size, GLuint textureID, GLuint normalMapID, GLuint vaoID, GLsizei indexCount, bool isStatic);
 
 void addModel(const std::string& name, const glm::vec3& position, const glm::vec3& scale, bool useTexture, GLuint textureID, GLuint normalMapID, GLuint vaoID, GLsizei indexCount, const AABB& boundingBox, const glm::vec3& rotationAxis = glm::vec3(0.0f), float rotationAngle = 0.0f, bool isStatic = false);
+
+} // namespace utils_scene
 
 #endif // SCENE_OBJECT_HPP

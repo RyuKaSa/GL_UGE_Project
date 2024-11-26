@@ -2,6 +2,8 @@
 #include <glad/glad.h>
 #include <cstddef> // For offsetof
 
+namespace utils_object {
+
 void createCube(std::vector<Vertex3D>& vertices, std::vector<GLuint>& indices) {
     vertices = {
         Vertex3D(glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec3(0, 0, 1), glm::vec2(0.0f, 0.0f)),
@@ -40,7 +42,7 @@ void createCube(std::vector<Vertex3D>& vertices, std::vector<GLuint>& indices) {
     };
 }
 
-void computeTangents(std::vector<Vertex3D>& vertices, const std::vector<GLuint>& indices) {
+void computeCubeTangents(std::vector<Vertex3D>& vertices, const std::vector<GLuint>& indices) {
     for (auto& vertex : vertices) {
         vertex.tangent = glm::vec3(0.0f);
         vertex.bitangent = glm::vec3(0.0f);
@@ -111,3 +113,5 @@ void setupCubeBuffers(const std::vector<Vertex3D>& vertices, const std::vector<G
 
     glBindVertexArray(0);
 }
+
+} // namespace utils_object

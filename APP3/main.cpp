@@ -7,6 +7,8 @@
 #include "utils/utilities.hpp"
 #include "utils/resource_loader.hpp"
 #include "utils/models.hpp"
+#include "utils/initialization.hpp"
+#include "utils/shader.hpp"
 
 #include <src/stb_image.h>
 
@@ -29,74 +31,22 @@
 int main(int argc, char *argv[])
 {
     (void)argc;
-    (void)argv;
-    std::cout << "Program started" << std::endl;
 
-    // Initialize SDL video subsystem
-    if (SDL_Init(SDL_INIT_VIDEO) != 0)
-    {
-        std::cerr << "SDL_Init Error: " << SDL_GetError() << std::endl;
-        return -1;
-    }
-
-    // Set OpenGL context version and profile
-    if (SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3) != 0)
-        std::cerr << "Failed to set SDL_GL_CONTEXT_MAJOR_VERSION: " << SDL_GetError() << std::endl;
-    if (SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3) != 0)
-        std::cerr << "Failed to set SDL_GL_CONTEXT_MINOR_VERSION: " << SDL_GetError() << std::endl;
-    if (SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE) != 0)
-        std::cerr << "Failed to set SDL_GL_CONTEXT_PROFILE_MASK: " << SDL_GetError() << std::endl;
-
-    #ifdef __APPLE__
-        if (SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG) != 0)
-            std::cerr << "Failed to set SDL_GL_CONTEXT_FLAGS: " << SDL_GetError() << std::endl;
-    #endif
-
-    // Initialize SDLWindowManager
-    glimac::SDLWindowManager windowManager(window_width, window_height, "Boules");
-    std::cout << "SDLWindowManager initialized" << std::endl;
-
-    // Initialize GLAD
-    if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress))
-    {
-        std::cerr << "Failed to initialize GLAD" << std::endl;
-        return -1;
-    }
-    std::cout << "GLAD initialized" << std::endl;
-
-    // Output OpenGL version and renderer
-    const GLubyte *renderer = glGetString(GL_RENDERER);
-    const GLubyte *version = glGetString(GL_VERSION);
-    if (renderer)
-        std::cout << "Renderer: " << renderer << std::endl;
-    else
-        std::cout << "Renderer is NULL" << std::endl;
-
-    if (version)
-        std::cout << "OpenGL version supported: " << version << std::endl;
-    else
-        std::cout << "OpenGL version is NULL" << std::endl;
-
-    // Check if glGenVertexArrays is available
-    if (glGenVertexArrays == nullptr)
-    {
-        std::cerr << "Error: glGenVertexArrays is NULL" << std::endl;
-        return -1;
-    }
+    auto windowManager = utils_init::initOpenGL(window_width, window_height);
 
     /*********************************
      * Initialization code
      *********************************/
 
-    // Sphere creation
+    // Sphere setup
     glimac::Sphere sphere(1, 32, 16);
     std::vector<SphereVertex> sphereVertices;
 
-    size_t sphereVertexCount = createSphereVertices(sphereVertices, sphere);
-    computeSphereTangents(sphereVertices);
+    size_t sphereVertexCount = utils_object::createSphereVertices(sphereVertices, sphere);
+    utils_object::computeSphereTangents(sphereVertices);
 
     GLuint sphereVBO, sphereVAO;
-    setupSphereBuffers(sphereVertices, sphereVBO, sphereVAO);
+    utils_object::setupSphereBuffers(sphereVertices, sphereVBO, sphereVAO);
 
     GLsizei sphereVertexCountGL = static_cast<GLsizei>(sphereVertexCount);
 
@@ -104,64 +54,80 @@ int main(int argc, char *argv[])
     // Create cube vertices and indices
     std::vector<Vertex3D> cubeVertices;
     std::vector<GLuint> cubeIndices;
-    createCube(cubeVertices, cubeIndices);
-    computeTangents(cubeVertices, cubeIndices);
+    utils_object::createCube(cubeVertices, cubeIndices);
+    utils_object::computeCubeTangents(cubeVertices, cubeIndices);
 
     // Set up VBO, EBO, and VAO for the cube
     GLuint cubeVBO, cubeEBO, cubeVAO;
-    setupCubeBuffers(cubeVertices, cubeIndices, cubeVBO, cubeEBO, cubeVAO);
+    utils_object::setupCubeBuffers(cubeVertices, cubeIndices, cubeVBO, cubeEBO, cubeVAO);
     std::cout << "Cube VBO, EBO, and VAO set up" << std::endl;
 
-    // Load shaders
     glimac::FilePath applicationPath(argv[0]);
 
-    // Load unified shader program
-    glimac::Program unifiedProgram, depthProgram;
-    unifiedProgram = loadUnifiedShader(applicationPath);
-    depthProgram = loadDepthShader(applicationPath);
+    // Load shaders
+    utils_loader::Shader unifiedShader(
+        applicationPath.dirPath() + "APP1/shaders/unified_shader.vs.glsl",
+        applicationPath.dirPath() + "APP1/shaders/pointlight.fs.glsl"
+    );
+
+    utils_loader::Shader depthShader(
+        applicationPath.dirPath() + "APP1/shaders/point_shadow_depth.vs.glsl",
+        applicationPath.dirPath() + "APP1/shaders/point_shadow_depth.fs.glsl"
+    );
+
+    // check shaders
+    if (unifiedShader.getID() == 0 || depthShader.getID() == 0) {
+        std::cerr << "Failed to compile/link shaders. Exiting." << std::endl;
+        return -1;
+    }
+
+    unifiedShader.use();
+    std::cout << "Unified shader program in use" << std::endl;
 
     // Load textures
     GLuint textureID, stoneTextureID, brownTerracottaTextureID, soccerTextureID;
     GLuint textureID_normalMap, stoneTextureID_normalMap, brownTerracottaTextureID_normalMap, soccerTextureID_normalMap;
     GLuint chairBaseColorTextureID, chairNormalMapTextureID;
-    loadTextures(textureID, stoneTextureID, brownTerracottaTextureID, soccerTextureID,
+    utils_loader::loadTextures(textureID, stoneTextureID, brownTerracottaTextureID, soccerTextureID,
                 textureID_normalMap, stoneTextureID_normalMap, brownTerracottaTextureID_normalMap, soccerTextureID_normalMap,
                 chairBaseColorTextureID, chairNormalMapTextureID, 
                 applicationPath);
 
     GLuint depthCubeMap, shadowMapFBO;
-    setupDepthCubeMap(depthCubeMap, shadowMapFBO);
+    utils_loader::setupDepthCubeMap(depthCubeMap, shadowMapFBO);
 
     // Check depth shader uniforms
     std::cout << "Checking depth shader uniforms..." << std::endl;
-    GLint uDepth_LightSpaceMatrixLocation = glGetUniformLocation(depthProgram.getGLId(), "uLightSpaceMatrix");
-    GLint uDepth_ModelMatrixLocation = glGetUniformLocation(depthProgram.getGLId(), "uModelMatrix");
+
+    GLint uDepth_LightSpaceMatrixLocation = depthShader.getUniformLocation("uLightSpaceMatrix");
     if (uDepth_LightSpaceMatrixLocation == -1)
         std::cerr << "Failed to get 'uLightSpaceMatrix' location in depth shader" << std::endl;
+
+    GLint uDepth_ModelMatrixLocation = unifiedShader.getUniformLocation("uModelMatrix");
     if (uDepth_ModelMatrixLocation == -1)
         std::cerr << "Failed to get 'uModelMatrix' location in depth shader" << std::endl;
 
     // Get uniform location for model matrix in unified shader
-    GLint uModelMatrixLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uModelMatrix");
+    GLint uModelMatrixLocation = unifiedShader.getUniformLocation("uModelMatrix");
     if (uModelMatrixLocation == -1)
         std::cerr << "Failed to get 'uModelMatrix' location in unified shader" << std::endl;
 
     // Get uniform locations
-    unifiedProgram.use();
+    unifiedShader.use();
     std::cout << "Shader program in use" << std::endl;
 
     // Get uniform locations
-    GLint uMVPMatrixLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uMVPMatrix");
-    GLint uMVMatrixLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uMVMatrix");
-    GLint uNormalMatrixLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uNormalMatrix");
-    GLint uTextureLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uTexture");
-    GLint uUseTextureLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uUseTexture");
+    GLint uMVPMatrixLocation = glGetUniformLocation(unifiedShader.getGLId(), "uMVPMatrix");
+    GLint uMVMatrixLocation = glGetUniformLocation(unifiedShader.getGLId(), "uMVMatrix");
+    GLint uNormalMatrixLocation = glGetUniformLocation(unifiedShader.getGLId(), "uNormalMatrix");
+    GLint uTextureLocation = glGetUniformLocation(unifiedShader.getGLId(), "uTexture");
+    GLint uUseTextureLocation = glGetUniformLocation(unifiedShader.getGLId(), "uUseTexture");
 
-    GLint uKdLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uKd");
-    GLint uKsLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uKs");
-    GLint uShininessLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uShininess");
-    GLint uLightPos_vsLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uLightPos_vs");
-    GLint uLightIntensityLocation = glGetUniformLocation(unifiedProgram.getGLId(), "uLightIntensity");
+    GLint uKdLocation = glGetUniformLocation(unifiedShader.getGLId(), "uKd");
+    GLint uKsLocation = glGetUniformLocation(unifiedShader.getGLId(), "uKs");
+    GLint uShininessLocation = glGetUniformLocation(unifiedShader.getGLId(), "uShininess");
+    GLint uLightPos_vsLocation = glGetUniformLocation(unifiedShader.getGLId(), "uLightPos_vs");
+    GLint uLightIntensityLocation = glGetUniformLocation(unifiedShader.getGLId(), "uLightIntensity");
 
     // Sanity check
     if (uMVPMatrixLocation == -1)
@@ -238,38 +204,38 @@ int main(int argc, char *argv[])
     // floor
     glm::vec3 origin(0.0f, 0.0f, 0.0f);
     glm::vec3 floorSize(42.0f, 1.0f, 24.0f);
-    createCompositeCube("floor", origin, floorSize, stoneTextureID, stoneTextureID_normalMap, cubeVAO, cubeIndexCount, true);
+    utils_scene::createCompositeCube("floor", origin, floorSize, stoneTextureID, stoneTextureID_normalMap, cubeVAO, cubeIndexCount, true);
 
     // wall X1
     glm::vec3 wallPosition1(0.0f, 1.0f, 0.0f);
     glm::vec3 wallSizeX(42.0f, 3.0f, 1.0f);
-    createCompositeCube("wall_X1", wallPosition1, wallSizeX, textureID, textureID_normalMap, cubeVAO, cubeIndexCount, true);
+    utils_scene::createCompositeCube("wall_X1", wallPosition1, wallSizeX, textureID, textureID_normalMap, cubeVAO, cubeIndexCount, true);
 
     // wall X2
     glm::vec3 wallPosition2(0.0f, 1.0f, 23.0f);
-    createCompositeCube("wall_X2", wallPosition2, wallSizeX, textureID, textureID_normalMap, cubeVAO, cubeIndexCount, true);
+    utils_scene::createCompositeCube("wall_X2", wallPosition2, wallSizeX, textureID, textureID_normalMap, cubeVAO, cubeIndexCount, true);
 
     // wall Z1
     glm::vec3 wallPosition3(0.0f, 1.0f, 1.0f);
     glm::vec3 wallSizeZ1(1.0f, 3.0f, 22.0f);
-    createCompositeCube("wall_Z1", wallPosition3, wallSizeZ1, textureID, textureID_normalMap, cubeVAO, cubeIndexCount, true);
+    utils_scene::createCompositeCube("wall_Z1", wallPosition3, wallSizeZ1, textureID, textureID_normalMap, cubeVAO, cubeIndexCount, true);
 
     // wall Z2
     glm::vec3 wallPosition4(41.0f, 1.0f, 1.0f);
-    createCompositeCube("wall_Z2",wallPosition4, wallSizeZ1, textureID, textureID_normalMap, cubeVAO, cubeIndexCount, true);
+    utils_scene::createCompositeCube("wall_Z2",wallPosition4, wallSizeZ1, textureID, textureID_normalMap, cubeVAO, cubeIndexCount, true);
 
     // separation wall, Z3
     glm::vec3 wallPosition5(20.0f, 1.0f, 1.0f);
     glm::vec3 wallSizeZ2(2.0f, 3.0f, 9.0f);
-    createCompositeCube("wall_Z3",wallPosition5, wallSizeZ2, brownTerracottaTextureID, brownTerracottaTextureID_normalMap, cubeVAO, cubeIndexCount, true);
+    utils_scene::createCompositeCube("wall_Z3",wallPosition5, wallSizeZ2, brownTerracottaTextureID, brownTerracottaTextureID_normalMap, cubeVAO, cubeIndexCount, true);
 
     // separation wall, Z4
     glm::vec3 wallPosition6(20.0f, 1.0f, 14.0f);
-    createCompositeCube("wall_Z4",wallPosition6, wallSizeZ2, brownTerracottaTextureID, brownTerracottaTextureID_normalMap, cubeVAO, cubeIndexCount, true);
+    utils_scene::createCompositeCube("wall_Z4",wallPosition6, wallSizeZ2, brownTerracottaTextureID, brownTerracottaTextureID_normalMap, cubeVAO, cubeIndexCount, true);
 
     // load a soccer ball as sophisticated object
     // Add sphere to the scene
-    addSphere(
+    utils_scene::addSphere(
         "soccer_ball",               // Name
         glm::vec3(5.0f, 1.5f, 5.0f), // Position
         0.3f,                        // Radius
@@ -283,9 +249,9 @@ int main(int argc, char *argv[])
     );
 
     // Load the Heater .obj model
-    ModelData heaterModelData;
+    utils_object::ModelData heaterModelData;
     std::string modelPath = applicationPath.dirPath() + "assets/models/HeaterOBJ/Heater.obj";
-    if (!loadOBJ(modelPath, applicationPath.dirPath() + "assets/models/HeaterOBJ/", heaterModelData)) {
+    if (!utils_object::loadOBJ(modelPath, applicationPath.dirPath() + "assets/models/HeaterOBJ/", heaterModelData)) {
         std::cerr << "Failed to load model heater" << std::endl;
     } else {
         std::cout << "Heater Model Loaded: " 
@@ -310,7 +276,7 @@ int main(int argc, char *argv[])
     heaterModelBoundingBox.max += heaterModelPosition;
 
     // Add Heater Model to Scene Objects
-    addModel(
+    utils_scene::addModel(
         "heater",                         // Name
         heaterModelPosition,               // Position
         heaterModelScale,                  // Scale
@@ -326,11 +292,11 @@ int main(int argc, char *argv[])
     );
 
     // Load the Rocking Chair model
-    ModelData rockingChairModelData;
+    utils_object::ModelData rockingChairModelData;
     std::string rockingChairPath = applicationPath.dirPath() + "assets/models/Rocking_Chair/kid_rocking_chair.obj";
     std::string rockingChairBasePath = applicationPath.dirPath() + "assets/models/Rocking_Chair/Textures/";
 
-    if (!loadOBJ(rockingChairPath, rockingChairBasePath, rockingChairModelData)) {
+    if (!utils_object::loadOBJ(rockingChairPath, rockingChairBasePath, rockingChairModelData)) {
         std::cerr << "Failed to load Rocking Chair model." << std::endl;
     } else {
         std::cout << "Rocking Chair Model Loaded: " 
@@ -340,7 +306,7 @@ int main(int argc, char *argv[])
 
     // Load Rocking Chair Base Color Texture
     std::string baseColorPath = rockingChairBasePath + "/BaseColor.png";
-    GLuint baseColorTextureID = LoadTextureFromFile(baseColorPath.c_str());
+    GLuint baseColorTextureID = utils_object::LoadTextureFromFile(baseColorPath.c_str());
     if (baseColorTextureID == 0) {
         std::cerr << "Failed to load BaseColor.png for Rocking Chair." << std::endl;
     } else {
@@ -349,7 +315,7 @@ int main(int argc, char *argv[])
 
     // Load Rocking Chair Normal Map
     std::string normalMapPath = rockingChairBasePath + "/Normal.png";
-    GLuint normalMapTextureID = LoadTextureFromFile(normalMapPath.c_str());
+    GLuint normalMapTextureID = utils_object::LoadTextureFromFile(normalMapPath.c_str());
     if (normalMapTextureID == 0) {
         std::cerr << "Failed to load Normal.png for Rocking Chair." << std::endl;
     } else {
@@ -373,7 +339,7 @@ int main(int argc, char *argv[])
     rockingChairModelBoundingBox.max += rockingChairModelPosition;
 
     // Add Rocking Chair Model to Scene Objects
-    addModel(
+    utils_scene::addModel(
         "rocking_chair",                         // Name
         rockingChairModelPosition,               // Position
         rockingChairModelScale,                  // Scale
@@ -516,7 +482,7 @@ int main(int argc, char *argv[])
 
         // Check collision against all objects
         bool collisionDetected = false;
-        for (const auto &object : sceneObjects)
+        for (const auto &object : utils_scene::sceneObjects)
         {
             if (checkCollision(proposedCameraPos, cameraRadius, cameraHeight, object.boundingBox))
             {
@@ -549,7 +515,7 @@ int main(int argc, char *argv[])
         );
 
         // Update light position to move in a circle at a fixed height
-        float spiralRadius = 2.0f;    // Adjust the radius of the circle
+        float spiralRadius = 2.0f;     // Adjust the radius of the circle
         float spiralSpeed = 0.5f;      // Adjust the speed of the rotation
         float fixedHeight = 6.0f;      // Set the fixed height of the light
 
@@ -587,9 +553,9 @@ int main(int argc, char *argv[])
         glClear(GL_DEPTH_BUFFER_BIT);
 
         // Use the depth shader program
-        depthProgram.use();
-        glUniform1f(glGetUniformLocation(depthProgram.getGLId(), "farPlane"), farPlane);
-        glUniform3fv(glGetUniformLocation(depthProgram.getGLId(), "lightPos"), 1, glm::value_ptr(lightPosWorld));
+        depthShader.use();
+        glUniform1f(glGetUniformLocation(depthShader.getGLId(), "farPlane"), farPlane);
+        glUniform3fv(glGetUniformLocation(depthShader.getGLId(), "lightPos"), 1, glm::value_ptr(lightPosWorld));
 
         // Rocking chair parameters
         double frequency = 0.30;           // Rocking frequency (cycles per second)
@@ -597,7 +563,7 @@ int main(int argc, char *argv[])
         double radius = 0.3;              // Radius of the rocking base
 
         // Update dynamic only objects before rendering
-        for (auto& object : sceneObjects) {
+        for (auto& object : utils_scene::sceneObjects) {
             if (!object.isStatic) {
                 // we place here all objects that we want to move
                 if (object.name == "rocking_chair") {
@@ -609,7 +575,7 @@ int main(int argc, char *argv[])
                     glm::vec3 offsetPosition;
                     glm::vec3 rotation;
                     float rotationAngleRadians;
-                    GetRockingChairPositionAndRotation(
+                    utils_object::GetRockingChairPositionAndRotation(
                         adjustedTime,
                         frequency,
                         radius,
@@ -643,15 +609,15 @@ int main(int argc, char *argv[])
             glClear(GL_DEPTH_BUFFER_BIT);
 
             // Use the depth shader program
-            depthProgram.use();
-            glUniform1f(glGetUniformLocation(depthProgram.getGLId(), "farPlane"), farPlane);
-            glUniform3fv(glGetUniformLocation(depthProgram.getGLId(), "lightPos"), 1, glm::value_ptr(lightPosWorld));
+            depthShader.use();
+            glUniform1f(glGetUniformLocation(depthShader.getGLId(), "farPlane"), farPlane);
+            glUniform3fv(glGetUniformLocation(depthShader.getGLId(), "lightPos"), 1, glm::value_ptr(lightPosWorld));
 
             // Set the shadow matrix for the current face
-            glUniformMatrix4fv(glGetUniformLocation(depthProgram.getGLId(), "shadowMatrix"), 1, GL_FALSE, glm::value_ptr(shadowTransforms[i]));
+            glUniformMatrix4fv(glGetUniformLocation(depthShader.getGLId(), "shadowMatrix"), 1, GL_FALSE, glm::value_ptr(shadowTransforms[i]));
 
             // Render scene objects
-            for (const auto &object : sceneObjects) {
+            for (const auto &object : utils_scene::sceneObjects) {
                 glm::mat4 modelMatrix = glm::mat4(1.0f);
                 modelMatrix = glm::translate(modelMatrix, object.position);
                 if (object.rotationAngle != 0.0f) {
@@ -660,14 +626,14 @@ int main(int argc, char *argv[])
                 modelMatrix = glm::scale(modelMatrix, object.scale);
 
                 // Set model matrix for depth shader
-                glUniformMatrix4fv(glGetUniformLocation(depthProgram.getGLId(), "model"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+                glUniformMatrix4fv(glGetUniformLocation(depthShader.getGLId(), "model"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
 
                 glBindVertexArray(object.vaoID);
-                if (object.type == ObjectType::Cube) {
+                if (object.type == utils_scene::ObjectType::Cube) {
                     glDrawElements(GL_TRIANGLES, object.indexCount, GL_UNSIGNED_INT, 0);
-                } else if (object.type == ObjectType::Sphere) {
+                } else if (object.type == utils_scene::ObjectType::Sphere) {
                     glDrawArrays(GL_TRIANGLES, 0, object.indexCount);
-                } else if (object.type == ObjectType::Model) {
+                } else if (object.type == utils_scene::ObjectType::Model) {
                     glDrawElements(GL_TRIANGLES, object.indexCount, GL_UNSIGNED_INT, 0);
                 }
                 glBindVertexArray(0);
@@ -681,31 +647,31 @@ int main(int argc, char *argv[])
         glViewport(0, 0, window_width, window_height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        unifiedProgram.use();
+        unifiedShader.use();
 
         // Set light properties
         glUniform3fv(uLightPos_vsLocation, 1, glm::value_ptr(lightPosViewSpace));
         glUniform3fv(uLightIntensityLocation, 1, glm::value_ptr(lightIntensity));
 
         // Set the updated light space matrix
-        glUniformMatrix4fv(glGetUniformLocation(unifiedProgram.getGLId(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+        glUniformMatrix4fv(glGetUniformLocation(unifiedShader.getGLId(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 
         // Bind the depth cube map to texture unit 1
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap);
-        glUniform1i(glGetUniformLocation(unifiedProgram.getGLId(), "depthMap"), 1);
+        glUniform1i(glGetUniformLocation(unifiedShader.getGLId(), "depthMap"), 1);
 
         // Set light position in world space
-        glUniform3fv(glGetUniformLocation(unifiedProgram.getGLId(), "lightPosWorld"), 1, glm::value_ptr(lightPosWorld));
+        glUniform3fv(glGetUniformLocation(unifiedShader.getGLId(), "lightPosWorld"), 1, glm::value_ptr(lightPosWorld));
 
         // Set camera position in world space
-        glUniform3fv(glGetUniformLocation(unifiedProgram.getGLId(), "cameraPosWorld"), 1, glm::value_ptr(cameraPos));
+        glUniform3fv(glGetUniformLocation(unifiedShader.getGLId(), "cameraPosWorld"), 1, glm::value_ptr(cameraPos));
 
         // Set far plane
-        glUniform1f(glGetUniformLocation(unifiedProgram.getGLId(), "farPlane"), farPlane);
+        glUniform1f(glGetUniformLocation(unifiedShader.getGLId(), "farPlane"), farPlane);
 
         // Render all scene objects
-        for (const auto &object : sceneObjects)
+        for (const auto &object : utils_scene::sceneObjects)
         {
             glm::mat4 modelMatrix = glm::mat4(1.0f);
             modelMatrix = glm::translate(modelMatrix, object.position);
@@ -750,24 +716,24 @@ int main(int argc, char *argv[])
             {
                 glActiveTexture(GL_TEXTURE2); // Bind to texture unit 2 (or another unused unit)
                 glBindTexture(GL_TEXTURE_2D, object.normalMapID);
-                glUniform1i(glGetUniformLocation(unifiedProgram.getGLId(), "uNormalMap"), 2);
-                glUniform1f(glGetUniformLocation(unifiedProgram.getGLId(), "uUseNormalMap"), 1.0f);
+                glUniform1i(glGetUniformLocation(unifiedShader.getGLId(), "uNormalMap"), 2);
+                glUniform1f(glGetUniformLocation(unifiedShader.getGLId(), "uUseNormalMap"), 1.0f);
             }
             else
             {
-                glUniform1f(glGetUniformLocation(unifiedProgram.getGLId(), "uUseNormalMap"), 0.0f); // Disable normal map usage
+                glUniform1f(glGetUniformLocation(unifiedShader.getGLId(), "uUseNormalMap"), 0.0f); // Disable normal map usage
             }
 
             glBindVertexArray(object.vaoID);
-            if (object.type == ObjectType::Cube)
+            if (object.type == utils_scene::ObjectType::Cube)
             {
                 glDrawElements(GL_TRIANGLES, object.indexCount, GL_UNSIGNED_INT, 0);
             }
-            else if (object.type == ObjectType::Sphere)
+            else if (object.type == utils_scene::ObjectType::Sphere)
             {
                 glDrawArrays(GL_TRIANGLES, 0, object.indexCount);
             }
-            else if (object.type == ObjectType::Model)
+            else if (object.type == utils_scene::ObjectType::Model)
             {
                 glDrawElements(GL_TRIANGLES, object.indexCount, GL_UNSIGNED_INT, 0);
             }
@@ -798,7 +764,7 @@ int main(int argc, char *argv[])
             glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(mvMatrix)));
 
             // Use the unified shader program
-            unifiedProgram.use();
+            unifiedShader.use();
 
             // **Set transformation matrices**
             glUniformMatrix4fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
@@ -807,22 +773,22 @@ int main(int argc, char *argv[])
             glUniformMatrix3fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
             // **Set camera position in world space (for lighting calculations)**
-            glUniform3fv(glGetUniformLocation(unifiedProgram.getGLId(), "cameraPosWorld"), 1, glm::value_ptr(cameraPos));
+            glUniform3fv(glGetUniformLocation(unifiedShader.getGLId(), "cameraPosWorld"), 1, glm::value_ptr(cameraPos));
 
             // **Set light position in world space (even if not needed for the light sphere)**
-            glUniform3fv(glGetUniformLocation(unifiedProgram.getGLId(), "lightPosWorld"), 1, glm::value_ptr(lightPosWorld));
+            glUniform3fv(glGetUniformLocation(unifiedShader.getGLId(), "lightPosWorld"), 1, glm::value_ptr(lightPosWorld));
 
             // **Set light properties**
             glUniform3fv(uLightPos_vsLocation, 1, glm::value_ptr(lightPosViewSpace));
             glUniform3fv(uLightIntensityLocation, 1, glm::value_ptr(lightIntensity));
 
             // **Set far plane**
-            glUniform1f(glGetUniformLocation(unifiedProgram.getGLId(), "farPlane"), farPlane);
+            glUniform1f(glGetUniformLocation(unifiedShader.getGLId(), "farPlane"), farPlane);
 
             // Bind depth cube map
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap);
-            glUniform1i(glGetUniformLocation(unifiedProgram.getGLId(), "depthMap"), 1);
+            glUniform1i(glGetUniformLocation(unifiedShader.getGLId(), "depthMap"), 1);
 
             // Set material properties (emissive)
             glm::vec3 Kd = lightIntensity / 5.0f; // Adjustable
@@ -834,7 +800,7 @@ int main(int argc, char *argv[])
 
             // Disable textures
             glUniform1f(uUseTextureLocation, 0.0f);
-            glUniform1f(glGetUniformLocation(unifiedProgram.getGLId(), "uUseNormalMap"), 0.0f);
+            glUniform1f(glGetUniformLocation(unifiedShader.getGLId(), "uUseNormalMap"), 0.0f);
 
             // Draw the sphere
             glBindVertexArray(sphereVAO);

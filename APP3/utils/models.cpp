@@ -6,6 +6,8 @@
 #include <glm/gtc/constants.hpp> 
 #include <cmath> 
 
+namespace utils_object {
+
 void GetRockingChairPositionAndRotation(
     double currentTime,
     double frequency,
@@ -418,3 +420,5 @@ void setupModelBuffers(ModelData &modelData) {
 
     glBindVertexArray(0);
 }
+
+} // namespace utils_scene

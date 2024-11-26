@@ -1,5 +1,7 @@
 #include "scene_object.hpp"
 
+namespace utils_scene {
+
 std::vector<SceneObject> sceneObjects;
 
 void addCube(
@@ -142,3 +144,5 @@ void addModel(
 
     sceneObjects.push_back(obj);
 }
+
+} // namespace utils_scene
