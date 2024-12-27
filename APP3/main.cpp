@@ -9,6 +9,8 @@
 #include "utils/models.hpp"
 #include "utils/initialization.hpp"
 #include "utils/shader.hpp"
+#include "utils/rendering.hpp"
+#include "utils/lights.hpp"
 
 #include <src/stb_image.h>
 
@@ -66,13 +68,13 @@ int main(int argc, char *argv[])
 
     // Load shaders
     utils_loader::Shader unifiedShader(
-        applicationPath.dirPath() + "APP1/shaders/unified_shader.vs.glsl",
-        applicationPath.dirPath() + "APP1/shaders/pointlight.fs.glsl"
+        applicationPath.dirPath() + "APP3/shaders/unified_shader.vs.glsl",
+        applicationPath.dirPath() + "APP3/shaders/pointlight.fs.glsl"
     );
 
     utils_loader::Shader depthShader(
-        applicationPath.dirPath() + "APP1/shaders/point_shadow_depth.vs.glsl",
-        applicationPath.dirPath() + "APP1/shaders/point_shadow_depth.fs.glsl"
+        applicationPath.dirPath() + "APP3/shaders/point_shadow_depth.vs.glsl",
+        applicationPath.dirPath() + "APP3/shaders/point_shadow_depth.fs.glsl"
     );
 
     // check shaders
@@ -161,7 +163,7 @@ int main(int argc, char *argv[])
     // Light properties
     float spiralRadius = 3.0f; // Radius of the spiral
     float spiralSpeed = 1.0f;   // Speed of the spiral movement
-    float lightHeight = 5.0f;   // Height variation of the light
+    float fixedHeight = 5.0f;   // Height variation of the light
 
     // Light space matrix for shadows
     glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 50.0f);
@@ -354,6 +356,41 @@ int main(int argc, char *argv[])
         false
     );
 
+    // add a std::vector of simple point lights from namespace utils_light
+    std::vector<utils_light::SimplePointLight> simpleLights;
+
+    // Add a simple point light to the scene
+    int newLightID = utils_light::addLight(
+        simpleLights,
+        glm::vec3(5.0f, 4.0f, 9.0f), // position
+        glm::vec3(1.0f, 0.0f, 0.0f), // color
+        1.0f                         // intensity
+    );
+
+    // Add a simple point light to the scene 2
+    int newLightID2 = utils_light::addLight(
+        simpleLights,
+        glm::vec3(5.0f, 4.0f, 5.0f), // position
+        glm::vec3(0.0f, 0.0f, 1.0f), // color
+        1.0f                         // intensity
+    );
+
+    // update a light position during the loop
+    // utils_light::updateLightPosition(simpleLights, newLightID, glm::vec3(5.0f, 2.0f, 1.0f));
+
+    // change colro and intensity of the light
+    // utils_light::updateLightColor(simpleLights, newLightID, glm::vec3(0.2f, 1.0f, 0.2f));
+    // utils_light::updateLightIntensity(simpleLights, newLightID, 3.5f);
+
+    // remove the light from the scene
+    // bool lightRemoved = utils_light::removeLight(simpleLights, newLightID);
+    // if (lightRemoved) {
+    //     std::cout << "Light with ID " << newLightID << " removed from the scene." << std::endl;
+    // } else {
+    //     std::cerr << "Failed to remove light with ID " << newLightID << " from the scene." << std::endl;
+    // }
+
+
     // =======================
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -386,72 +423,16 @@ int main(int argc, char *argv[])
         SDL_SetWindowTitle(windowManager.getWindow(), newTitle.c_str());
 
         // Update light intensity dynamically within the loop
-        // glm::vec3 lightIntensity = glm::vec3(
-        //     (sin(currentFrame) + 1.0f) / 2.0f,       // Red oscillates between 0 and 1
-        //     (cos(currentFrame) + 1.0f) / 2.0f,       // Green oscillates between 0 and 1
-        //     (sin(currentFrame * 0.5f) + 1.0f) / 2.0f // Blue oscillates more slowly between 0 and 1
-        // );
+        glm::vec3 lightIntensity = glm::vec3(
+            (sin(currentFrame) + 1.0f) / 2.0f,       // Red oscillates between 0 and 1
+            (cos(currentFrame) + 1.0f) / 2.0f,       // Green oscillates between 0 and 1
+            (sin(currentFrame * 0.5f) + 1.0f) / 2.0f // Blue oscillates more slowly between 0 and 1
+        );
         // white light
-        glm::vec3 lightIntensity = glm::vec3(2.0f);
+        // glm::vec3 lightIntensity = glm::vec3(2.0f);
 
-        // Event handling
-        SDL_Event e;
-        while (windowManager.pollEvent(e))
-        {
-        if (e.type == SDL_QUIT)
-            {
-                done = true;
-            }
-            if (e.type == SDL_KEYDOWN)
-            {
-                if (e.key.keysym.sym == SDLK_ESCAPE)
-                {
-                    done = true;
-                }
-                else if (e.key.keysym.sym == SDLK_t)
-                {
-                    isRockingChairPaused = !isRockingChairPaused;
-                    if (isRockingChairPaused)
-                    {
-                        // Record the time when paused
-                        rockingChairPausedTime = currentFrame;
-                    }
-                    else
-                    {
-                        // Adjust the start time when unpausing
-                        double pauseDuration = currentFrame - rockingChairPausedTime;
-                        rockingChairStartTime += pauseDuration;
-                    }
-                }
-            }
-
-            // Mouse movement
-            if (e.type == SDL_MOUSEMOTION)
-            {
-                float xpos = e.motion.xrel;
-                float ypos = e.motion.yrel;
-
-                float sensitivity = 0.1f; // Adjust this value
-                xpos *= sensitivity;
-                ypos *= sensitivity;
-
-                yaw += xpos;
-                pitch -= ypos; // Invert y-axis if necessary
-
-                // Constrain pitch
-                if (pitch > 89.0f)
-                    pitch = 89.0f;
-                if (pitch < -89.0f)
-                    pitch = -89.0f;
-
-                // Update camera front vector
-                glm::vec3 front;
-                front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-                front.y = sin(glm::radians(pitch));
-                front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-                cameraFront = glm::normalize(front);
-            }
-        }
+        // even handler 
+        utils_game_loop::eventHandler(windowManager, done, isRockingChairPaused, rockingChairStartTime, rockingChairPausedTime, yaw, pitch, cameraFront, currentFrame);
 
         // Movement direction vectors projected onto the XZ-plane
         glm::vec3 frontDirection = glm::normalize(glm::vec3(cameraFront.x, 0.0f, cameraFront.z));
@@ -514,21 +495,16 @@ int main(int argc, char *argv[])
             cameraUp                 // Up vector
         );
 
-        // Update light position to move in a circle at a fixed height
-        float spiralRadius = 2.0f;     // Adjust the radius of the circle
-        float spiralSpeed = 0.5f;      // Adjust the speed of the rotation
-        float fixedHeight = 6.0f;      // Set the fixed height of the light
-
-        // glm::vec3 lightPosWorld;
-        // lightPosWorld.x = spiralRadius * cos(currentFrame * spiralSpeed);
-        // lightPosWorld.y = fixedHeight; // Fixed height
-        // lightPosWorld.z = spiralRadius * sin(currentFrame * spiralSpeed);
+        glm::vec3 lightPosWorld;
+        lightPosWorld.x = spiralRadius * cos(currentFrame * spiralSpeed);
+        lightPosWorld.y = fixedHeight; // Fixed height
+        lightPosWorld.z = spiralRadius * sin(currentFrame * spiralSpeed);
 
         // fixed light position
         // glm::vec3 lightPosWorld = glm::vec3(2.0f, 0.6f, 2.0f);
 
         // light position on the camera
-        glm::vec3 lightPosWorld = cameraPos + glm::vec3(0.0f, 1.0f, 0.0f); // Slightly elevate the light position above the camera
+        // glm::vec3 lightPosWorld = cameraPos + glm::vec3(0.0f, 1.0f, 0.0f); // Slightly elevate the light position above the camera
 
         // Transform light position to view space
         glm::vec3 lightPosViewSpace = glm::vec3(ViewMatrix * glm::vec4(lightPosWorld, 1.0f));
@@ -548,7 +524,7 @@ int main(int argc, char *argv[])
         shadowTransforms.push_back(shadowProj * glm::lookAt(lightPosWorld, lightPosWorld + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0)));
 
         // First Pass: Render scene from light's perspective to generate shadow map
-        glViewport(0, 0, 8192, 8192); // Match shadow map resolution
+        glViewport(0, 0, 4096, 4096); // Match shadow map resolution
         glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
         glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -562,39 +538,8 @@ int main(int argc, char *argv[])
         double length = 0.08;    // Maximum angle in degrees
         double radius = 0.3;              // Radius of the rocking base
 
-        // Update dynamic only objects before rendering
-        for (auto& object : utils_scene::sceneObjects) {
-            if (!object.isStatic) {
-                // we place here all objects that we want to move
-                if (object.name == "rocking_chair") {
-                    double adjustedTime = currentFrame - rockingChairStartTime;
-                    if (isRockingChairPaused) {
-                        adjustedTime = rockingChairPausedTime - rockingChairStartTime;
-                    }
-
-                    glm::vec3 offsetPosition;
-                    glm::vec3 rotation;
-                    float rotationAngleRadians;
-                    utils_object::GetRockingChairPositionAndRotation(
-                        adjustedTime,
-                        frequency,
-                        radius,
-                        length,
-                        offsetPosition,
-                        rotation
-                    );
-
-                    // Update position and rotation
-                    object.position = object.initialPosition + offsetPosition;
-
-                    object.rotationAngle = rotation.z; // Rotation around Z-axis
-                    object.rotationAxis = glm::vec3(1.0f, 0.0f, 0.0f); // Rotation around X-axis
-                }
-                // if (object.name == "") {
-                    
-                // }
-            }
-        }
+        // dynamic loop 
+        utils_game_loop::dynamic_loop(deltaTime, lastFrame, currentFrame, windowManager, cameraPos, cameraFront, cameraUp, cameraSpeed, done, isRockingChairPaused, rockingChairStartTime, rockingChairPausedTime, yaw, pitch, radius, frequency, radius, length, cameraHeight);
 
         // First Pass: Render scene to depth cube map
         for (unsigned int i = 0; i < 6; ++i) {
@@ -648,6 +593,41 @@ int main(int argc, char *argv[])
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         unifiedShader.use();
+
+        // simpel point lights here
+        int numLights = (int)simpleLights.size();
+        if (numLights > MAX_ADDITIONAL_LIGHTS) {
+            numLights = MAX_ADDITIONAL_LIGHTS;
+        }
+
+        GLint numLightsLoc = glGetUniformLocation(unifiedShader.getGLId(), "uNumAdditionalLights");
+        glUniform1i(numLightsLoc, numLights);
+
+        // 3) For each light, pass position, color, intensity
+        for (int i = 0; i < numLights; ++i) {
+            std::string idx = std::to_string(i);
+
+            // Position
+            GLint posLoc = glGetUniformLocation(
+                unifiedShader.getGLId(),
+                ("uAdditionalLightPos[" + idx + "]").c_str()
+            );
+            glUniform3fv(posLoc, 1, glm::value_ptr(simpleLights[i].position));
+
+            // Color
+            GLint colorLoc = glGetUniformLocation(
+                unifiedShader.getGLId(),
+                ("uAdditionalLightColor[" + idx + "]").c_str()
+            );
+            glUniform3fv(colorLoc, 1, glm::value_ptr(simpleLights[i].color));
+
+            // Intensity
+            GLint intenLoc = glGetUniformLocation(
+                unifiedShader.getGLId(),
+                ("uAdditionalLightIntensity[" + idx + "]").c_str()
+            );
+            glUniform1f(intenLoc, simpleLights[i].intensity);
+        }
 
         // Set light properties
         glUniform3fv(uLightPos_vsLocation, 1, glm::value_ptr(lightPosViewSpace));

@@ -30,34 +30,40 @@ assignment :
 
 ---
 
-**General:**
-- Develop a 3D real-time application in C++ using OpenGL 3+ (no fixed pipeline, use shaders). *Done*
-- Ensure the application runs on Linux and compiles with `g++` (tested on faculty machines). *I work on MacOS*
-- Handle window management and events. *Done*
-- Prevent memory leaks (use Valgrind for verification).
-- Maintain clean, well-commented code. *Done*
-- Use Git for version control and provide a `README.md` with build and usage instructions. *On github*
-- Implement user navigation in FPS mode with fixed height, including wall collision management. *Done*
-- Create a skybox visible from both rooms.
-- Implement functionality to:
-  - Exit the application via a keypress. *Done*
-  - Toggle 'wireframe' mode on/off with a keypress, using glPolygon-Mode
-  - Pause and restart the animation in room 1 via a keypress.
-  - Turn a light in room 1 on/off via a keypress.
+# Features to Implement
 
-**Room 1:**
-- Create at least two objects (including one original or imported `.obj`/`.ply` model).
-- Animate one object with a complex motion (beyond simple rotation).
-- Apply textures to at least one object. *Done*
-- Implement at least two light sources with a complex illumination model (e.g., Phong shading).
-- Ensure one light source is mobile, and its movement influences the illumination coherently. *Done*
-- Ensure lighting in room 1 does not influence room 2.
+ - C++ application with OpenGL 3+ (shaders, no fixed pipeline)
+ - Loading/importing of geometry or .obj/.ply models
+ - Skybox rendering (visible from anywhere, no ceiling)
+ - Two separate lighting/shader pipelines (one per room)
+ - Animated object in at least one room
+ - Mirror or transparency effect in one room
+ - Room-specific lighting (lights in one room do not affect the other)
+ - FPS camera with restricted vertical movement
+ - Collision detection for walls
 
-**Room 2:**
-- Create at least two objects (including one original or imported `.obj`/`.ply` model).
-- Implement an illumination model distinct from room 1 (can be simple or more elaborate).
-- Create a surface with transparency or a mirror effect (transparency with single/multiple layers or a mirror using advanced OpenGL techniques).
-- Ensure lighting in room 2 does not influence room 1.
+# Conditions (Assignment Constraints)
+
+## General Scene:
+
+ - Two rooms connected by a passage, as per the floor plan (strict geometry).
+ - Minimum two “exhibit” objects in each room.
+ - Skybox must be present (no ceilings).
+ - Must compile on Linux (no memory leaks, documented, uses Git).
+
+## Room 1:
+
+ - Uses a more “realistic” illumination model (e.g., Phong).
+ - At least one textured object.
+ - At least two lights (one movable), affecting only Room 1.
+ - Contains the animated object.
+
+## Room 2:
+
+ - Uses a different illumination model (can be simpler).
+ - Must have at least one surface with transparency or mirror.
+ - Lights (if any) affect only Room 2.
+
 
 **Map:**
 

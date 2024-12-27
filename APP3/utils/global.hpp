@@ -24,6 +24,11 @@ extern bool isRockingChairPaused;
 extern double rockingChairPausedTime;
 extern double rockingChairStartTime;
 
+extern float sensitivity;
+extern float currentFrame;
+
+extern int MAX_ADDITIONAL_LIGHTS;
+
 // Structure for 3D vertices with position, normal, and texture coordinates
 struct Vertex3D {
     glm::vec3 position;  // Vertex position
