@@ -161,9 +161,9 @@ int main(int argc, char *argv[])
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
     // Light properties
-    float spiralRadius = 3.0f; // Radius of the spiral
-    float spiralSpeed = 1.0f;   // Speed of the spiral movement
-    float fixedHeight = 5.0f;   // Height variation of the light
+    float spiralRadius = 2.0f;  // Radius of the spiral
+    float spiralSpeed = 0.5f;   // Speed of the spiral movement
+    float fixedHeight = 1.5f;   // Height variation of the light
 
     // Light space matrix for shadows
     glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 50.0f);
@@ -239,7 +239,7 @@ int main(int argc, char *argv[])
     // Add sphere to the scene
     utils_scene::addSphere(
         "soccer_ball",               // Name
-        glm::vec3(5.0f, 1.5f, 5.0f), // Position
+        glm::vec3(2.0f, 1.5f, 10.0f), // Position
         0.3f,                        // Radius
         glm::vec3(1.0f),             // Color (white)
         true,                        // Use texture
@@ -336,7 +336,7 @@ int main(int argc, char *argv[])
     rockingChairModelBoundingBox.max *= rockingChairModelScale;
 
     // Apply translation (position)
-    glm::vec3 rockingChairModelPosition(5.0f, 0.56f, 9.0f);
+    glm::vec3 rockingChairModelPosition(9.0f, 0.55f, 20.0f);
     rockingChairModelBoundingBox.min += rockingChairModelPosition;
     rockingChairModelBoundingBox.max += rockingChairModelPosition;
 
@@ -355,6 +355,51 @@ int main(int argc, char *argv[])
         0.0f,                                    // Rotation Angle
         false
     );
+
+    // add the torus model
+    utils_object::ModelData torusModelData;
+
+    std::string torusPath = applicationPath.dirPath() + "assets/models/Torus/Torus.obj";
+    std::string torusBasePath = applicationPath.dirPath() + "assets/models/Torus/";
+
+    if (!utils_object::loadOBJ(torusPath, torusBasePath, torusModelData)) {
+        std::cerr << "Failed to load Torus model." << std::endl;
+    } else {
+        std::cout << "Torus Model Loaded: "
+                << torusModelData.vertices.size() / 3 << " vertices, "
+                << torusModelData.indices.size() << " indices." << std::endl;
+    }
+
+    setupModelBuffers(torusModelData);
+
+    AABB torusBoundingBox = computeAABB(torusModelData.vertices);
+    // replace bounding box with new scale
+
+    glm::vec3 torusPosition(9.0f, 1.0f, 3.0f);
+    glm::vec3 torusScale(0.05f, 0.05f, 0.05f);
+
+    torusBoundingBox.min *= torusScale;
+    torusBoundingBox.max *= torusScale;
+
+    torusBoundingBox.min += torusPosition;
+    torusBoundingBox.max += torusPosition;
+
+    utils_scene::addModel(
+        "torus",                // Unique name
+        torusPosition,          // Position in world space
+        torusScale,             // Scale
+        false,                  // useTexture? (true if you have a texture)
+        0,                      // textureID if used
+        0,                      // normalMapID if used
+        torusModelData.vao,     // VAO from setupModelBuffers
+        static_cast<GLsizei>(torusModelData.indices.size()), // Index count
+        torusBoundingBox,       // bounding box
+        glm::vec3(0.0f, 1.0f, 0.0f), //  rotation axis
+        0.0f,                       //  rotation angle
+        true                       // isStatic?
+    );
+
+
 
     // add a std::vector of simple point lights from namespace utils_light
     std::vector<utils_light::SimplePointLight> simpleLights;
@@ -428,8 +473,12 @@ int main(int argc, char *argv[])
             (cos(currentFrame) + 1.0f) / 2.0f,       // Green oscillates between 0 and 1
             (sin(currentFrame * 0.5f) + 1.0f) / 2.0f // Blue oscillates more slowly between 0 and 1
         );
+        
         // white light
-        // glm::vec3 lightIntensity = glm::vec3(2.0f);
+        // glm::vec3 lightIntensity = glm::vec3(1.0f);
+
+        // green light
+        // glm::vec3 lightIntensity = glm::vec3(0.0f, 1.0f, 0.0f);
 
         // even handler 
         utils_game_loop::eventHandler(windowManager, done, isRockingChairPaused, rockingChairStartTime, rockingChairPausedTime, yaw, pitch, cameraFront, currentFrame);
@@ -495,10 +544,13 @@ int main(int argc, char *argv[])
             cameraUp                 // Up vector
         );
 
+        glm::vec3 spiralCenter(9.0f, 1.0f, 3.0f); // Center of the spiral
+
+        // Spiral movement around spiralCenter
         glm::vec3 lightPosWorld;
-        lightPosWorld.x = spiralRadius * cos(currentFrame * spiralSpeed);
-        lightPosWorld.y = fixedHeight; // Fixed height
-        lightPosWorld.z = spiralRadius * sin(currentFrame * spiralSpeed);
+        lightPosWorld.x = spiralCenter.x + spiralRadius * cos(currentFrame * spiralSpeed);
+        lightPosWorld.y = fixedHeight + spiralCenter.y;
+        lightPosWorld.z = spiralCenter.z + spiralRadius * sin(currentFrame * spiralSpeed);
 
         // fixed light position
         // glm::vec3 lightPosWorld = glm::vec3(2.0f, 0.6f, 2.0f);
@@ -603,7 +655,14 @@ int main(int argc, char *argv[])
         GLint numLightsLoc = glGetUniformLocation(unifiedShader.getGLId(), "uNumAdditionalLights");
         glUniform1i(numLightsLoc, numLights);
 
-        // 3) For each light, pass position, color, intensity
+        // convert to view space
+        std::vector<glm::vec3> additionalLightPosViewSpace;
+        for (const auto& light : simpleLights) {
+            glm::vec4 posView = ViewMatrix * glm::vec4(light.position, 1.0f);
+            additionalLightPosViewSpace.emplace_back(glm::vec3(posView));
+        }
+
+        // For each light, pass position, color, intensity
         for (int i = 0; i < numLights; ++i) {
             std::string idx = std::to_string(i);
 
@@ -612,7 +671,7 @@ int main(int argc, char *argv[])
                 unifiedShader.getGLId(),
                 ("uAdditionalLightPos[" + idx + "]").c_str()
             );
-            glUniform3fv(posLoc, 1, glm::value_ptr(simpleLights[i].position));
+            glUniform3fv(posLoc, 1, glm::value_ptr(additionalLightPosViewSpace[i]));
 
             // Color
             GLint colorLoc = glGetUniformLocation(

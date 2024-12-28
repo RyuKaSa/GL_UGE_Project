@@ -125,23 +125,21 @@ void main() {
     color = ambient + (1.0 - shadow) * color ;
 
     // Add additional point lights
-        vec3 additionalLightsColor = vec3(0.0);
+    vec3 additionalLightsColor = vec3(0.0);
 
     for (int i = 0; i < uNumAdditionalLights; ++i) {
-        // Direction from fragment to this extra light
-        vec3 toLight = uAdditionalLightPos[i] - vFragPosWorld;
+        // Direction from fragment to this extra light in view space
+        vec3 toLight = uAdditionalLightPos[i] - vFragPos; // Both in view space
         float dist = length(toLight);
         vec3 L = normalize(toLight);
 
-        // Simple Lambert or partial Blinn-Phong
+        // Lambertian diffuse
         float NdotL = max(dot(N, L), 0.0);
 
-        // Optional simple attenuation or not, e.g.:
+        // Attenuation factors
         float attenuation = 1.0 / (1.0 + 0.09 * dist + 0.032 * dist * dist);
 
-        // Combine color, intensity, and NdotL
-        // If you want a specular portion, replicate your blinnPhong logic for each
-        // but here’s a simpler approach:
+        // Diffuse component
         vec3 diffuse = uAdditionalLightColor[i] * NdotL * uAdditionalLightIntensity[i] * attenuation;
 
         additionalLightsColor += diffuse;
