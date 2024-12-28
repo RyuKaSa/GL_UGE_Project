@@ -67,9 +67,15 @@ int main(int argc, char *argv[])
     glimac::FilePath applicationPath(argv[0]);
 
     // Load shaders
-    utils_loader::Shader unifiedShader(
-        applicationPath.dirPath() + "APP3/shaders/unified_shader.vs.glsl",
-        applicationPath.dirPath() + "APP3/shaders/pointlight.fs.glsl"
+    utils_loader::Shader room1(
+        applicationPath.dirPath() + "APP3/shaders/room1.vs.glsl",
+        applicationPath.dirPath() + "APP3/shaders/room1.fs.glsl"
+    );
+
+    // room 2 is to be acticaved when camera position is in the second room, i.e., x > 20.5, no condition on z or y
+    utils_loader::Shader room2(
+        applicationPath.dirPath() + "APP3/shaders/room2.vs.glsl",
+        applicationPath.dirPath() + "APP3/shaders/room2.fs.glsl"
     );
 
     utils_loader::Shader depthShader(
@@ -77,13 +83,13 @@ int main(int argc, char *argv[])
         applicationPath.dirPath() + "APP3/shaders/point_shadow_depth.fs.glsl"
     );
 
-    // check shaders
-    if (unifiedShader.getID() == 0 || depthShader.getID() == 0) {
-        std::cerr << "Failed to compile/link shaders. Exiting." << std::endl;
+    // Check shaders
+    if (room1.getID() == 0 || room2.getID() == 0 || depthShader.getID() == 0) {
+        std::cerr << "Failed to compile/link one or more shaders. Exiting." << std::endl;
         return -1;
     }
 
-    unifiedShader.use();
+    room1.use();
     std::cout << "Unified shader program in use" << std::endl;
 
     // Load textures
@@ -105,31 +111,31 @@ int main(int argc, char *argv[])
     if (uDepth_LightSpaceMatrixLocation == -1)
         std::cerr << "Failed to get 'uLightSpaceMatrix' location in depth shader" << std::endl;
 
-    GLint uDepth_ModelMatrixLocation = unifiedShader.getUniformLocation("uModelMatrix");
+    GLint uDepth_ModelMatrixLocation = depthShader.getUniformLocation("model");
     if (uDepth_ModelMatrixLocation == -1)
-        std::cerr << "Failed to get 'uModelMatrix' location in depth shader" << std::endl;
+        std::cerr << "Failed to get 'model' location in depth shader" << std::endl;
 
     // Get uniform location for model matrix in unified shader
-    GLint uModelMatrixLocation = unifiedShader.getUniformLocation("uModelMatrix");
+    GLint uModelMatrixLocation = room1.getUniformLocation("uModelMatrix");
     if (uModelMatrixLocation == -1)
         std::cerr << "Failed to get 'uModelMatrix' location in unified shader" << std::endl;
 
     // Get uniform locations
-    unifiedShader.use();
+    room1.use();
     std::cout << "Shader program in use" << std::endl;
 
     // Get uniform locations
-    GLint uMVPMatrixLocation = glGetUniformLocation(unifiedShader.getGLId(), "uMVPMatrix");
-    GLint uMVMatrixLocation = glGetUniformLocation(unifiedShader.getGLId(), "uMVMatrix");
-    GLint uNormalMatrixLocation = glGetUniformLocation(unifiedShader.getGLId(), "uNormalMatrix");
-    GLint uTextureLocation = glGetUniformLocation(unifiedShader.getGLId(), "uTexture");
-    GLint uUseTextureLocation = glGetUniformLocation(unifiedShader.getGLId(), "uUseTexture");
+    GLint uMVPMatrixLocation = glGetUniformLocation(room1.getGLId(), "uMVPMatrix");
+    GLint uMVMatrixLocation = glGetUniformLocation(room1.getGLId(), "uMVMatrix");
+    GLint uNormalMatrixLocation = glGetUniformLocation(room1.getGLId(), "uNormalMatrix");
+    GLint uTextureLocation = glGetUniformLocation(room1.getGLId(), "uTexture");
+    GLint uUseTextureLocation = glGetUniformLocation(room1.getGLId(), "uUseTexture");
 
-    GLint uKdLocation = glGetUniformLocation(unifiedShader.getGLId(), "uKd");
-    GLint uKsLocation = glGetUniformLocation(unifiedShader.getGLId(), "uKs");
-    GLint uShininessLocation = glGetUniformLocation(unifiedShader.getGLId(), "uShininess");
-    GLint uLightPos_vsLocation = glGetUniformLocation(unifiedShader.getGLId(), "uLightPos_vs");
-    GLint uLightIntensityLocation = glGetUniformLocation(unifiedShader.getGLId(), "uLightIntensity");
+    GLint uKdLocation = glGetUniformLocation(room1.getGLId(), "uKd");
+    GLint uKsLocation = glGetUniformLocation(room1.getGLId(), "uKs");
+    GLint uShininessLocation = glGetUniformLocation(room1.getGLId(), "uShininess");
+    GLint uLightPos_vsLocation = glGetUniformLocation(room1.getGLId(), "uLightPos_vs");
+    GLint uLightIntensityLocation = glGetUniformLocation(room1.getGLId(), "uLightIntensity");
 
     // Sanity check
     if (uMVPMatrixLocation == -1)
@@ -152,6 +158,43 @@ int main(int argc, char *argv[])
     //     std::cerr << "Failed to get 'uLightDir_vs' location" << std::endl;
     if (uLightIntensityLocation == -1)
         std::cerr << "Failed to get 'uLightIntensity' location" << std::endl;
+
+    // Retrieve uniform locations for room2
+    room2.use();
+    std::cout << "Room2 shader program in use" << std::endl;
+
+    // Get uniform locations for room2
+    GLint room2_uMVPMatrixLocation = glGetUniformLocation(room2.getGLId(), "uMVPMatrix");
+    GLint room2_uMVMatrixLocation = glGetUniformLocation(room2.getGLId(), "uMVMatrix");
+    GLint room2_uNormalMatrixLocation = glGetUniformLocation(room2.getGLId(), "uNormalMatrix");
+    GLint room2_uTextureLocation = glGetUniformLocation(room2.getGLId(), "uTexture");
+    GLint room2_uUseTextureLocation = glGetUniformLocation(room2.getGLId(), "uUseTexture");
+
+    GLint room2_uKdLocation = glGetUniformLocation(room2.getGLId(), "uKd");
+    GLint room2_uKsLocation = glGetUniformLocation(room2.getGLId(), "uKs");
+    GLint room2_uShininessLocation = glGetUniformLocation(room2.getGLId(), "uShininess");
+    GLint room2_uLightPos_vsLocation = glGetUniformLocation(room2.getGLId(), "uLightPos_vs");
+    GLint room2_uLightIntensityLocation = glGetUniformLocation(room2.getGLId(), "uLightIntensity");
+
+    // Sanity check for room2 uniforms
+    if (room2_uMVPMatrixLocation == -1)
+        std::cerr << "Failed to get 'uMVPMatrix' location in room2 shader" << std::endl;
+    if (room2_uMVMatrixLocation == -1)
+        std::cerr << "Failed to get 'uMVMatrix' location in room2 shader" << std::endl;
+    if (room2_uNormalMatrixLocation == -1)
+        std::cerr << "Failed to get 'uNormalMatrix' location in room2 shader" << std::endl;
+    if (room2_uTextureLocation == -1)
+        std::cerr << "Failed to get 'uTexture' location in room2 shader" << std::endl;
+    if (room2_uUseTextureLocation == -1)
+        std::cerr << "Failed to get 'uUseTexture' location in room2 shader" << std::endl;
+    if (room2_uKdLocation == -1)
+        std::cerr << "Failed to get 'uKd' location in room2 shader" << std::endl;
+    if (room2_uKsLocation == -1)
+        std::cerr << "Failed to get 'uKs' location in room2 shader" << std::endl;
+    if (room2_uShininessLocation == -1)
+        std::cerr << "Failed to get 'uShininess' location in room2 shader" << std::endl;
+    if (room2_uLightIntensityLocation == -1)
+        std::cerr << "Failed to get 'uLightIntensity' location in room2 shader" << std::endl;
 
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
@@ -463,8 +506,8 @@ int main(int argc, char *argv[])
 
         // Update window title with camera position every frame
         // std::string newTitle = "Boules - FPS: " + std::to_string(fps) + " - Position: (" + std::to_string(cameraPos.x) + ", " + std::to_string(cameraPos.z) + ")";
-        // std::string newTitle = std::to_string(cameraPos.x) + ", " + std::to_string(cameraPos.z);
-        std::string newTitle = "FPS: " + std::to_string(fps);
+        std::string newTitle = std::to_string(cameraPos.x) + ", " + std::to_string(cameraPos.z);
+        // std::string newTitle = "FPS: " + std::to_string(fps);
         SDL_SetWindowTitle(windowManager.getWindow(), newTitle.c_str());
 
         // Update light intensity dynamically within the loop
@@ -473,7 +516,7 @@ int main(int argc, char *argv[])
             (cos(currentFrame) + 1.0f) / 2.0f,       // Green oscillates between 0 and 1
             (sin(currentFrame * 0.5f) + 1.0f) / 2.0f // Blue oscillates more slowly between 0 and 1
         );
-        
+
         // white light
         // glm::vec3 lightIntensity = glm::vec3(1.0f);
 
@@ -644,7 +687,18 @@ int main(int argc, char *argv[])
         glViewport(0, 0, window_width, window_height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        unifiedShader.use();
+        // room1.use();
+
+        // Set the shader program to use, room1 for x udner 20.5 and room2 for x over 20.5
+        utils_loader::Shader* currentRoom = &room1;
+
+        if (cameraPos.x < 20.5f) {
+            currentRoom = &room1;
+        } else {
+            currentRoom = &room2;
+        }
+
+        currentRoom->use();
 
         // simpel point lights here
         int numLights = (int)simpleLights.size();
@@ -652,7 +706,7 @@ int main(int argc, char *argv[])
             numLights = MAX_ADDITIONAL_LIGHTS;
         }
 
-        GLint numLightsLoc = glGetUniformLocation(unifiedShader.getGLId(), "uNumAdditionalLights");
+        GLint numLightsLoc = glGetUniformLocation(currentRoom->getGLId(), "uNumAdditionalLights");
         glUniform1i(numLightsLoc, numLights);
 
         // convert to view space
@@ -668,21 +722,21 @@ int main(int argc, char *argv[])
 
             // Position
             GLint posLoc = glGetUniformLocation(
-                unifiedShader.getGLId(),
+                currentRoom->getGLId(),
                 ("uAdditionalLightPos[" + idx + "]").c_str()
             );
             glUniform3fv(posLoc, 1, glm::value_ptr(additionalLightPosViewSpace[i]));
 
             // Color
             GLint colorLoc = glGetUniformLocation(
-                unifiedShader.getGLId(),
+                currentRoom->getGLId(),
                 ("uAdditionalLightColor[" + idx + "]").c_str()
             );
             glUniform3fv(colorLoc, 1, glm::value_ptr(simpleLights[i].color));
 
             // Intensity
             GLint intenLoc = glGetUniformLocation(
-                unifiedShader.getGLId(),
+                currentRoom->getGLId(),
                 ("uAdditionalLightIntensity[" + idx + "]").c_str()
             );
             glUniform1f(intenLoc, simpleLights[i].intensity);
@@ -693,21 +747,21 @@ int main(int argc, char *argv[])
         glUniform3fv(uLightIntensityLocation, 1, glm::value_ptr(lightIntensity));
 
         // Set the updated light space matrix
-        glUniformMatrix4fv(glGetUniformLocation(unifiedShader.getGLId(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+        glUniformMatrix4fv(glGetUniformLocation(currentRoom->getGLId(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 
         // Bind the depth cube map to texture unit 1
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap);
-        glUniform1i(glGetUniformLocation(unifiedShader.getGLId(), "depthMap"), 1);
+        glUniform1i(glGetUniformLocation(currentRoom->getGLId(), "depthMap"), 1);
 
         // Set light position in world space
-        glUniform3fv(glGetUniformLocation(unifiedShader.getGLId(), "lightPosWorld"), 1, glm::value_ptr(lightPosWorld));
+        glUniform3fv(glGetUniformLocation(currentRoom->getGLId(), "lightPosWorld"), 1, glm::value_ptr(lightPosWorld));
 
         // Set camera position in world space
-        glUniform3fv(glGetUniformLocation(unifiedShader.getGLId(), "cameraPosWorld"), 1, glm::value_ptr(cameraPos));
+        glUniform3fv(glGetUniformLocation(currentRoom->getGLId(), "cameraPosWorld"), 1, glm::value_ptr(cameraPos));
 
         // Set far plane
-        glUniform1f(glGetUniformLocation(unifiedShader.getGLId(), "farPlane"), farPlane);
+        glUniform1f(glGetUniformLocation(currentRoom->getGLId(), "farPlane"), farPlane);
 
         // Render all scene objects
         for (const auto &object : utils_scene::sceneObjects)
@@ -755,12 +809,12 @@ int main(int argc, char *argv[])
             {
                 glActiveTexture(GL_TEXTURE2); // Bind to texture unit 2 (or another unused unit)
                 glBindTexture(GL_TEXTURE_2D, object.normalMapID);
-                glUniform1i(glGetUniformLocation(unifiedShader.getGLId(), "uNormalMap"), 2);
-                glUniform1f(glGetUniformLocation(unifiedShader.getGLId(), "uUseNormalMap"), 1.0f);
+                glUniform1i(glGetUniformLocation(currentRoom->getGLId(), "uNormalMap"), 2);
+                glUniform1f(glGetUniformLocation(currentRoom->getGLId(), "uUseNormalMap"), 1.0f);
             }
             else
             {
-                glUniform1f(glGetUniformLocation(unifiedShader.getGLId(), "uUseNormalMap"), 0.0f); // Disable normal map usage
+                glUniform1f(glGetUniformLocation(currentRoom->getGLId(), "uUseNormalMap"), 0.0f); // Disable normal map usage
             }
 
             glBindVertexArray(object.vaoID);
@@ -803,7 +857,7 @@ int main(int argc, char *argv[])
             glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(mvMatrix)));
 
             // Use the unified shader program
-            unifiedShader.use();
+            currentRoom->use();
 
             // **Set transformation matrices**
             glUniformMatrix4fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
@@ -812,22 +866,22 @@ int main(int argc, char *argv[])
             glUniformMatrix3fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
             // **Set camera position in world space (for lighting calculations)**
-            glUniform3fv(glGetUniformLocation(unifiedShader.getGLId(), "cameraPosWorld"), 1, glm::value_ptr(cameraPos));
+            glUniform3fv(glGetUniformLocation(currentRoom->getGLId(), "cameraPosWorld"), 1, glm::value_ptr(cameraPos));
 
             // **Set light position in world space (even if not needed for the light sphere)**
-            glUniform3fv(glGetUniformLocation(unifiedShader.getGLId(), "lightPosWorld"), 1, glm::value_ptr(lightPosWorld));
+            glUniform3fv(glGetUniformLocation(currentRoom->getGLId(), "lightPosWorld"), 1, glm::value_ptr(lightPosWorld));
 
             // **Set light properties**
             glUniform3fv(uLightPos_vsLocation, 1, glm::value_ptr(lightPosViewSpace));
             glUniform3fv(uLightIntensityLocation, 1, glm::value_ptr(lightIntensity));
 
             // **Set far plane**
-            glUniform1f(glGetUniformLocation(unifiedShader.getGLId(), "farPlane"), farPlane);
+            glUniform1f(glGetUniformLocation(currentRoom->getGLId(), "farPlane"), farPlane);
 
             // Bind depth cube map
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap);
-            glUniform1i(glGetUniformLocation(unifiedShader.getGLId(), "depthMap"), 1);
+            glUniform1i(glGetUniformLocation(currentRoom->getGLId(), "depthMap"), 1);
 
             // Set material properties (emissive)
             glm::vec3 Kd = lightIntensity / 5.0f; // Adjustable
@@ -839,7 +893,7 @@ int main(int argc, char *argv[])
 
             // Disable textures
             glUniform1f(uUseTextureLocation, 0.0f);
-            glUniform1f(glGetUniformLocation(unifiedShader.getGLId(), "uUseNormalMap"), 0.0f);
+            glUniform1f(glGetUniformLocation(currentRoom->getGLId(), "uUseNormalMap"), 0.0f);
 
             // Draw the sphere
             glBindVertexArray(sphereVAO);
