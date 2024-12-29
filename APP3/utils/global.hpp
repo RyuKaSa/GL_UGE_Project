@@ -29,6 +29,8 @@ extern float currentFrame;
 
 extern int MAX_ADDITIONAL_LIGHTS;
 
+extern bool wireframeMode;
+
 // Structure for 3D vertices with position, normal, and texture coordinates
 struct Vertex3D {
     glm::vec3 position;  // Vertex position

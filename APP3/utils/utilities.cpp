@@ -65,6 +65,11 @@ void eventHandler(glimac::SDLWindowManager &windowManager, bool &done, bool &isR
                     rockingChairStartTime += pauseDuration;
                 }
             }
+            else if (e.key.keysym.sym == SDLK_y)
+            {
+                wireframeMode = !wireframeMode;
+                glPolygonMode(GL_FRONT_AND_BACK, wireframeMode ? GL_LINE : GL_FILL);
+            }
         }
 
         // Mouse movement
