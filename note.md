@@ -1,4 +1,8 @@
+# OpenGL Project keybinds
 
+ - 'ZQSD' for movement (azerty keyboard)
+ - 'Y' for wireframe toggle
+ - 'T' for chair animation toggle
 
 # 10-Nov-2024
 currently trying to separate the main file into several more digestable parts, for ease of maintenance and readability.
@@ -15,6 +19,12 @@ next steps will include :
  - import obj models
  - do the 2 rooms in minecraft 64x64 texture blocks
  - figure out the different vibes in each room (different shaders ?)
+
+# 30-Dec-2024
+I have been working on the project, but not updating the notes.
+In the meantime, I did the dual shader pipeline, the rrom2 shader is just a color inversion of the room1 shader, as proof of concept, I'll look into a dither effect or a toon shader.
+Also did the multiple point lights, they are also dynamic, can change color and position during the while loop. I did not implement shadows for these extra point lights, for both performance and complexity reasons, as the shadows are already a bonus feature.
+Wireframe toggle has been added.
 
 ## note
 
