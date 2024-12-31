@@ -23,6 +23,9 @@ uniform vec3 uKd;           // Diffuse reflection coefficient
 uniform vec3 uKs;           // Specular reflection coefficient
 uniform float uShininess;   // Shininess exponent
 
+// Transparency
+uniform float uAlpha;
+
 // Main light properties (in view space)
 uniform vec3 uLightPos_vs;    // Main light position in view space
 uniform vec3 uLightIntensity; // Main light intensity (color)
@@ -160,5 +163,5 @@ void main() {
     color += additionalLightsColor;
 
     // Output final fragment color (opaque)
-    FragColor = vec4(color, 1.0);
+    FragColor = vec4(color, uAlpha);
 }

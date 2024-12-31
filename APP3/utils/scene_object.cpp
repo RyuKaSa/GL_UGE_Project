@@ -1,190 +1,189 @@
+// scene_object.cpp
 #include "scene_object.hpp"
 
-namespace utils_scene {
+namespace utils_scene
+{
 
-std::vector<SceneObject> sceneObjects;
-std::vector<SceneObject> sceneObjectsTransparent;
+    std::vector<SceneObject> sceneObjects;
+    std::vector<SceneObject> sceneObjectsTransparent;
 
-void addCube(
-    const std::string& name,
-    const glm::vec3& position,
-    const glm::vec3& scale,
-    const glm::vec3& color,
-    bool useTexture,
-    GLuint textureID,
-    GLuint normalMapID,
-    const glm::vec3& rotationAxis,
-    float rotationAngle,
-    GLuint vaoID,
-    GLsizei indexCount,
-    bool isStatic
-) {
-    SceneObject cube;
-    cube.name = name;
-    cube.type = ObjectType::Cube;
-    cube.position = position;
-    cube.initialPosition = position;
-    cube.scale = scale;
-    cube.color = color;
-    cube.useTexture = useTexture;
-    cube.textureID = textureID;
-    cube.normalMapID = normalMapID;
-    cube.rotationAxis = rotationAxis;
-    cube.rotationAngle = rotationAngle;
-    cube.vaoID = vaoID;
-    cube.indexCount = indexCount;
-    cube.isStatic = isStatic;
+    void addCube(const std::string &name,
+                const glm::vec3 &position,
+                const glm::vec3 &scale,
+                const Material &material,
+                const glm::vec3 &rotationAxis,
+                float rotationAngle,
+                GLuint vaoID,
+                GLsizei indexCount,
+                bool isStatic)
+    {
+        SceneObject cube;
+        cube.name = name;
+        cube.type = ObjectType::Cube;
+        cube.position = position;
+        cube.initialPosition = position;
+        cube.scale = scale;
+        cube.rotationAxis = rotationAxis;
+        cube.rotationAngle = rotationAngle;
+        cube.vaoID = vaoID;
+        cube.indexCount = indexCount;
+        cube.isStatic = isStatic;
 
-    glm::vec3 halfSize = scale * 0.5f;
-    cube.boundingBox.min = position - halfSize;
-    cube.boundingBox.max = position + halfSize;
+        // Calculate bounding box
+        glm::vec3 halfSize = scale * 0.5f;
+        cube.boundingBox.min = position - halfSize;
+        cube.boundingBox.max = position + halfSize;
 
-    sceneObjects.push_back(cube);
-}
+        // Ensure material is reused
+        int materialIndex = MaterialManager::getInstance().findMaterial(material);
+        if (materialIndex == -1) {
+            materialIndex = MaterialManager::getInstance().addOrGetMaterial(material);
+        }
+        cube.materialIndex = materialIndex;
 
-// transparent cube
-void addTransparentCube(
-    const std::string& name,
-    const glm::vec3& position,
-    const glm::vec3& scale,
-    const glm::vec3& color,
-    bool useTexture,
-    GLuint textureID,
-    GLuint normalMapID,
-    const glm::vec3& rotationAxis,
-    float rotationAngle,
-    GLuint vaoID,
-    GLsizei indexCount,
-    bool isStatic,
-    float alpha
-) {
-    SceneObject cube;
-    cube.name = name;
-    cube.type = ObjectType::Cube;
-    cube.position = position;
-    cube.initialPosition = position;
-    cube.scale = scale;
-    cube.color = color;
-    cube.useTexture = useTexture;
-    cube.textureID = textureID;
-    cube.normalMapID = normalMapID;
-    cube.rotationAxis = rotationAxis;
-    cube.rotationAngle = rotationAngle;
-    cube.vaoID = vaoID;
-    cube.indexCount = indexCount;
-    cube.isStatic = isStatic;
-    cube.isTransparent = true;
-    cube.alpha = alpha;
+        sceneObjects.push_back(cube);
+    }
 
-    glm::vec3 halfSize = scale * 0.5f;
-    cube.boundingBox.min = position - halfSize;
-    cube.boundingBox.max = position + halfSize;
+    void addTransparentCube(const std::string &name,
+                            const glm::vec3 &position,
+                            const glm::vec3 &scale,
+                            const Material &material,
+                            const glm::vec3 &rotationAxis,
+                            float rotationAngle,
+                            GLuint vaoID,
+                            GLsizei indexCount,
+                            bool isStatic)
+    {
+        SceneObject cube;
+        cube.name = name;
+        cube.type = ObjectType::Cube;
+        cube.position = position;
+        cube.initialPosition = position;
+        cube.scale = scale;
+        cube.rotationAxis = rotationAxis;
+        cube.rotationAngle = rotationAngle;
+        cube.vaoID = vaoID;
+        cube.indexCount = indexCount;
+        cube.isStatic = isStatic;
 
-    sceneObjectsTransparent.push_back(cube);
-}
+        // Calculate bounding box
+        glm::vec3 halfSize = scale * 0.5f;
+        cube.boundingBox.min = position - halfSize;
+        cube.boundingBox.max = position + halfSize;
 
-void addSphere(
-    const std::string& name,
-    const glm::vec3& position,
-    float radius,
-    const glm::vec3& color,
-    bool useTexture,
-    GLuint textureID,
-    GLuint normalMapID,
-    GLuint vaoID,
-    GLsizei vertexCount,
-    bool isStatic
-) {
-    SceneObject sphereObject;
-    sphereObject.name = name;
-    sphereObject.type = ObjectType::Sphere;
-    sphereObject.position = position;
-    sphereObject.initialPosition = position;
-    sphereObject.scale = glm::vec3(radius);
-    sphereObject.color = color;
-    sphereObject.useTexture = useTexture;
-    sphereObject.textureID = textureID;
-    sphereObject.normalMapID = normalMapID;
-    sphereObject.vaoID = vaoID;
-    sphereObject.indexCount = vertexCount;
-    sphereObject.isStatic = isStatic;
+        // Assign material using MaterialManager
+        int materialIndex = MaterialManager::getInstance().findMaterial(material);
+        if (materialIndex == -1) {
+            materialIndex = MaterialManager::getInstance().addOrGetMaterial(material);
+        }
+        cube.materialIndex = materialIndex;
 
-    sphereObject.boundingBox.min = position - glm::vec3(radius);
-    sphereObject.boundingBox.max = position + glm::vec3(radius);
+        sceneObjectsTransparent.push_back(cube);
+    }
 
-    sceneObjects.push_back(sphereObject);
-}
+    void addSphere(const std::string &name,
+                   const glm::vec3 &position,
+                   float radius,
+                   const Material &material,
+                   GLuint vaoID,
+                   GLsizei vertexCount,
+                   bool isStatic)
+    {
+        SceneObject sphereObject;
+        sphereObject.name = name;
+        sphereObject.type = ObjectType::Sphere;
+        sphereObject.position = position;
+        sphereObject.initialPosition = position;
+        sphereObject.scale = glm::vec3(radius);
+        sphereObject.rotationAxis = glm::vec3(0.0f);
+        sphereObject.rotationAngle = 0.0f;
+        sphereObject.vaoID = vaoID;
+        sphereObject.indexCount = vertexCount;
+        sphereObject.isStatic = isStatic;
 
-void createCompositeCube(
-    const std::string& baseName,
-    const glm::vec3& origin,
-    const glm::vec3& size,
-    GLuint textureID,
-    GLuint normalMapID,
-    GLuint vaoID,
-    GLsizei indexCount,
-    bool isStatic
-) {
-    int numCubesX = static_cast<int>(size.x);
-    int numCubesY = static_cast<int>(size.y);
-    int numCubesZ = static_cast<int>(size.z);
+        // Calculate bounding box
+        sphereObject.boundingBox.min = position - glm::vec3(radius);
+        sphereObject.boundingBox.max = position + glm::vec3(radius);
 
-    for (int x = 0; x < numCubesX; ++x) {
-        for (int y = 0; y < numCubesY; ++y) {
-            for (int z = 0; z < numCubesZ; ++z) {
-                glm::vec3 position = origin + glm::vec3(x, y, z);
-                std::string name = baseName + "_" + std::to_string(x) + "_" + std::to_string(y) + "_" + std::to_string(z);
-                addCube(
-                    name,                       // Name
-                    position,                   // Position
-                    glm::vec3(1.0f),            // Scale (individual cubes are 1x1x1 units)
-                    glm::vec3(1.0f),            // Color (white, not used if texture is applied)
-                    true,                       // Use texture
-                    textureID,                  // Texture ID
-                    normalMapID,                // Normal map ID
-                    glm::vec3(0.0f),            // Rotation axis
-                    0.0f,                       // Rotation angle
-                    vaoID,                      // VAO ID
-                    indexCount,                 // Index count
-                    isStatic                    // Is static
-                );
+        // Assign material using MaterialManager
+        int materialIndex = MaterialManager::getInstance().findMaterial(material);
+        if (materialIndex == -1) {
+            materialIndex = MaterialManager::getInstance().addOrGetMaterial(material);
+        }
+        sphereObject.materialIndex = materialIndex;
+
+        sceneObjects.push_back(sphereObject);
+    }
+
+    void createCompositeCube(const std::string &name,
+                             const glm::vec3 &origin,
+                             const glm::vec3 &size,
+                             const Material &material,
+                             GLuint vaoID,
+                             GLsizei indexCount,
+                             bool isStatic)
+    {
+        int numCubesX = static_cast<int>(size.x);
+        int numCubesY = static_cast<int>(size.y);
+        int numCubesZ = static_cast<int>(size.z);
+
+        for (int x = 0; x < numCubesX; ++x)
+        {
+            for (int y = 0; y < numCubesY; ++y)
+            {
+                for (int z = 0; z < numCubesZ; ++z)
+                {
+                    glm::vec3 position = origin + glm::vec3(x, y, z);
+                    std::string cubeName = name + "_" + std::to_string(x) + "_" + std::to_string(y) + "_" + std::to_string(z);
+                    addCube(
+                        cubeName,        // Name
+                        position,        // Position
+                        glm::vec3(1.0f), // Scale (individual cubes are 1x1x1 units)
+                        material,        // Material
+                        glm::vec3(0.0f), // Rotation axis
+                        0.0f,            // Rotation angle
+                        vaoID,           // VAO ID
+                        indexCount,      // Index count
+                        isStatic         // Is static
+                    );
+                }
             }
         }
     }
-}
 
-void addModel(
-    const std::string& name,
-    const glm::vec3& position,
-    const glm::vec3& scale,
-    bool useTexture,
-    GLuint textureID,
-    GLuint normalMapID,
-    GLuint vaoID,
-    GLsizei indexCount,
-    const AABB& boundingBox,
-    const glm::vec3& rotationAxis,
-    float rotationAngle,
-    bool isStatic
-) {
-    SceneObject obj;
-    obj.name = name;
-    obj.type = ObjectType::Model;
-    obj.position = position;
-    obj.initialPosition = position;
-    obj.scale = scale;
-    obj.color = glm::vec3(1.0f); // Default color white
-    obj.useTexture = useTexture;
-    obj.textureID = textureID;
-    obj.normalMapID = normalMapID;
-    obj.rotationAxis = rotationAxis;
-    obj.rotationAngle = rotationAngle;
-    obj.boundingBox = boundingBox;
-    obj.vaoID = vaoID;
-    obj.indexCount = indexCount;
-    obj.isStatic = isStatic;
+    void addModel(const std::string &name,
+                  const glm::vec3 &position,
+                  const glm::vec3 &scale,
+                  const Material &material,
+                  GLuint vaoID,
+                  GLsizei indexCount,
+                  const AABB &boundingBox,
+                  const glm::vec3 &rotationAxis,
+                  float rotationAngle,
+                  bool isStatic)
+    {
+        SceneObject obj;
+        obj.name = name;
+        obj.type = ObjectType::Model;
+        obj.position = position;
+        obj.initialPosition = position;
+        obj.scale = scale;
+        obj.rotationAxis = rotationAxis;
+        obj.rotationAngle = rotationAngle;
+        obj.vaoID = vaoID;
+        obj.indexCount = indexCount;
+        obj.isStatic = isStatic;
 
-    sceneObjects.push_back(obj);
-}
+        obj.boundingBox = boundingBox;
+
+        // Assign material using MaterialManager
+        int materialIndex = MaterialManager::getInstance().findMaterial(material);
+        if (materialIndex == -1) {
+            materialIndex = MaterialManager::getInstance().addOrGetMaterial(material);
+        }
+        obj.materialIndex = materialIndex;
+
+        sceneObjects.push_back(obj);
+    }
 
 } // namespace utils_scene

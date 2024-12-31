@@ -11,6 +11,8 @@
 #include "utils/shader.hpp"
 #include "utils/rendering.hpp"
 #include "utils/lights.hpp"
+#include "utils/material.hpp"
+#include "utils/material_manager.hpp"
 
 #include <src/stb_image.h>
 
@@ -239,6 +241,158 @@ int main(int argc, char *argv[])
     float fpsTimer = 0.0f;
     int fps = 0;
 
+    // ====================
+    // create materials for the scene
+
+    // Define the alpha value for transparency
+    float alphaOpaque = 1.0f;   // Fully opaque
+    float alphaTransparent1 = 0.3f; // 30% opaque
+    float alphaTransparent2 = 0.5f; // 50% opaque
+
+    // Material for the floor and walls using stone texture
+    Material stoneMaterial;
+    stoneMaterial.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color (will be tinted by texture)
+    stoneMaterial.hasDiffuseMap = true;
+    stoneMaterial.diffuseMapID = stoneTextureID; 
+    stoneMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    stoneMaterial.shininess = 32.0f; // Shininess exponent
+    stoneMaterial.hasSpecularMap = false;
+    stoneMaterial.specularMapID = 0;
+    stoneMaterial.hasNormalMap = true;
+    stoneMaterial.normalMapID = stoneTextureID_normalMap; 
+    stoneMaterial.alpha = alphaOpaque; // Opaque
+
+    // Material for walls without stone texture but with general texture
+    Material wallMaterial;
+    wallMaterial.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
+    wallMaterial.hasDiffuseMap = true;
+    wallMaterial.diffuseMapID = textureID; 
+    wallMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    wallMaterial.shininess = 32.0f; // Shininess exponent
+    wallMaterial.hasSpecularMap = false; 
+    wallMaterial.specularMapID = 0;
+    wallMaterial.hasNormalMap = true;
+    wallMaterial.normalMapID = textureID_normalMap;
+    wallMaterial.alpha = alphaOpaque; // Opaque
+
+    // Material for separation walls with brown terracotta texture
+    Material terracottaMaterial;
+    terracottaMaterial.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
+    terracottaMaterial.hasDiffuseMap = true;
+    terracottaMaterial.diffuseMapID = brownTerracottaTextureID; 
+    terracottaMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    terracottaMaterial.shininess = 32.0f; // Shininess exponent
+    terracottaMaterial.hasSpecularMap = false;
+    terracottaMaterial.specularMapID = 0;
+    terracottaMaterial.hasNormalMap = true;
+    terracottaMaterial.normalMapID = brownTerracottaTextureID_normalMap;
+    terracottaMaterial.alpha = alphaOpaque; // Opaque
+
+    // Material for transparent cubes without textures
+    Material transparentMaterialNoTexture;
+    transparentMaterialNoTexture.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
+    transparentMaterialNoTexture.hasDiffuseMap = false;
+    transparentMaterialNoTexture.diffuseMapID = 0;
+    transparentMaterialNoTexture.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    transparentMaterialNoTexture.shininess = 32.0f; // Shininess exponent
+    transparentMaterialNoTexture.hasSpecularMap = false;
+    transparentMaterialNoTexture.specularMapID = 0;
+    transparentMaterialNoTexture.hasNormalMap = false;
+    transparentMaterialNoTexture.normalMapID = 0;
+    transparentMaterialNoTexture.alpha = alphaTransparent1; // 30% opaque
+
+    // Material for transparent cubes with textures
+    Material transparentMaterialWithTexture;
+    transparentMaterialWithTexture.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
+    transparentMaterialWithTexture.hasDiffuseMap = true;
+    transparentMaterialWithTexture.diffuseMapID = textureID; // Ensure textureID is loaded
+    transparentMaterialWithTexture.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    transparentMaterialWithTexture.shininess = 32.0f; // Shininess exponent
+    transparentMaterialWithTexture.hasSpecularMap = false; // Assuming no specular map
+    transparentMaterialWithTexture.specularMapID = 0;
+    transparentMaterialWithTexture.hasNormalMap = true;
+    transparentMaterialWithTexture.normalMapID = textureID_normalMap; // Ensure textureID_normalMap is loaded
+    transparentMaterialWithTexture.alpha = alphaTransparent2; // 50% opaque
+
+    // Material for the heater model (no textures)
+    Material heaterMaterial;
+    heaterMaterial.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
+    heaterMaterial.hasDiffuseMap = false;
+    heaterMaterial.diffuseMapID = 0;
+    heaterMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    heaterMaterial.shininess = 32.0f; // Shininess exponent
+    heaterMaterial.hasSpecularMap = false;
+    heaterMaterial.specularMapID = 0;
+    heaterMaterial.hasNormalMap = false;
+    heaterMaterial.normalMapID = 0;
+    heaterMaterial.alpha = alphaOpaque; // Opaque
+
+    // Material for the rocking chair model with textures
+    Material rockingChairMaterial;
+    rockingChairMaterial.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
+    rockingChairMaterial.hasDiffuseMap = true;
+    rockingChairMaterial.diffuseMapID = chairBaseColorTextureID;
+    rockingChairMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    rockingChairMaterial.shininess = 32.0f; // Shininess exponent
+    rockingChairMaterial.hasSpecularMap = false; // Assuming no specular map
+    rockingChairMaterial.specularMapID = 0;
+    rockingChairMaterial.hasNormalMap = true;
+    rockingChairMaterial.normalMapID = chairNormalMapTextureID;
+    rockingChairMaterial.alpha = alphaOpaque; // Opaque
+
+    // Material for the torus model (no textures)
+    Material torusMaterial;
+    torusMaterial.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
+    torusMaterial.hasDiffuseMap = false;
+    torusMaterial.diffuseMapID = 0;
+    torusMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    torusMaterial.shininess = 32.0f; // Shininess exponent
+    torusMaterial.hasSpecularMap = false;
+    torusMaterial.specularMapID = 0;
+    torusMaterial.hasNormalMap = false;
+    torusMaterial.normalMapID = 0;
+    torusMaterial.alpha = alphaOpaque; // Opaque
+
+    // Define the soccer ball material
+    Material soccerMaterial;
+    soccerMaterial.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
+    soccerMaterial.hasDiffuseMap = true;
+    soccerMaterial.diffuseMapID = soccerTextureID; // Ensure soccerTextureID is loaded
+    soccerMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    soccerMaterial.shininess = 32.0f; // Shininess exponent
+    soccerMaterial.hasSpecularMap = false; // Assuming no specular map
+    soccerMaterial.specularMapID = 0;
+    soccerMaterial.hasNormalMap = true;
+    soccerMaterial.normalMapID = soccerTextureID_normalMap; // Ensure soccerTextureID_normalMap is loaded
+    soccerMaterial.alpha = alphaOpaque;
+
+    // Define a reference to the MaterialManager singleton
+    MaterialManager& materialManager = MaterialManager::getInstance();
+
+    // Add materials to the MaterialManager function is addOrGetMaterial
+    materialManager.addOrGetMaterial(stoneMaterial);
+    materialManager.addOrGetMaterial(wallMaterial);
+    materialManager.addOrGetMaterial(terracottaMaterial);
+    materialManager.addOrGetMaterial(transparentMaterialNoTexture);
+    materialManager.addOrGetMaterial(transparentMaterialWithTexture);
+    materialManager.addOrGetMaterial(heaterMaterial);
+    materialManager.addOrGetMaterial(rockingChairMaterial);
+    materialManager.addOrGetMaterial(torusMaterial);
+    materialManager.addOrGetMaterial(soccerMaterial);
+
+
+    std::cout << "Materials created" << std::endl;
+    // After loading textures
+    for (const auto& material : materialManager.materials)
+    {
+        std::cout << "Material info " << std::endl;
+        std::cout << "  Material Index: " << (&material - &materialManager.materials[0]) << std::endl;
+        std::cout << "  Diffuse Map ID: " << material.diffuseMapID << std::endl;
+        std::cout << "  Normal Map ID: " << material.normalMapID << std::endl;
+    }
+    // print size of materials
+    std::cout << "Size of materials: " << materialManager.materials.size() << std::endl;
+
     // =======================
     // Scene objects creation
 
@@ -249,104 +403,144 @@ int main(int argc, char *argv[])
     // floor
     glm::vec3 origin(0.0f, 0.0f, 0.0f);
     glm::vec3 floorSize(42.0f, 1.0f, 24.0f);
-    utils_scene::createCompositeCube("floor", origin, floorSize, stoneTextureID, stoneTextureID_normalMap, cubeVAO, cubeIndexCount, true);
+    utils_scene::createCompositeCube(
+        "floor",                  // Name
+        origin,                   // Origin
+        floorSize,                // Size
+        stoneMaterial,            // Material
+        cubeVAO,                  // VAO ID
+        cubeIndexCount,           // Index count
+        true                      // Is static
+    );
 
     // wall X1
     glm::vec3 wallPosition1(0.0f, 1.0f, 0.0f);
     glm::vec3 wallSizeX(42.0f, 3.0f, 1.0f);
-    utils_scene::createCompositeCube("wall_X1", wallPosition1, wallSizeX, textureID, textureID_normalMap, cubeVAO, cubeIndexCount, true);
+    utils_scene::createCompositeCube(
+        "wall_X1",                // Name
+        wallPosition1,            // Position
+        wallSizeX,                // Size
+        wallMaterial,             // Material
+        cubeVAO,                  // VAO ID
+        cubeIndexCount,           // Index count
+        true                      // Is static
+    );
 
     // wall X2
     glm::vec3 wallPosition2(0.0f, 1.0f, 23.0f);
-    utils_scene::createCompositeCube("wall_X2", wallPosition2, wallSizeX, textureID, textureID_normalMap, cubeVAO, cubeIndexCount, true);
+    utils_scene::createCompositeCube(
+        "wall_X2",                // Name
+        wallPosition2,            // Position
+        wallSizeX,                // Size
+        wallMaterial,             // Material
+        cubeVAO,                  // VAO ID
+        cubeIndexCount,           // Index count
+        true                      // Is static
+    );
 
     // wall Z1
     glm::vec3 wallPosition3(0.0f, 1.0f, 1.0f);
     glm::vec3 wallSizeZ1(1.0f, 3.0f, 22.0f);
-    utils_scene::createCompositeCube("wall_Z1", wallPosition3, wallSizeZ1, textureID, textureID_normalMap, cubeVAO, cubeIndexCount, true);
+    utils_scene::createCompositeCube(
+        "wall_Z1",                // Name
+        wallPosition3,            // Position
+        wallSizeZ1,               // Size
+        wallMaterial,             // Material
+        cubeVAO,                  // VAO ID
+        cubeIndexCount,           // Index count
+        true                      // Is static
+    );
 
     // wall Z2
     glm::vec3 wallPosition4(41.0f, 1.0f, 1.0f);
-    utils_scene::createCompositeCube("wall_Z2",wallPosition4, wallSizeZ1, textureID, textureID_normalMap, cubeVAO, cubeIndexCount, true);
+    utils_scene::createCompositeCube(
+        "wall_Z2",                // Name
+        wallPosition4,            // Position
+        wallSizeZ1,               // Size
+        wallMaterial,             // Material
+        cubeVAO,                  // VAO ID
+        cubeIndexCount,           // Index count
+        true                      // Is static
+    );
+
 
     // separation wall, Z3
     glm::vec3 wallPosition5(20.0f, 1.0f, 1.0f);
     glm::vec3 wallSizeZ2(2.0f, 3.0f, 9.0f);
-    utils_scene::createCompositeCube("wall_Z3",wallPosition5, wallSizeZ2, brownTerracottaTextureID, brownTerracottaTextureID_normalMap, cubeVAO, cubeIndexCount, true);
+    utils_scene::createCompositeCube(
+        "wall_Z3",                // Name
+        wallPosition5,            // Position
+        wallSizeZ2,               // Size
+        terracottaMaterial,       // Material
+        cubeVAO,                  // VAO ID
+        cubeIndexCount,           // Index count
+        true                      // Is static
+    );
 
     // separation wall, Z4
     glm::vec3 wallPosition6(20.0f, 1.0f, 14.0f);
-    utils_scene::createCompositeCube("wall_Z4",wallPosition6, wallSizeZ2, brownTerracottaTextureID, brownTerracottaTextureID_normalMap, cubeVAO, cubeIndexCount, true);
+    utils_scene::createCompositeCube(
+        "wall_Z4",                // Name
+        wallPosition6,            // Position
+        wallSizeZ2,               // Size
+        terracottaMaterial,       // Material
+        cubeVAO,                  // VAO ID
+        cubeIndexCount,           // Index count
+        true                      // Is static
+    );
 
     // transparent cube in room 2
     glm::vec3 transparentCubePosition(32.0f, 2.0f, 10.0f);
     glm::vec3 transparentCubeSize(1.0f, 1.0f, 1.0f);
-
     utils_scene::addTransparentCube(
-        "transparent_cube",          // name
-        transparentCubePosition,     // position
-        transparentCubeSize,         // scale
-        glm::vec3(1.0f),             // color (white)
-        false,                       // useTexture (assuming no texture for transparency)
-        0,                           // textureID (0 if not using texture)
-        0,                           // normalMapID (0 if not using normal map)
-        glm::vec3(0.0f, 1.0f, 0.0f), // rotationAxis (Y-axis, no rotation initially)
-        0.0f,                        // rotationAngle (no rotation)
-        cubeVAO,                     // vaoID
-        cubeIndexCount,              // indexCount
-        true,                        // isStatic
-        0.3f                         // alpha (50% transparent)
+        "transparent_cube",          // Name
+        transparentCubePosition,     // Position
+        transparentCubeSize,         // Size
+        transparentMaterialNoTexture, // Material
+        glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
+        0.0f,                         // Rotation angle
+        cubeVAO,                      // VAO ID
+        cubeIndexCount,               // Index count
+        true                          // Is static
     );
 
     // second transparent cube in room 2
     glm::vec3 transparentCubePosition2(32.0f, 2.0f, 12.0f);
     utils_scene::addTransparentCube(
-        "transparent_cube2",          // name
-        transparentCubePosition2,     // position
-        transparentCubeSize,          // scale
-        glm::vec3(1.0f),              // color (white)
-        true,                        // useTexture 
-        textureID,                   // textureID 
-        textureID_normalMap,         // normalMapID 
-        glm::vec3(0.0f, 1.0f, 0.0f),  // rotationAxis (Y-axis, no rotation initially)
-        0.0f,                         // rotationAngle (no rotation)
-        cubeVAO,                      // vaoID
-        cubeIndexCount,               // indexCount
-        true,                         // isStatic
-        0.5f                          // alpha (50% transparent)
+        "transparent_cube2",          // Name
+        transparentCubePosition2,     // Position
+        transparentCubeSize,          // Size
+        transparentMaterialWithTexture, // Material
+        glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
+        0.0f,                         // Rotation angle
+        cubeVAO,                      // VAO ID
+        cubeIndexCount,               // Index count
+        true                          // Is static
     );
 
     // third transparent cube in room 2
     glm::vec3 transparentCubePosition3(32.0f, 2.0f, 14.0f);
     utils_scene::addTransparentCube(
-        "transparent_cube3",          // name
-        transparentCubePosition3,     // position
-        transparentCubeSize,          // scale
-        glm::vec3(1.0f),              // color (white)
-        true,                        // useTexture 
-        textureID,                   // textureID 
-        textureID_normalMap,         // normalMapID 
-        glm::vec3(0.0f, 1.0f, 0.0f),  // rotationAxis (Y-axis, no rotation initially)
-        0.0f,                         // rotationAngle (no rotation)
-        cubeVAO,                      // vaoID
-        cubeIndexCount,               // indexCount
-        true,                         // isStatic
-        0.5f                          // alpha (50% transparent)
+        "transparent_cube3",          // Name
+        transparentCubePosition3,     // Position
+        transparentCubeSize,          // Size
+        transparentMaterialWithTexture, // Material
+        glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
+        0.0f,                         // Rotation angle
+        cubeVAO,                      // VAO ID
+        cubeIndexCount,               // Index count
+        true                          // Is static
     );
 
     // load a soccer ball as sophisticated object
-    // Add sphere to the scene
     utils_scene::addSphere(
-        "soccer_ball",               // Name
-        glm::vec3(2.0f, 1.5f, 10.0f), // Position
-        0.3f,                        // Radius
-        glm::vec3(1.0f),             // Color (white)
-        true,                        // Use texture
-        soccerTextureID,             // Texture ID
-        soccerTextureID_normalMap,   // Normal map ID
-        sphereVAO,                   // VAO ID
-        sphereVertexCount,           // Vertex count
-        true                         // Is static
+        "soccer_ball",                 // Name
+        glm::vec3(2.0f, 1.5f, 10.0f),  // Position
+        0.3f,                          // Radius
+        soccerMaterial,                // Material
+        sphereVAO,                     // VAO ID
+        sphereVertexCount,             // Vertex count
+        true                           // Is static
     );
 
     // Load the Heater .obj model
@@ -376,20 +570,18 @@ int main(int argc, char *argv[])
     heaterModelBoundingBox.min += heaterModelPosition;
     heaterModelBoundingBox.max += heaterModelPosition;
 
-    // Add Heater Model to Scene Objects
+    // Add the heater model with the material
     utils_scene::addModel(
         "heater",                         // Name
-        heaterModelPosition,               // Position
-        heaterModelScale,                  // Scale
-        false,                       // Use texture
-        0,
-        0,                           // Normal Map ID (if any; set to 0 if none)
-        heaterModelData.vao,               // VAO ID
+        heaterModelPosition,              // Position
+        heaterModelScale,                 // Scale
+        heaterMaterial,                   // Material
+        heaterModelData.vao,              // VAO ID
         static_cast<GLsizei>(heaterModelData.indices.size()), // Index Count
-        heaterModelBoundingBox,            // Bounding Box
-        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation Axis (Y-axis)
-        0.0f,                        // Rotation Angle
-        true
+        heaterModelBoundingBox,           // Bounding Box
+        glm::vec3(0.0f, 1.0f, 0.0f),      // Rotation Axis (Y-axis)
+        0.0f,                             // Rotation Angle
+        true                              // Is static
     );
 
     // Load the Rocking Chair model
@@ -441,18 +633,16 @@ int main(int argc, char *argv[])
 
     // Add Rocking Chair Model to Scene Objects
     utils_scene::addModel(
-        "rocking_chair",                         // Name
-        rockingChairModelPosition,               // Position
-        rockingChairModelScale,                  // Scale
-        true,                                    // Use texture
-        baseColorTextureID,                      // Texture ID (Base Color)
-        normalMapTextureID,                      // Normal Map ID
-        rockingChairModelData.vao,               // VAO ID
+        "rocking_chair",                  // Name
+        rockingChairModelPosition,        // Position
+        rockingChairModelScale,           // Scale
+        rockingChairMaterial,             // Material
+        rockingChairModelData.vao,        // VAO ID
         static_cast<GLsizei>(rockingChairModelData.indices.size()), // Index Count
-        rockingChairModelBoundingBox,            // Bounding Box
-        glm::vec3(0.0f, 0.0f, 0.0f),             // Rotation Axis (Y-axis)
-        0.0f,                                    // Rotation Angle
-        false
+        rockingChairModelBoundingBox,     // Bounding Box
+        glm::vec3(0.0f, 0.0f, 0.0f),      // Rotation Axis (no rotation)
+        0.0f,                             // Rotation Angle
+        false                             // Is static
     );
 
     // add the torus model
@@ -484,21 +674,17 @@ int main(int argc, char *argv[])
     torusBoundingBox.max += torusPosition;
 
     utils_scene::addModel(
-        "torus",                // Unique name
-        torusPosition,          // Position in world space
-        torusScale,             // Scale
-        false,                  // useTexture? (true if you have a texture)
-        0,                      // textureID if used
-        0,                      // normalMapID if used
-        torusModelData.vao,     // VAO from setupModelBuffers
-        static_cast<GLsizei>(torusModelData.indices.size()), // Index count
-        torusBoundingBox,       // bounding box
-        glm::vec3(0.0f, 1.0f, 0.0f), //  rotation axis
-        0.0f,                       //  rotation angle
-        true                       // isStatic?
+        "torus",                        // Name
+        torusPosition,                  // Position
+        torusScale,                     // Scale
+        torusMaterial,                  // Material
+        torusModelData.vao,             // VAO ID
+        static_cast<GLsizei>(torusModelData.indices.size()), // Index Count
+        torusBoundingBox,               // Bounding Box
+        glm::vec3(0.0f, 1.0f, 0.0f),    // Rotation Axis (Y-axis)
+        0.0f,                           // Rotation Angle
+        true                            // Is static
     );
-
-
 
     // add a std::vector of simple point lights from namespace utils_light
     std::vector<utils_light::SimplePointLight> simpleLights;
@@ -550,7 +736,6 @@ int main(int argc, char *argv[])
     //     std::cerr << "Failed to remove light with ID " << newLightID << " from the scene." << std::endl;
     // }
 
-
     // =======================
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -577,8 +762,8 @@ int main(int argc, char *argv[])
         }
 
         // Update window title with camera position every frame
-        // std::string newTitle = "Boules - FPS: " + std::to_string(fps) + " - Position: (" + std::to_string(cameraPos.x) + ", " + std::to_string(cameraPos.z) + ")";
-        std::string newTitle = std::to_string(cameraPos.x) + ", " + std::to_string(cameraPos.z);
+        std::string newTitle = "Boules - FPS: " + std::to_string(fps) + " - Position: (" + std::to_string(cameraPos.x) + ", " + std::to_string(cameraPos.z) + ")";
+        // std::string newTitle = std::to_string(cameraPos.x) + ", " + std::to_string(cameraPos.z);
         // std::string newTitle = "FPS: " + std::to_string(fps);
         SDL_SetWindowTitle(windowManager.getWindow(), newTitle.c_str());
 
@@ -757,9 +942,8 @@ int main(int argc, char *argv[])
 
         // Second Pass: Render the scene normally with point light
         glViewport(0, 0, window_width, window_height);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // room1.use();
 
         // Set the shader program to use, room1 for x udner 20.5 and room2 for x over 20.5
         utils_loader::Shader* currentRoom = &room1;
@@ -865,6 +1049,7 @@ int main(int argc, char *argv[])
                 });
         }
 
+
         // Render all scene objects (opaque)
         for (const auto &object : utils_scene::sceneObjects)
         {
@@ -892,37 +1077,79 @@ int main(int argc, char *argv[])
             //     glUniform1f(uAlphaLocation, 1.0f);
             // }
 
-            // Set material properties
-            glm::vec3 Kd = glm::vec3(0.6f); // Fixed diffuse color (e.g., gray)
-            glm::vec3 Ks = glm::vec3(0.3f); // Fixed specular color
-            float shininess = 32.0f;        // Moderate shininess
-            glUniform3fv(uKdLocation, 1, glm::value_ptr(Kd));
-            glUniform3fv(uKsLocation, 1, glm::value_ptr(Ks));
-            glUniform1f(uShininessLocation, shininess);
+            // Retrieve the material from the object
+            const Material& mat = materialManager.getMaterial(object.materialIndex);
+            // print material properties once
+            if (object.name == "transparent_cube1") {
+                std::cout << "Material Properties for " << object.name << std::endl;
+                std::cout << "  has diffuse map: " << mat.hasDiffuseMap << std::endl;
+                std::cout << "  Diffuse: " << mat.Kd << std::endl;
+                std::cout << "  Specular: " << mat.Ks << std::endl;
+                std::cout << "  Shininess: " << mat.shininess << std::endl;
+                std::cout << "  Alpha: " << mat.alpha << std::endl;
+            }
 
-            // Handle textures
-            if (object.useTexture && object.textureID != 0)
-            {
+            // 1) Diffuse color
+            if (uKdLocation != -1) {
+                glUniform3fv(uKdLocation, 1, glm::value_ptr(mat.Kd));
+            }
+            else {
+                std::cerr << "Warning: 'uKd' uniform not found.\n";
+            }
+
+            // 2) Specular color
+            if (uKsLocation != -1) {
+                glUniform3fv(uKsLocation, 1, glm::value_ptr(mat.Ks));
+            }
+            else {
+                std::cerr << "Warning: 'uKs' uniform not found.\n";
+            }
+
+            // 3) Shininess
+            if (uShininessLocation != -1) {
+                glUniform1f(uShininessLocation, mat.shininess);
+            }
+
+            // 4) Alpha (if your shader uses it)
+            GLint uAlphaLoc = glGetUniformLocation(currentRoom->getGLId(), "uAlpha");
+            if (uAlphaLoc != -1) {
+                glUniform1f(uAlphaLoc, mat.alpha);
+            }
+
+            // 5) Diffuse Map
+            if (mat.hasDiffuseMap && mat.diffuseMapID != 0) {
                 glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, object.textureID);
-                glUniform1i(uTextureLocation, 0); // Ensure the texture sampler uses the correct unit
-                glUniform1f(uUseTextureLocation, 1.0f);
+                glBindTexture(GL_TEXTURE_2D, mat.diffuseMapID);
+                if (uTextureLocation != -1) {
+                    glUniform1i(uTextureLocation, 0); // sampler in shader uses texture unit 0
+                }
+                if (uUseTextureLocation != -1) {
+                    glUniform1f(uUseTextureLocation, 1.0f);
+                }
             }
-            else
-            {
-                glUniform1f(uUseTextureLocation, 0.0f);
+            else {
+                if (uUseTextureLocation != -1) {
+                    glUniform1f(uUseTextureLocation, 0.0f);
+                }
             }
 
-            if (object.normalMapID != 0)
-            {
-                glActiveTexture(GL_TEXTURE2); // Bind to texture unit 2 (or another unused unit)
-                glBindTexture(GL_TEXTURE_2D, object.normalMapID);
-                glUniform1i(glGetUniformLocation(currentRoom->getGLId(), "uNormalMap"), 2);
-                glUniform1f(glGetUniformLocation(currentRoom->getGLId(), "uUseNormalMap"), 1.0f);
+            // 6) Normal Map
+            GLint uNormalMapLoc     = glGetUniformLocation(currentRoom->getGLId(), "uNormalMap");
+            GLint uUseNormalMapLoc  = glGetUniformLocation(currentRoom->getGLId(), "uUseNormalMap");
+            if (mat.hasNormalMap && mat.normalMapID != 0) {
+                glActiveTexture(GL_TEXTURE2);
+                glBindTexture(GL_TEXTURE_2D, mat.normalMapID);
+                if (uNormalMapLoc != -1) {
+                    glUniform1i(uNormalMapLoc, 2); // normal map uses texture unit 2
+                }
+                if (uUseNormalMapLoc != -1) {
+                    glUniform1f(uUseNormalMapLoc, 1.0f);
+                }
             }
-            else
-            {
-                glUniform1f(glGetUniformLocation(currentRoom->getGLId(), "uUseNormalMap"), 0.0f); // Disable normal map usage
+            else {
+                if (uUseNormalMapLoc != -1) {
+                    glUniform1f(uUseNormalMapLoc, 0.0f);
+                }
             }
 
             glBindVertexArray(object.vaoID);
@@ -940,20 +1167,20 @@ int main(int argc, char *argv[])
             }
 
             // Unbind textures if they are used
-            if (object.useTexture && object.textureID != 0)
+            if (mat.hasDiffuseMap && mat.diffuseMapID != 0)
             {
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, 0); // Unbind base texture
+                glBindTexture(GL_TEXTURE_2D, 0);
             }
-            if (object.normalMapID != 0)
+        
+            if (mat.hasNormalMap && mat.normalMapID != 0)
             {
-                glActiveTexture(GL_TEXTURE2);
-                glBindTexture(GL_TEXTURE_2D, 0); // Unbind normal map texture
-            }
+                glBindTexture(GL_TEXTURE_2D, 0);
+            }   
         }
 
         // Disable face culling to render both front and back faces
         // glDisable(GL_CULL_FACE);
+        // Render all transparent objects
 
         // Render all transparent objects
         if (inRoom2 && !utils_scene::sceneObjectsTransparent.empty())
@@ -961,13 +1188,27 @@ int main(int argc, char *argv[])
             // Enable blending
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glDepthMask(GL_FALSE); // Disable depth writing
+
+            // Disable depth writing so transparent objects blend with background
+            glDepthMask(GL_FALSE);
 
             for (const auto &object : utils_scene::sceneObjectsTransparent)
             {
-                // Set 'uAlpha' uniform
-                if (uAlphaLocation != -1) {
-                    glUniform1f(uAlphaLocation, object.alpha);
+                // Check material index validity
+                if (object.materialIndex < 0 
+                    || object.materialIndex >= static_cast<int>(materialManager.materials.size()))
+                {
+                    std::cerr << "Invalid material index for object: " << object.name << std::endl;
+                    continue; // Skip rendering this object
+                }
+
+                // Retrieve the material from the manager
+                const Material &mat = materialManager.getMaterial(object.materialIndex);
+
+                // Set alpha uniform from Material (uAlpha)
+                if (uAlphaLocation != -1)
+                {
+                    glUniform1f(uAlphaLocation, mat.alpha);
                 }
 
                 // Calculate model matrix
@@ -979,51 +1220,72 @@ int main(int argc, char *argv[])
                 }
                 modelMatrix = glm::scale(modelMatrix, object.scale);
 
-                glm::mat4 mvMatrix = ViewMatrix * modelMatrix;
+                glm::mat4 mvMatrix  = ViewMatrix * modelMatrix;
                 glm::mat4 mvpMatrix = ProjMatrix * mvMatrix;
                 glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(mvMatrix)));
 
-                // Set uniforms
+                // Set transform uniforms
                 glUniformMatrix4fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
-                glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
-                glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
-                glUniformMatrix3fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+                glUniformMatrix4fv(uMVMatrixLocation,    1, GL_FALSE, glm::value_ptr(mvMatrix));
+                glUniformMatrix4fv(uMVPMatrixLocation,   1, GL_FALSE, glm::value_ptr(mvpMatrix));
+                glUniformMatrix3fv(uNormalMatrixLocation,1, GL_FALSE, glm::value_ptr(normalMatrix));
 
-                // Set material properties
-                glm::vec3 Kd = object.color; // Use object's color
-                glm::vec3 Ks = glm::vec3(0.3f); // Example specular color
-                float shininess = 32.0f;
-                glUniform3fv(uKdLocation, 1, glm::value_ptr(Kd));
-                glUniform3fv(uKsLocation, 1, glm::value_ptr(Ks));
-                glUniform1f(uShininessLocation, shininess);
+                // 1) Diffuse color
+                if (uKdLocation != -1) {
+                    glUniform3fv(uKdLocation, 1, glm::value_ptr(mat.Kd));
+                }
 
-                // keep textures for transparent cubes if bool is true
-                if (object.useTexture && object.textureID != 0)
+                // 2) Specular color
+                if (uKsLocation != -1) {
+                    glUniform3fv(uKsLocation, 1, glm::value_ptr(mat.Ks));
+                }
+
+                // 3) Shininess
+                if (uShininessLocation != -1) {
+                    glUniform1f(uShininessLocation, mat.shininess);
+                }
+
+                // 4) Diffuse texture
+                if (mat.hasDiffuseMap && mat.diffuseMapID != 0)
                 {
                     glActiveTexture(GL_TEXTURE0);
-                    glBindTexture(GL_TEXTURE_2D, object.textureID);
-                    glUniform1i(uTextureLocation, 0);
-                    glUniform1f(uUseTextureLocation, 1.0f);
+                    glBindTexture(GL_TEXTURE_2D, mat.diffuseMapID);
+                    if (uTextureLocation != -1) {
+                        glUniform1i(uTextureLocation, 0);
+                    }
+                    if (uUseTextureLocation != -1) {
+                        glUniform1f(uUseTextureLocation, 1.0f);
+                    }
                 }
                 else
                 {
-                    glUniform1f(uUseTextureLocation, 0.0f);
+                    if (uUseTextureLocation != -1) {
+                        glUniform1f(uUseTextureLocation, 0.0f);
+                    }
                 }
 
-                // Handle normal maps
-                if (object.normalMapID != 0)
+                // 5) Normal map
+                GLint uNormalMapLoc    = glGetUniformLocation(currentRoom->getGLId(), "uNormalMap");
+                GLint uUseNormalMapLoc = glGetUniformLocation(currentRoom->getGLId(), "uUseNormalMap");
+                if (mat.hasNormalMap && mat.normalMapID != 0)
                 {
                     glActiveTexture(GL_TEXTURE2);
-                    glBindTexture(GL_TEXTURE_2D, object.normalMapID);
-                    glUniform1i(glGetUniformLocation(currentRoom->getGLId(), "uNormalMap"), 2);
-                    glUniform1f(glGetUniformLocation(currentRoom->getGLId(), "uUseNormalMap"), 1.0f);
+                    glBindTexture(GL_TEXTURE_2D, mat.normalMapID);
+                    if (uNormalMapLoc != -1) {
+                        glUniform1i(uNormalMapLoc, 2);
+                    }
+                    if (uUseNormalMapLoc != -1) {
+                        glUniform1f(uUseNormalMapLoc, 1.0f);
+                    }
                 }
                 else
                 {
-                    glUniform1f(glGetUniformLocation(currentRoom->getGLId(), "uUseNormalMap"), 0.0f);
+                    if (uUseNormalMapLoc != -1) {
+                        glUniform1f(uUseNormalMapLoc, 0.0f);
+                    }
                 }
 
-                // Bind VAO and draw
+                // Draw transparent object
                 glBindVertexArray(object.vaoID);
                 if (object.type == utils_scene::ObjectType::Cube)
                 {
@@ -1038,17 +1300,32 @@ int main(int argc, char *argv[])
                     glDrawElements(GL_TRIANGLES, object.indexCount, GL_UNSIGNED_INT, 0);
                 }
                 glBindVertexArray(0);
+
+                // (Optional) unbind textures afterwards
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, 0);
+                glActiveTexture(GL_TEXTURE2);
+                glBindTexture(GL_TEXTURE_2D, 0);
             }
 
-            // Restore depth writing and disable blending
+            // Restore depth writing
             glDepthMask(GL_TRUE);
             glDisable(GL_BLEND);
 
-            // Reset 'uAlpha' to default if necessary
+            // Reset alpha to default if needed
             if (uAlphaLocation != -1) {
                 glUniform1f(uAlphaLocation, 1.0f);
             }
         }
+
+        // for (const auto &object : utils_scene::sceneObjects) {
+        //     std::cout << "Object: " << object.name << ", Material Index: " << object.materialIndex << std::endl;
+        //     const Material& mat = materialManager.getMaterial(object.materialIndex);
+        //     std::cout << "  Has Diffuse Map: " << mat.hasDiffuseMap
+        //             << ", Diffuse Map ID: " << mat.diffuseMapID
+        //             << ", Has Normal Map: " << mat.hasNormalMap
+        //             << ", Normal Map ID: " << mat.normalMapID << std::endl;
+        // }
 
         // Re-enable face culling after rendering transparent objects
         // glEnable(GL_CULL_FACE);

@@ -1,52 +1,98 @@
+// scene_object.hpp
 #ifndef SCENE_OBJECT_HPP
 #define SCENE_OBJECT_HPP
 
 #include "utilities.hpp"
 #include "global.hpp"
+#include "material.hpp"  
+#include "material_manager.hpp"
 #include <vector>
-#include <map>
 #include <string>
 
-namespace utils_scene {
+namespace utils_scene
+{
 
-enum class ObjectType {
-    Cube,
-    Sphere,
-    Model
-};
+    enum class ObjectType
+    {
+        Cube,
+        Sphere,
+        Model
+    };
 
-struct SceneObject {
-    std::string name;
-    ObjectType type;
-    glm::vec3 position;
-    glm::vec3 initialPosition;
-    glm::vec3 scale;
-    glm::vec3 color;
-    bool useTexture;
-    GLuint textureID;
-    GLuint normalMapID;
-    glm::vec3 rotationAxis;
-    float rotationAngle;
-    AABB boundingBox;
-    GLuint vaoID;
-    GLsizei indexCount;
-    bool isStatic;
-    // transparancy
-    bool isTransparent = false;
-    float alpha = 1.0f;
-};
+    struct SceneObject
+    {
+        std::string name;
+        ObjectType type;
+        glm::vec3 position;
+        glm::vec3 initialPosition;
+        glm::vec3 scale;
+        glm::vec3 rotationAxis;
+        float rotationAngle;
+        AABB boundingBox;
+        GLuint vaoID;
+        GLsizei indexCount;
+        bool isStatic;
 
-extern std::vector<SceneObject> sceneObjects;
-extern std::vector<SceneObject> sceneObjectsTransparent;
+        // Material reference
+        int materialIndex; // Index into MaterialManager's material list
 
-void addCube(const std::string& name, const glm::vec3& position, const glm::vec3& scale, const glm::vec3& color, bool useTexture, GLuint textureID = 0, GLuint normalMapID = 0, const glm::vec3& rotationAxis = glm::vec3(0.0f), float rotationAngle = 0.0f, GLuint vaoID = 0, GLsizei indexCount = 0, bool isStatic = false);
-void addTransparentCube(const std::string& name, const glm::vec3& position, const glm::vec3& scale, const glm::vec3& color, bool useTexture, GLuint textureID = 0, GLuint normalMapID = 0, const glm::vec3& rotationAxis = glm::vec3(0.0f), float rotationAngle = 0.0f, GLuint vaoID = 0, GLsizei indexCount = 0, bool isStatic = false, float alpha = 1.0f);
+        // Constructor
+        SceneObject()
+            : position(0.0f), initialPosition(0.0f), scale(1.0f),
+              rotationAxis(0.0f), rotationAngle(0.0f), vaoID(0),
+              indexCount(0), isStatic(false), materialIndex(-1) {}
+    };
 
-void addSphere(const std::string& name, const glm::vec3& position, float radius, const glm::vec3& color, bool useTexture, GLuint textureID = 0, GLuint normalMapID = 0, GLuint vaoID = 0, GLsizei vertexCount = 0, bool isStatic = false);
+    extern std::vector<SceneObject> sceneObjects;
+    extern std::vector<SceneObject> sceneObjectsTransparent;
 
-void createCompositeCube(const std::string& name, const glm::vec3& origin, const glm::vec3& size, GLuint textureID, GLuint normalMapID, GLuint vaoID, GLsizei indexCount, bool isStatic);
+    // Updated function declarations to accept Material
+    void addCube(const std::string &name,
+                 const glm::vec3 &position,
+                 const glm::vec3 &scale,
+                 const Material &material,
+                 const glm::vec3 &rotationAxis = glm::vec3(0.0f),
+                 float rotationAngle = 0.0f,
+                 GLuint vaoID = 0,
+                 GLsizei indexCount = 0,
+                 bool isStatic = false);
 
-void addModel(const std::string& name, const glm::vec3& position, const glm::vec3& scale, bool useTexture, GLuint textureID, GLuint normalMapID, GLuint vaoID, GLsizei indexCount, const AABB& boundingBox, const glm::vec3& rotationAxis = glm::vec3(0.0f), float rotationAngle = 0.0f, bool isStatic = false);
+    void addTransparentCube(const std::string &name,
+                            const glm::vec3 &position,
+                            const glm::vec3 &scale,
+                            const Material &material,
+                            const glm::vec3 &rotationAxis = glm::vec3(0.0f),
+                            float rotationAngle = 0.0f,
+                            GLuint vaoID = 0,
+                            GLsizei indexCount = 0,
+                            bool isStatic = false);
+
+    void addSphere(const std::string &name,
+                   const glm::vec3 &position,
+                   float radius,
+                   const Material &material,
+                   GLuint vaoID = 0,
+                   GLsizei vertexCount = 0,
+                   bool isStatic = false);
+
+    void createCompositeCube(const std::string &name,
+                             const glm::vec3 &origin,
+                             const glm::vec3 &size,
+                             const Material &material,
+                             GLuint vaoID,
+                             GLsizei indexCount,
+                             bool isStatic);
+
+    void addModel(const std::string &name,
+                  const glm::vec3 &position,
+                  const glm::vec3 &scale,
+                  const Material &material,
+                  GLuint vaoID,
+                  GLsizei indexCount,
+                  const AABB &boundingBox,
+                  const glm::vec3 &rotationAxis = glm::vec3(0.0f),
+                  float rotationAngle = 0.0f,
+                  bool isStatic = false);
 
 } // namespace utils_scene
 
