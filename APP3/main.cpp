@@ -278,6 +278,44 @@ int main(int argc, char *argv[])
     glm::vec3 wallPosition6(20.0f, 1.0f, 14.0f);
     utils_scene::createCompositeCube("wall_Z4",wallPosition6, wallSizeZ2, brownTerracottaTextureID, brownTerracottaTextureID_normalMap, cubeVAO, cubeIndexCount, true);
 
+    // transparent cube in room 2
+    glm::vec3 transparentCubePosition(32.0f, 2.0f, 10.0f);
+    glm::vec3 transparentCubeSize(1.0f, 1.0f, 1.0f);
+
+    utils_scene::addTransparentCube(
+        "transparent_cube",          // name
+        transparentCubePosition,     // position
+        transparentCubeSize,         // scale
+        glm::vec3(1.0f),             // color (white)
+        false,                       // useTexture (assuming no texture for transparency)
+        0,                           // textureID (0 if not using texture)
+        0,                           // normalMapID (0 if not using normal map)
+        glm::vec3(0.0f, 1.0f, 0.0f), // rotationAxis (Y-axis, no rotation initially)
+        0.0f,                        // rotationAngle (no rotation)
+        cubeVAO,                     // vaoID
+        cubeIndexCount,              // indexCount
+        true,                        // isStatic
+        0.3f                         // alpha (50% transparent)
+    );
+
+    // second transparent cube in room 2
+    glm::vec3 transparentCubePosition2(32.0f, 2.0f, 13.0f);
+    utils_scene::addTransparentCube(
+        "transparent_cube2",          // name
+        transparentCubePosition2,     // position
+        transparentCubeSize,          // scale
+        glm::vec3(1.0f),              // color (white)
+        true,                        // useTexture 
+        textureID,                   // textureID 
+        textureID_normalMap,         // normalMapID 
+        glm::vec3(0.0f, 1.0f, 0.0f),  // rotationAxis (Y-axis, no rotation initially)
+        0.0f,                         // rotationAngle (no rotation)
+        cubeVAO,                      // vaoID
+        cubeIndexCount,               // indexCount
+        true,                         // isStatic
+        0.5f                          // alpha (50% transparent)
+    );
+
     // load a soccer ball as sophisticated object
     // Add sphere to the scene
     utils_scene::addSphere(
@@ -691,14 +729,34 @@ int main(int argc, char *argv[])
 
         // Set the shader program to use, room1 for x udner 20.5 and room2 for x over 20.5
         utils_loader::Shader* currentRoom = &room1;
-
-        if (cameraPos.x < 20.5f) {
-            currentRoom = &room1;
-        } else {
+        bool inRoom2 = cameraPos.x >= 20.5f;
+        if (inRoom2) {
             currentRoom = &room2;
         }
 
         currentRoom->use();
+
+        // Retrieve uniform locations specific to the active shader
+        GLint uModelMatrixLocation = currentRoom->getUniformLocation("uModelMatrix");
+        GLint uMVPMatrixLocation = currentRoom->getUniformLocation("uMVPMatrix");
+        GLint uMVMatrixLocation = currentRoom->getUniformLocation("uMVMatrix");
+        GLint uNormalMatrixLocation = currentRoom->getUniformLocation("uNormalMatrix");
+        GLint uTextureLocation = currentRoom->getUniformLocation("uTexture");
+        GLint uUseTextureLocation = currentRoom->getUniformLocation("uUseTexture");
+        GLint uKdLocation = currentRoom->getUniformLocation("uKd");
+        GLint uKsLocation = currentRoom->getUniformLocation("uKs");
+        GLint uShininessLocation = currentRoom->getUniformLocation("uShininess");
+        GLint uLightPos_vsLocation = currentRoom->getUniformLocation("uLightPos_vs");
+        GLint uLightIntensityLocation = currentRoom->getUniformLocation("uLightIntensity");
+
+        // Retrieve 'uAlpha' only if in room2
+        GLint uAlphaLocation = -1;
+        if (inRoom2) {
+            uAlphaLocation = currentRoom->getUniformLocation("uAlpha");
+            if (uAlphaLocation == -1) {
+                std::cerr << "Failed to get 'uAlpha' location in room2 shader" << std::endl;
+            }
+        }
 
         // simpel point lights here
         int numLights = (int)simpleLights.size();
@@ -763,7 +821,17 @@ int main(int argc, char *argv[])
         // Set far plane
         glUniform1f(glGetUniformLocation(currentRoom->getGLId(), "farPlane"), farPlane);
 
-        // Render all scene objects
+        // **Sort Transparent Objects Back-to-Front**
+        if (inRoom2 && !utils_scene::sceneObjectsTransparent.empty()) {
+            std::sort(utils_scene::sceneObjectsTransparent.begin(), utils_scene::sceneObjectsTransparent.end(),
+                [&](const utils_scene::SceneObject &a, const utils_scene::SceneObject &b) {
+                    float distanceA = glm::length(cameraPos - a.position);
+                    float distanceB = glm::length(cameraPos - b.position);
+                    return distanceA > distanceB;
+                });
+        }
+
+        // Render all scene objects (opaque)
         for (const auto &object : utils_scene::sceneObjects)
         {
             glm::mat4 modelMatrix = glm::mat4(1.0f);
@@ -783,6 +851,12 @@ int main(int argc, char *argv[])
             glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
             glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
             glUniformMatrix3fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+
+            // if room 2, set alpha value to 1.0f
+            // if (inRoom2)
+            // {
+            //     glUniform1f(uAlphaLocation, 1.0f);
+            // }
 
             // Set material properties
             glm::vec3 Kd = glm::vec3(0.6f); // Fixed diffuse color (e.g., gray)
@@ -844,61 +918,99 @@ int main(int argc, char *argv[])
             }
         }
 
-        // Render a small sphere to represent the light source
+        // Render all transparent objects
+        if (inRoom2 && !utils_scene::sceneObjectsTransparent.empty())
         {
-            // Create model matrix for the light sphere
-            glm::mat4 modelMatrix = glm::mat4(1.0f);
-            modelMatrix = glm::translate(modelMatrix, lightPosWorld);
-            modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1f));
+            // Enable blending
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glDepthMask(GL_FALSE); // Disable depth writing
 
-            // Calculate matrices
-            glm::mat4 mvMatrix = ViewMatrix * modelMatrix;
-            glm::mat4 mvpMatrix = ProjMatrix * mvMatrix;
-            glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(mvMatrix)));
+            for (const auto &object : utils_scene::sceneObjectsTransparent)
+            {
+                // Set 'uAlpha' uniform
+                if (uAlphaLocation != -1) {
+                    glUniform1f(uAlphaLocation, object.alpha);
+                }
 
-            // Use the unified shader program
-            currentRoom->use();
+                // Calculate model matrix
+                glm::mat4 modelMatrix = glm::mat4(1.0f);
+                modelMatrix = glm::translate(modelMatrix, object.position);
+                if (object.rotationAngle != 0.0f)
+                {
+                    modelMatrix = glm::rotate(modelMatrix, glm::radians(object.rotationAngle), object.rotationAxis);
+                }
+                modelMatrix = glm::scale(modelMatrix, object.scale);
 
-            // **Set transformation matrices**
-            glUniformMatrix4fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
-            glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
-            glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
-            glUniformMatrix3fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+                glm::mat4 mvMatrix = ViewMatrix * modelMatrix;
+                glm::mat4 mvpMatrix = ProjMatrix * mvMatrix;
+                glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(mvMatrix)));
 
-            // **Set camera position in world space (for lighting calculations)**
-            glUniform3fv(glGetUniformLocation(currentRoom->getGLId(), "cameraPosWorld"), 1, glm::value_ptr(cameraPos));
+                // Set uniforms
+                glUniformMatrix4fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+                glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
+                glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+                glUniformMatrix3fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
-            // **Set light position in world space (even if not needed for the light sphere)**
-            glUniform3fv(glGetUniformLocation(currentRoom->getGLId(), "lightPosWorld"), 1, glm::value_ptr(lightPosWorld));
+                // Set material properties
+                glm::vec3 Kd = object.color; // Use object's color
+                glm::vec3 Ks = glm::vec3(0.3f); // Example specular color
+                float shininess = 32.0f;
+                glUniform3fv(uKdLocation, 1, glm::value_ptr(Kd));
+                glUniform3fv(uKsLocation, 1, glm::value_ptr(Ks));
+                glUniform1f(uShininessLocation, shininess);
 
-            // **Set light properties**
-            glUniform3fv(uLightPos_vsLocation, 1, glm::value_ptr(lightPosViewSpace));
-            glUniform3fv(uLightIntensityLocation, 1, glm::value_ptr(lightIntensity));
+                // keep textures for transparent cubes if bool is true
+                if (object.useTexture && object.textureID != 0)
+                {
+                    glActiveTexture(GL_TEXTURE0);
+                    glBindTexture(GL_TEXTURE_2D, object.textureID);
+                    glUniform1i(uTextureLocation, 0);
+                    glUniform1f(uUseTextureLocation, 1.0f);
+                }
+                else
+                {
+                    glUniform1f(uUseTextureLocation, 0.0f);
+                }
 
-            // **Set far plane**
-            glUniform1f(glGetUniformLocation(currentRoom->getGLId(), "farPlane"), farPlane);
+                // Handle normal maps
+                if (object.normalMapID != 0)
+                {
+                    glActiveTexture(GL_TEXTURE2);
+                    glBindTexture(GL_TEXTURE_2D, object.normalMapID);
+                    glUniform1i(glGetUniformLocation(currentRoom->getGLId(), "uNormalMap"), 2);
+                    glUniform1f(glGetUniformLocation(currentRoom->getGLId(), "uUseNormalMap"), 1.0f);
+                }
+                else
+                {
+                    glUniform1f(glGetUniformLocation(currentRoom->getGLId(), "uUseNormalMap"), 0.0f);
+                }
 
-            // Bind depth cube map
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap);
-            glUniform1i(glGetUniformLocation(currentRoom->getGLId(), "depthMap"), 1);
+                // Bind VAO and draw
+                glBindVertexArray(object.vaoID);
+                if (object.type == utils_scene::ObjectType::Cube)
+                {
+                    glDrawElements(GL_TRIANGLES, object.indexCount, GL_UNSIGNED_INT, 0);
+                }
+                else if (object.type == utils_scene::ObjectType::Sphere)
+                {
+                    glDrawArrays(GL_TRIANGLES, 0, object.indexCount);
+                }
+                else if (object.type == utils_scene::ObjectType::Model)
+                {
+                    glDrawElements(GL_TRIANGLES, object.indexCount, GL_UNSIGNED_INT, 0);
+                }
+                glBindVertexArray(0);
+            }
 
-            // Set material properties (emissive)
-            glm::vec3 Kd = lightIntensity / 5.0f; // Adjustable
-            glm::vec3 Ks = glm::vec3(0.0f);       // No specular for the light indicator
-            float shininess = 1.0f;
-            glUniform3fv(uKdLocation, 1, glm::value_ptr(Kd));
-            glUniform3fv(uKsLocation, 1, glm::value_ptr(Ks));
-            glUniform1f(uShininessLocation, shininess);
+            // Restore depth writing and disable blending
+            glDepthMask(GL_TRUE);
+            glDisable(GL_BLEND);
 
-            // Disable textures
-            glUniform1f(uUseTextureLocation, 0.0f);
-            glUniform1f(glGetUniformLocation(currentRoom->getGLId(), "uUseNormalMap"), 0.0f);
-
-            // Draw the sphere
-            glBindVertexArray(sphereVAO);
-            glDrawArrays(GL_TRIANGLES, 0, sphereVertexCountGL);
-            glBindVertexArray(0);
+            // Reset 'uAlpha' to default if necessary
+            if (uAlphaLocation != -1) {
+                glUniform1f(uAlphaLocation, 1.0f);
+            }
         }
 
         // Swap buffers

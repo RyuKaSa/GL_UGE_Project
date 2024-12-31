@@ -31,11 +31,16 @@ struct SceneObject {
     GLuint vaoID;
     GLsizei indexCount;
     bool isStatic;
+    // transparancy
+    bool isTransparent = false;
+    float alpha = 1.0f;
 };
 
 extern std::vector<SceneObject> sceneObjects;
+extern std::vector<SceneObject> sceneObjectsTransparent;
 
 void addCube(const std::string& name, const glm::vec3& position, const glm::vec3& scale, const glm::vec3& color, bool useTexture, GLuint textureID = 0, GLuint normalMapID = 0, const glm::vec3& rotationAxis = glm::vec3(0.0f), float rotationAngle = 0.0f, GLuint vaoID = 0, GLsizei indexCount = 0, bool isStatic = false);
+void addTransparentCube(const std::string& name, const glm::vec3& position, const glm::vec3& scale, const glm::vec3& color, bool useTexture, GLuint textureID = 0, GLuint normalMapID = 0, const glm::vec3& rotationAxis = glm::vec3(0.0f), float rotationAngle = 0.0f, GLuint vaoID = 0, GLsizei indexCount = 0, bool isStatic = false, float alpha = 1.0f);
 
 void addSphere(const std::string& name, const glm::vec3& position, float radius, const glm::vec3& color, bool useTexture, GLuint textureID = 0, GLuint normalMapID = 0, GLuint vaoID = 0, GLsizei vertexCount = 0, bool isStatic = false);
 

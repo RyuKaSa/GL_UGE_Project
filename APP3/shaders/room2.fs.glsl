@@ -21,6 +21,9 @@ uniform vec3 uKd;         // Diffuse reflection coefficient
 uniform vec3 uKs;         // Specular reflection coefficient
 uniform float uShininess; // Shininess exponent
 
+// alpha value for transparency
+uniform float uAlpha;
+
 // Light properties
 uniform vec3 uLightPos_vs; // Light position in view space
 uniform vec3 lightPosWorld;    // Light position in world space
@@ -152,5 +155,5 @@ void main() {
     // **Apply Inverse Color Effect**
     color = vec3(1.0) - color;
 
-    FragColor = vec4(color, 1.0);
+    FragColor = vec4(color, uAlpha);
 }

@@ -3,6 +3,7 @@
 namespace utils_scene {
 
 std::vector<SceneObject> sceneObjects;
+std::vector<SceneObject> sceneObjectsTransparent;
 
 void addCube(
     const std::string& name,
@@ -39,6 +40,47 @@ void addCube(
     cube.boundingBox.max = position + halfSize;
 
     sceneObjects.push_back(cube);
+}
+
+// transparent cube
+void addTransparentCube(
+    const std::string& name,
+    const glm::vec3& position,
+    const glm::vec3& scale,
+    const glm::vec3& color,
+    bool useTexture,
+    GLuint textureID,
+    GLuint normalMapID,
+    const glm::vec3& rotationAxis,
+    float rotationAngle,
+    GLuint vaoID,
+    GLsizei indexCount,
+    bool isStatic,
+    float alpha
+) {
+    SceneObject cube;
+    cube.name = name;
+    cube.type = ObjectType::Cube;
+    cube.position = position;
+    cube.initialPosition = position;
+    cube.scale = scale;
+    cube.color = color;
+    cube.useTexture = useTexture;
+    cube.textureID = textureID;
+    cube.normalMapID = normalMapID;
+    cube.rotationAxis = rotationAxis;
+    cube.rotationAngle = rotationAngle;
+    cube.vaoID = vaoID;
+    cube.indexCount = indexCount;
+    cube.isStatic = isStatic;
+    cube.isTransparent = true;
+    cube.alpha = alpha;
+
+    glm::vec3 halfSize = scale * 0.5f;
+    cube.boundingBox.min = position - halfSize;
+    cube.boundingBox.max = position + halfSize;
+
+    sceneObjectsTransparent.push_back(cube);
 }
 
 void addSphere(
