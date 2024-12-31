@@ -299,10 +299,28 @@ int main(int argc, char *argv[])
     );
 
     // second transparent cube in room 2
-    glm::vec3 transparentCubePosition2(32.0f, 2.0f, 13.0f);
+    glm::vec3 transparentCubePosition2(32.0f, 2.0f, 12.0f);
     utils_scene::addTransparentCube(
         "transparent_cube2",          // name
         transparentCubePosition2,     // position
+        transparentCubeSize,          // scale
+        glm::vec3(1.0f),              // color (white)
+        true,                        // useTexture 
+        textureID,                   // textureID 
+        textureID_normalMap,         // normalMapID 
+        glm::vec3(0.0f, 1.0f, 0.0f),  // rotationAxis (Y-axis, no rotation initially)
+        0.0f,                         // rotationAngle (no rotation)
+        cubeVAO,                      // vaoID
+        cubeIndexCount,               // indexCount
+        true,                         // isStatic
+        0.5f                          // alpha (50% transparent)
+    );
+
+    // third transparent cube in room 2
+    glm::vec3 transparentCubePosition3(32.0f, 2.0f, 14.0f);
+    utils_scene::addTransparentCube(
+        "transparent_cube3",          // name
+        transparentCubePosition3,     // position
         transparentCubeSize,          // scale
         glm::vec3(1.0f),              // color (white)
         true,                        // useTexture 
@@ -498,6 +516,22 @@ int main(int argc, char *argv[])
         simpleLights,
         glm::vec3(5.0f, 4.0f, 5.0f), // position
         glm::vec3(0.0f, 0.0f, 1.0f), // color
+        1.0f                         // intensity
+    );
+
+    // light pos 32 2 11
+    int newLightID3 = utils_light::addLight(
+        simpleLights,
+        glm::vec3(32.0f, 2.0f, 11.0f), // position
+        glm::vec3(1.0f, 1.0f, 1.0f), // color
+        1.0f                         // intensity
+    );
+
+    // light pos 32 2 13
+    int newLightID4 = utils_light::addLight(
+        simpleLights,
+        glm::vec3(32.0f, 2.0f, 13.0f), // position
+        glm::vec3(0.0f, 1.0f, 0.0f), // color
         1.0f                         // intensity
     );
 
@@ -918,6 +952,9 @@ int main(int argc, char *argv[])
             }
         }
 
+        // Disable face culling to render both front and back faces
+        // glDisable(GL_CULL_FACE);
+
         // Render all transparent objects
         if (inRoom2 && !utils_scene::sceneObjectsTransparent.empty())
         {
@@ -1012,6 +1049,9 @@ int main(int argc, char *argv[])
                 glUniform1f(uAlphaLocation, 1.0f);
             }
         }
+
+        // Re-enable face culling after rendering transparent objects
+        // glEnable(GL_CULL_FACE);
 
         // Swap buffers
         windowManager.swapBuffers();
