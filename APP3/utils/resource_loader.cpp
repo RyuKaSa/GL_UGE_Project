@@ -9,18 +9,55 @@ namespace utils_loader {
 void loadTextures(GLuint& textureID, GLuint& stoneTextureID, GLuint& brownTerracottaTextureID, GLuint& soccerTextureID,
                   GLuint& textureID_normalMap, GLuint& stoneTextureID_normalMap, GLuint& brownTerracottaTextureID_normalMap, GLuint& soccerTextureID_normalMap,
                   GLuint& chairBaseColorTextureID, GLuint& chairNormalMapTextureID,
+                  GLuint& texture_ID_deepslate_emerald_ore, GLuint& texture_ID_deepslate_emerald_ore_n, GLuint& texture_ID_deepslate_emerald_ore_s,
+                  GLuint& texture_ID_glass, GLuint& texture_ID_purple_stained_glass,
+                  GLuint& testure_ID_iron_block, GLuint& texture_ID_iron_block_n, GLuint& texture_ID_iron_block_s,
+                  GLuint& texture_ID_note_block, GLuint& texture_ID_note_block_n, GLuint& texture_ID_note_block_s,
+                  GLuint& texture_ID_oak_planks, GLuint& texture_ID_oak_planks_n, GLuint& texture_ID_oak_planks_s,
+                  GLuint& texture_ID_stone_bricks, GLuint& texture_ID_stone_bricks_n, GLuint& texture_ID_stone_bricks_s,
                   const glimac::FilePath& applicationPath) {
-    textureID = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_HD/cobblestone_8bit.png");
-    stoneTextureID = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_HD/stone_8bit.png");
-    brownTerracottaTextureID = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_HD/brown_glazed_terracotta_8bit.png");
-    soccerTextureID = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_sphere/soccer_sph_s_8bit.png");
+    textureID = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_HD/cobblestone_8bit.png");
+    stoneTextureID = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_HD/stone_8bit.png");
+    brownTerracottaTextureID = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_HD/brown_glazed_terracotta_8bit.png");
+    soccerTextureID = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_sphere/soccer_sph_s_8bit.png");
     chairBaseColorTextureID = loadTexture(applicationPath.dirPath() + "../assets/models/Rocking_Chair/Textures/BaseColor.png");
 
-    textureID_normalMap = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_HD/cobblestone_8bit_normal_map.png");
-    stoneTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_HD/stone_8bit_normal_map.png");
-    brownTerracottaTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_HD/brown_glazed_terracotta_8bit_normal_map.png");
-    soccerTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../APP1/assets/textures_sphere/soccer_sph_s_8bit_normal_map.png");
+    textureID_normalMap = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_HD/cobblestone_8bit_normal_map.png");
+    stoneTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_HD/stone_8bit_normal_map.png");
+    brownTerracottaTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_HD/brown_glazed_terracotta_8bit_normal_map.png");
+    soccerTextureID_normalMap = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_sphere/soccer_sph_s_8bit_normal_map.png");
     chairNormalMapTextureID = loadTexture(applicationPath.dirPath() + "../assets/models/Rocking_Chair/Textures/Normal.png");
+
+    // final textures
+    // deepslate_emerald_ore
+    texture_ID_deepslate_emerald_ore = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/deepslate_emerald_ore/deepslate_emerald_ore.png");
+    texture_ID_deepslate_emerald_ore_n = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/deepslate_emerald_ore/deepslate_emerald_ore_n.png");
+    texture_ID_deepslate_emerald_ore_s = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/deepslate_emerald_ore/deepslate_emerald_ore_s.png");
+
+    // glass
+    texture_ID_glass = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/glass/glass.png");
+    texture_ID_purple_stained_glass = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/glass/purple_stained_glass.png");
+
+    // iron_block
+    testure_ID_iron_block = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/iron_block/iron_block.png");
+    texture_ID_iron_block_n = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/iron_block/iron_block_n.png");
+    texture_ID_iron_block_s = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/iron_block/iron_block_s.png");
+
+    // note_block
+    texture_ID_note_block = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/note_block/note_block.png");
+    texture_ID_note_block_n = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/note_block/note_block_n.png");
+    texture_ID_note_block_s = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/note_block/note_block_s.png");
+
+    // oak_planks
+    texture_ID_oak_planks = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/oak_planks/oak_planks.png");
+    texture_ID_oak_planks_n = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/oak_planks/oak_planks_n.png");
+    texture_ID_oak_planks_s = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/oak_planks/oak_planks_s.png");
+
+    // stone_bricks
+    texture_ID_stone_bricks = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/stone_bricks/stone_bricks.png");
+    texture_ID_stone_bricks_n = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/stone_bricks/stone_bricks_n.png");
+    texture_ID_stone_bricks_s = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/stone_bricks/stone_bricks_s.png");
+
 
     std::cout << "Textures loaded successfully" << std::endl;
 

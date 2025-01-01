@@ -98,9 +98,23 @@ int main(int argc, char *argv[])
     GLuint textureID, stoneTextureID, brownTerracottaTextureID, soccerTextureID;
     GLuint textureID_normalMap, stoneTextureID_normalMap, brownTerracottaTextureID_normalMap, soccerTextureID_normalMap;
     GLuint chairBaseColorTextureID, chairNormalMapTextureID;
+    
+    GLuint texture_ID_deepslate_emerald_ore, texture_ID_deepslate_emerald_ore_n, texture_ID_deepslate_emerald_ore_s;
+    GLuint texture_ID_glass, texture_ID_purple_stained_glass;
+    GLuint testure_ID_iron_block, texture_ID_iron_block_n, texture_ID_iron_block_s;
+    GLuint texture_ID_note_block, texture_ID_note_block_n, texture_ID_note_block_s;
+    GLuint texture_ID_oak_planks, texture_ID_oak_planks_n, texture_ID_oak_planks_s;
+    GLuint texture_ID_stone_bricks, texture_ID_stone_bricks_n, texture_ID_stone_bricks_s;
+
     utils_loader::loadTextures(textureID, stoneTextureID, brownTerracottaTextureID, soccerTextureID,
                 textureID_normalMap, stoneTextureID_normalMap, brownTerracottaTextureID_normalMap, soccerTextureID_normalMap,
-                chairBaseColorTextureID, chairNormalMapTextureID, 
+                chairBaseColorTextureID, chairNormalMapTextureID,
+                texture_ID_deepslate_emerald_ore, texture_ID_deepslate_emerald_ore_n, texture_ID_deepslate_emerald_ore_s,
+                texture_ID_glass, texture_ID_purple_stained_glass,
+                testure_ID_iron_block, texture_ID_iron_block_n, texture_ID_iron_block_s,
+                texture_ID_note_block, texture_ID_note_block_n, texture_ID_note_block_s,
+                texture_ID_oak_planks, texture_ID_oak_planks_n, texture_ID_oak_planks_s,
+                texture_ID_stone_bricks, texture_ID_stone_bricks_n, texture_ID_stone_bricks_s,
                 applicationPath);
 
     GLuint depthCubeMap, shadowMapFBO;
@@ -380,6 +394,105 @@ int main(int argc, char *argv[])
     materialManager.addOrGetMaterial(torusMaterial);
     materialManager.addOrGetMaterial(soccerMaterial);
 
+    // second set of materials, with specular maps
+    // Material for stone_bricks
+    Material stone_bricks_material;
+    stone_bricks_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f);
+    stone_bricks_material.hasDiffuseMap = true;
+    stone_bricks_material.diffuseMapID = texture_ID_stone_bricks;
+    stone_bricks_material.Ks = glm::vec3(0.4f, 0.4f, 0.4f); 
+    stone_bricks_material.shininess = 16.0f; 
+    stone_bricks_material.hasSpecularMap = true;
+    stone_bricks_material.specularMapID = texture_ID_stone_bricks_s;
+    stone_bricks_material.hasNormalMap = true;
+    stone_bricks_material.normalMapID = texture_ID_stone_bricks_n;
+    stone_bricks_material.alpha = alphaOpaque;
+
+    // Material for glass and purple stained glass
+    Material glass_material;
+    glass_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f);
+    glass_material.hasDiffuseMap = true;
+    glass_material.diffuseMapID = texture_ID_glass;
+    glass_material.Ks = glm::vec3(0.9f, 0.9f, 0.9f); 
+    glass_material.shininess = 96.0f; 
+    glass_material.hasSpecularMap = false;
+    glass_material.specularMapID = 0;
+    glass_material.hasNormalMap = false;
+    glass_material.normalMapID = 0;
+    glass_material.alpha = alphaTransparent1;
+
+    Material purple_stained_glass_material;
+    purple_stained_glass_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f);
+    purple_stained_glass_material.hasDiffuseMap = true;
+    purple_stained_glass_material.diffuseMapID = texture_ID_purple_stained_glass;
+    purple_stained_glass_material.Ks = glm::vec3(0.9f, 0.7f, 0.9f); 
+    purple_stained_glass_material.shininess = 96.0f; 
+    purple_stained_glass_material.hasSpecularMap = false;
+    purple_stained_glass_material.specularMapID = 0;
+    purple_stained_glass_material.hasNormalMap = false;
+    purple_stained_glass_material.normalMapID = 0;
+    purple_stained_glass_material.alpha = alphaTransparent1;
+
+    // Material for iron block
+    Material iron_block_material;
+    iron_block_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f);
+    iron_block_material.hasDiffuseMap = true;
+    iron_block_material.diffuseMapID = testure_ID_iron_block;
+    iron_block_material.Ks = glm::vec3(0.8f, 0.8f, 0.8f); 
+    iron_block_material.shininess = 64.0f; 
+    iron_block_material.hasSpecularMap = true;
+    iron_block_material.specularMapID = texture_ID_iron_block_s;
+    iron_block_material.hasNormalMap = true;
+    iron_block_material.normalMapID = texture_ID_iron_block_n;
+    iron_block_material.alpha = alphaOpaque;
+
+    // Material for note block
+    Material note_block_material;
+    note_block_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f);
+    note_block_material.hasDiffuseMap = true;
+    note_block_material.diffuseMapID = texture_ID_note_block;
+    note_block_material.Ks = glm::vec3(0.2f, 0.2f, 0.2f); 
+    note_block_material.shininess = 8.0f; 
+    note_block_material.hasSpecularMap = true;
+    note_block_material.specularMapID = texture_ID_note_block_s;
+    note_block_material.hasNormalMap = true;
+    note_block_material.normalMapID = texture_ID_note_block_n;
+    note_block_material.alpha = alphaOpaque;
+
+    // Material for oak planks
+    Material oak_planks_material;
+    oak_planks_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f);
+    oak_planks_material.hasDiffuseMap = true;
+    oak_planks_material.diffuseMapID = texture_ID_oak_planks;
+    oak_planks_material.Ks = glm::vec3(0.3f, 0.3f, 0.3f); 
+    oak_planks_material.shininess = 12.0f; 
+    oak_planks_material.hasSpecularMap = true;
+    oak_planks_material.specularMapID = texture_ID_oak_planks_s;
+    oak_planks_material.hasNormalMap = true;
+    oak_planks_material.normalMapID = texture_ID_oak_planks_n;
+    oak_planks_material.alpha = alphaOpaque;
+
+    // material deepslate_emerald_ore
+    Material deepslate_emerald_ore_material;
+    deepslate_emerald_ore_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f);
+    deepslate_emerald_ore_material.hasDiffuseMap = true;
+    deepslate_emerald_ore_material.diffuseMapID = texture_ID_deepslate_emerald_ore;
+    deepslate_emerald_ore_material.Ks = glm::vec3(0.6f, 0.8f, 0.6f); 
+    deepslate_emerald_ore_material.shininess = 24.0f; 
+    deepslate_emerald_ore_material.hasSpecularMap = true;
+    deepslate_emerald_ore_material.specularMapID = texture_ID_deepslate_emerald_ore_s;
+    deepslate_emerald_ore_material.hasNormalMap = true;
+    deepslate_emerald_ore_material.normalMapID = texture_ID_deepslate_emerald_ore_n;
+    deepslate_emerald_ore_material.alpha = alphaOpaque;
+
+    // Add materials to the MaterialManager
+    materialManager.addOrGetMaterial(stone_bricks_material);
+    materialManager.addOrGetMaterial(glass_material);
+    materialManager.addOrGetMaterial(purple_stained_glass_material);
+    materialManager.addOrGetMaterial(iron_block_material);
+    materialManager.addOrGetMaterial(note_block_material);
+    materialManager.addOrGetMaterial(oak_planks_material);
+    materialManager.addOrGetMaterial(deepslate_emerald_ore_material);
 
     std::cout << "Materials created" << std::endl;
     // After loading textures
@@ -400,6 +513,113 @@ int main(int argc, char *argv[])
     GLsizei cubeIndexCount = static_cast<GLsizei>(cubeIndices.size());
     // GLsizei sphereVertexCount = sphere.getVertexCount();
 
+    // void addCube(const std::string &name,
+    //             const glm::vec3 &position,
+    //             const glm::vec3 &scale,
+    //             const Material &material,
+    //             const glm::vec3 &rotationAxis,
+    //             float rotationAngle,
+    //             GLuint vaoID,
+    //             GLsizei indexCount,
+    //             bool isStatic);
+
+
+    // new materials, with specular maps, one of each
+    glm::vec3 initialPosition(12.0f, 2.0f, 3.0f);
+    glm::vec3 initialPosition2(12.0f, 2.0f, 4.0f);
+    glm::vec3 initialSize(1.0f, 1.0f, 1.0f);
+    // Adding "stone_bricks" cube
+    utils_scene::addCube(
+        "stone_bricks",          // Name
+        initialPosition,         // Position
+        initialSize,             // Size
+        stone_bricks_material,   // Material
+        glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
+        0.0f,                     // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                 // VAO ID
+        cubeIndexCount,          // Index count
+        true                     // Is static
+    );
+
+    // Adding "glass" cube
+    utils_scene::addCube(
+        "glass",                 // Name
+        initialPosition2,        // Position
+        initialSize,             // Size
+        glass_material,          // Material
+        glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
+        0.0f,                     // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                 // VAO ID
+        cubeIndexCount,          // Index count
+        true                     // Is static
+    );
+
+    // Adding "purple_stained_glass" cube
+    utils_scene::addCube(
+        "purple_stained_glass",  // Name
+        glm::vec3(12.0f, 2.0f, 5.0f), // Position
+        initialSize,             // Size
+        purple_stained_glass_material, // Material
+        glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
+        0.0f,                     // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                 // VAO ID
+        cubeIndexCount,          // Index count
+        true                     // Is static
+    );
+
+    // Adding "iron_block" cube
+    utils_scene::addCube(
+        "iron_block",            // Name
+        glm::vec3(12.0f, 2.0f, 6.0f), // Position
+        initialSize,             // Size
+        iron_block_material,     // Material
+        glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
+        0.0f,                     // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                 // VAO ID
+        cubeIndexCount,          // Index count
+        true                     // Is static
+    );
+
+    // Adding "note_block" cube
+    utils_scene::addCube(
+        "note_block",            // Name
+        glm::vec3(12.0f, 2.0f, 7.0f), // Position
+        initialSize,             // Size
+        note_block_material,     // Material
+        glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
+        0.0f,                     // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                 // VAO ID
+        cubeIndexCount,          // Index count
+        true                     // Is static
+    );
+
+    // Adding "oak_planks" cube
+    utils_scene::addCube(
+        "oak_planks",            // Name
+        glm::vec3(12.0f, 2.0f, 8.0f), // Position
+        initialSize,             // Size
+        oak_planks_material,     // Material
+        glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
+        0.0f,                     // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                 // VAO ID
+        cubeIndexCount,          // Index count
+        true                     // Is static
+    );
+
+    // Adding "deepslate_emerald_ore" cube
+    utils_scene::addCube(
+        "deepslate_emerald_ore", // Name
+        glm::vec3(12.0f, 2.0f, 9.0f), // Position
+        initialSize,             // Size
+        deepslate_emerald_ore_material, // Material
+        glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
+        0.0f,                     // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                 // VAO ID
+        cubeIndexCount,          // Index count
+        true                     // Is static
+    );
+
+
     // floor
     glm::vec3 origin(0.0f, 0.0f, 0.0f);
     glm::vec3 floorSize(42.0f, 1.0f, 24.0f);
@@ -407,7 +627,7 @@ int main(int argc, char *argv[])
         "floor",                  // Name
         origin,                   // Origin
         floorSize,                // Size
-        stoneMaterial,            // Material
+        oak_planks_material,            // Material
         cubeVAO,                  // VAO ID
         cubeIndexCount,           // Index count
         true                      // Is static
@@ -692,24 +912,24 @@ int main(int argc, char *argv[])
     // Add a simple point light to the scene
     int newLightID = utils_light::addLight(
         simpleLights,
-        glm::vec3(5.0f, 4.0f, 9.0f), // position
-        glm::vec3(1.0f, 0.0f, 0.0f), // color
+        glm::vec3(5.0f, 2.5f, 15.0f), // position
+        glm::vec3(1.0f, 1.0f, 1.0f), // color
         1.0f                         // intensity
     );
 
-    // Add a simple point light to the scene 2
-    int newLightID2 = utils_light::addLight(
-        simpleLights,
-        glm::vec3(5.0f, 4.0f, 5.0f), // position
-        glm::vec3(0.0f, 0.0f, 1.0f), // color
-        1.0f                         // intensity
-    );
+    // // Add a simple point light to the scene 2
+    // int newLightID2 = utils_light::addLight(
+    //     simpleLights,
+    //     glm::vec3(5.0f, 4.0f, 19.0f), // position
+    //     glm::vec3(1.0f, 1.0f, 1.0f), // color
+    //     1.0f                         // intensity
+    // );
 
     // light pos 32 2 11
     int newLightID3 = utils_light::addLight(
         simpleLights,
         glm::vec3(32.0f, 2.0f, 11.0f), // position
-        glm::vec3(1.0f, 1.0f, 1.0f), // color
+        glm::vec3(1.0f, 0.0f, 1.0f), // color
         1.0f                         // intensity
     );
 
@@ -717,7 +937,7 @@ int main(int argc, char *argv[])
     int newLightID4 = utils_light::addLight(
         simpleLights,
         glm::vec3(32.0f, 2.0f, 13.0f), // position
-        glm::vec3(0.0f, 1.0f, 0.0f), // color
+        glm::vec3(1.0f, 1.0f, 1.0f), // color
         1.0f                         // intensity
     );
 
@@ -768,14 +988,14 @@ int main(int argc, char *argv[])
         SDL_SetWindowTitle(windowManager.getWindow(), newTitle.c_str());
 
         // Update light intensity dynamically within the loop
-        glm::vec3 lightIntensity = glm::vec3(
-            (sin(currentFrame) + 1.0f) / 2.0f,       // Red oscillates between 0 and 1
-            (cos(currentFrame) + 1.0f) / 2.0f,       // Green oscillates between 0 and 1
-            (sin(currentFrame * 0.5f) + 1.0f) / 2.0f // Blue oscillates more slowly between 0 and 1
-        );
+        // glm::vec3 lightIntensity = glm::vec3(
+        //     (sin(currentFrame) + 1.0f) / 2.0f,       // Red oscillates between 0 and 1
+        //     (cos(currentFrame) + 1.0f) / 2.0f,       // Green oscillates between 0 and 1
+        //     (sin(currentFrame * 0.5f) + 1.0f) / 2.0f // Blue oscillates more slowly between 0 and 1
+        // );
 
         // white light
-        // glm::vec3 lightIntensity = glm::vec3(1.0f);
+        glm::vec3 lightIntensity = glm::vec3(1.0f);
 
         // green light
         // glm::vec3 lightIntensity = glm::vec3(0.0f, 1.0f, 0.0f);
