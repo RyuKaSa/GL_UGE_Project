@@ -156,12 +156,26 @@ vec3 AdditionalLights(vec3 albedo, vec3 N) {
 
 // **Fragment Shader Main Function**
 void main() {
+    // Determine albedo based on whether a diffuse texture is used
     vec3 albedo = (uUseTexture > 0.5) ? texture(uTexture, vTexCoords).rgb : uKd;
+    
+    // Determine normal based on whether a normal map is used
     vec3 N = (uUseNormalMap > 0.5) ? GetNormalFromMap(normalize(vNormal)) : normalize(vNormal);
 
+    // Calculate shadow factor based on main light's shadow
     float shadow = ShadowCalculation(vFragPosWorld);
-    vec3 lighting = MainLightDiffuse(albedo, N) + MainLightSpecular(N) + AdditionalLights(albedo, N);
-    lighting *= (1.0 - shadow);
 
+    // Calculate main light's lighting contributions
+    vec3 mainDiffuse = MainLightDiffuse(albedo, N);
+    vec3 mainSpecular = MainLightSpecular(N);
+    vec3 mainLighting = (mainDiffuse + mainSpecular) * (1.0 - shadow);
+
+    // Calculate additional lights' lighting contributions
+    vec3 additionalLighting = AdditionalLights(albedo, N);
+
+    // Combine main lighting and additional lighting
+    vec3 lighting = mainLighting + additionalLighting;
+
+    // Set the final fragment color with alpha transparency
     FragColor = vec4(lighting, uAlpha);
 }
