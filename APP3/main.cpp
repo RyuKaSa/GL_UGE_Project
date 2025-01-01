@@ -212,6 +212,24 @@ int main(int argc, char *argv[])
     if (room2_uLightIntensityLocation == -1)
         std::cerr << "Failed to get 'uLightIntensity' location in room2 shader" << std::endl;
 
+    room1.use(); // Activate room1 shader program
+
+    // Assign sampler uniforms to texture units
+    glUniform1i(glGetUniformLocation(room1.getID(), "uTexture"), 0);      
+    glUniform1i(glGetUniformLocation(room1.getID(), "uSpecularMap"), 3);  
+    glUniform1i(glGetUniformLocation(room1.getID(), "uNormalMap"), 2);    
+    glUniform1i(glGetUniformLocation(room1.getID(), "depthMap"), 1);      
+
+    room1.use(); // Unbind the shader program
+
+    // Repeat for room2 shader if necessary
+    room2.use();
+    glUniform1i(glGetUniformLocation(room2.getID(), "uTexture"), 0);      
+    glUniform1i(glGetUniformLocation(room2.getID(), "uSpecularMap"), 3);  
+    glUniform1i(glGetUniformLocation(room2.getID(), "uNormalMap"), 2);    
+    glUniform1i(glGetUniformLocation(room2.getID(), "depthMap"), 1);      
+    room2.use(); // Unbind the shader program
+
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
     std::cout << "Depth test enabled" << std::endl;
@@ -414,7 +432,7 @@ int main(int argc, char *argv[])
     glass_material.hasDiffuseMap = true;
     glass_material.diffuseMapID = texture_ID_glass;
     glass_material.Ks = glm::vec3(0.9f, 0.9f, 0.9f); 
-    glass_material.shininess = 96.0f; 
+    glass_material.shininess = 130.0f; 
     glass_material.hasSpecularMap = false;
     glass_material.specularMapID = 0;
     glass_material.hasNormalMap = false;
@@ -426,7 +444,7 @@ int main(int argc, char *argv[])
     purple_stained_glass_material.hasDiffuseMap = true;
     purple_stained_glass_material.diffuseMapID = texture_ID_purple_stained_glass;
     purple_stained_glass_material.Ks = glm::vec3(0.9f, 0.7f, 0.9f); 
-    purple_stained_glass_material.shininess = 96.0f; 
+    purple_stained_glass_material.shininess = 130.0f; 
     purple_stained_glass_material.hasSpecularMap = false;
     purple_stained_glass_material.specularMapID = 0;
     purple_stained_glass_material.hasNormalMap = false;
@@ -478,7 +496,7 @@ int main(int argc, char *argv[])
     deepslate_emerald_ore_material.hasDiffuseMap = true;
     deepslate_emerald_ore_material.diffuseMapID = texture_ID_deepslate_emerald_ore;
     deepslate_emerald_ore_material.Ks = glm::vec3(0.6f, 0.8f, 0.6f); 
-    deepslate_emerald_ore_material.shininess = 24.0f; 
+    deepslate_emerald_ore_material.shininess = 54.0f; 
     deepslate_emerald_ore_material.hasSpecularMap = true;
     deepslate_emerald_ore_material.specularMapID = texture_ID_deepslate_emerald_ore_s;
     deepslate_emerald_ore_material.hasNormalMap = true;
@@ -1330,7 +1348,7 @@ int main(int argc, char *argv[])
                 glUniform1f(uShininessLocation, mat.shininess);
             }
 
-            // 4) Alpha (if your shader uses it)
+            // 4) Alpha
             GLint uAlphaLoc = glGetUniformLocation(currentRoom->getGLId(), "uAlpha");
             if (uAlphaLoc != -1) {
                 glUniform1f(uAlphaLoc, mat.alpha);
@@ -1372,6 +1390,27 @@ int main(int argc, char *argv[])
                 }
             }
 
+            // 7 specular map
+            GLint uSpecularMapLocation    = glGetUniformLocation(currentRoom->getGLId(), "uSpecularMap");
+            GLint uUseSpecularMapLocation = glGetUniformLocation(currentRoom->getGLId(), "uUseSpecularMap");
+            if (mat.hasSpecularMap && mat.specularMapID != 0)
+            {
+                glActiveTexture(GL_TEXTURE3); 
+                glBindTexture(GL_TEXTURE_2D, mat.specularMapID);
+                if (uSpecularMapLocation != -1) {
+                    glUniform1i(uSpecularMapLocation, 3); 
+                }
+                if (uUseSpecularMapLocation != -1) {
+                    glUniform1f(uUseSpecularMapLocation, 1.0f); // Enable specular map usage
+                }
+            }
+            else
+            {
+                if (uUseSpecularMapLocation != -1) {
+                    glUniform1f(uUseSpecularMapLocation, 0.0f); // Disable specular map usage
+                }
+            }
+
             glBindVertexArray(object.vaoID);
             if (object.type == utils_scene::ObjectType::Cube)
             {
@@ -1395,7 +1434,12 @@ int main(int argc, char *argv[])
             if (mat.hasNormalMap && mat.normalMapID != 0)
             {
                 glBindTexture(GL_TEXTURE_2D, 0);
-            }   
+            }
+
+            if (mat.hasSpecularMap && mat.specularMapID != 0)
+            {
+                glBindTexture(GL_TEXTURE_2D, 0);
+            }
         }
 
         // Disable face culling to render both front and back faces
@@ -1505,6 +1549,27 @@ int main(int argc, char *argv[])
                     }
                 }
 
+                // 6) Specular map
+                GLint uSpecularMapLocation    = glGetUniformLocation(currentRoom->getGLId(), "uSpecularMap");
+                GLint uUseSpecularMapLocation = glGetUniformLocation(currentRoom->getGLId(), "uUseSpecularMap");
+                if (mat.hasSpecularMap && mat.specularMapID != 0)
+                {
+                    glActiveTexture(GL_TEXTURE3); // Use texture unit 1 for specular maps
+                    glBindTexture(GL_TEXTURE_2D, mat.specularMapID);
+                    if (uSpecularMapLocation != -1) {
+                        glUniform1i(uSpecularMapLocation, 3); // Set sampler to texture unit 3
+                    }
+                    if (uUseSpecularMapLocation != -1) {
+                        glUniform1f(uUseSpecularMapLocation, 1.0f); // Enable specular map usage
+                    }
+                }
+                else
+                {
+                    if (uUseSpecularMapLocation != -1) {
+                        glUniform1f(uUseSpecularMapLocation, 0.0f); // Disable specular map usage
+                    }
+                }
+
                 // Draw transparent object
                 glBindVertexArray(object.vaoID);
                 if (object.type == utils_scene::ObjectType::Cube)
@@ -1525,6 +1590,8 @@ int main(int argc, char *argv[])
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, 0);
                 glActiveTexture(GL_TEXTURE2);
+                glBindTexture(GL_TEXTURE_2D, 0);
+                glActiveTexture(GL_TEXTURE3);
                 glBindTexture(GL_TEXTURE_2D, 0);
             }
 

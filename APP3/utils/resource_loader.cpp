@@ -32,7 +32,7 @@ void loadTextures(GLuint& textureID, GLuint& stoneTextureID, GLuint& brownTerrac
     // deepslate_emerald_ore
     texture_ID_deepslate_emerald_ore = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/deepslate_emerald_ore/deepslate_emerald_ore.png");
     texture_ID_deepslate_emerald_ore_n = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/deepslate_emerald_ore/deepslate_emerald_ore_n.png");
-    texture_ID_deepslate_emerald_ore_s = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/deepslate_emerald_ore/deepslate_emerald_ore_s.png");
+    texture_ID_deepslate_emerald_ore_s = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/deepslate_emerald_ore/deepslate_emerald_ore_s2.png");
 
     // glass
     texture_ID_glass = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/glass/glass.png");

@@ -54,7 +54,7 @@ uniform vec3 lightPosWorld;
 
 // Hardcoded map strengths
 const float NORMAL_MAP_STRENGTH = 0.3;
-const float SPECULAR_MAP_STRENGTH = 1.0;
+const float SPECULAR_MAP_STRENGTH = 3.0;
 
 // Sampling offsets for shadow mapping
 const vec3 gridSamplingDisk[20] = vec3[](
@@ -65,7 +65,7 @@ const vec3 gridSamplingDisk[20] = vec3[](
     vec3( 0,  1, -1), vec3( 0, -1, -1), vec3( 1,  1,  1), vec3(-1, -1, -1)
 );
 
-// 🛡️ **Shadow Calculation**
+// **Shadow Calculation**
 float ShadowCalculation(vec3 fragPosWorld) {
     vec3 fragToLight = fragPosWorld - lightPosWorld;
     float currentDepth = length(fragToLight);
@@ -87,7 +87,7 @@ float ShadowCalculation(vec3 fragPosWorld) {
     return shadow;
 }
 
-// 🧠 **Normal Map Sampling with Strength**
+// **Normal Map Sampling with Strength**
 vec3 GetNormalFromMap(vec3 defaultNormal) {
     vec3 normalMap = texture(uNormalMap, vTexCoords).rgb;
     normalMap = normalMap * 2.0 - 1.0; // Transform from [0,1] to [-1,1]
@@ -96,7 +96,7 @@ vec3 GetNormalFromMap(vec3 defaultNormal) {
     return normalize(mix(defaultNormal, TBN * normalMap, NORMAL_MAP_STRENGTH));
 }
 
-// ✨ **Specular Intensity from Map with Strength**
+// **Specular Intensity from Map with Strength**
 float GetSpecularIntensity() {
     if (uUseSpecularMap > 0.5) {
         return texture(uSpecularMap, vTexCoords).r * SPECULAR_MAP_STRENGTH; // Scale with strength
@@ -104,7 +104,7 @@ float GetSpecularIntensity() {
     return 1.0 * SPECULAR_MAP_STRENGTH; // Default intensity with strength
 }
 
-// 💡 **Main Light - Diffuse**
+// **Main Light - Diffuse**
 vec3 MainLightDiffuse(vec3 albedo, vec3 N) {
     vec3 L = normalize(uLightPos_vs - vFragPos);
     float distance = length(uLightPos_vs - vFragPos);
@@ -114,7 +114,7 @@ vec3 MainLightDiffuse(vec3 albedo, vec3 N) {
     return albedo * uLightIntensity * NdotL * attenuation;
 }
 
-// ✨ **Main Light - Specular**
+// **Main Light - Specular**
 vec3 MainLightSpecular(vec3 N) {
     vec3 L = normalize(uLightPos_vs - vFragPos);
     vec3 V = normalize(-vFragPos); 
@@ -128,7 +128,7 @@ vec3 MainLightSpecular(vec3 N) {
     return uKs * specularIntensity * uLightIntensity * pow(NdotH, uShininess) * attenuation;
 }
 
-// 💡 **Additional Lights**
+// **Additional Lights**
 vec3 AdditionalLights(vec3 albedo, vec3 N) {
     vec3 totalLight = vec3(0.0);
 
@@ -154,7 +154,7 @@ vec3 AdditionalLights(vec3 albedo, vec3 N) {
     return totalLight;
 }
 
-// 🖌️ **Fragment Shader Main Function**
+// **Fragment Shader Main Function**
 void main() {
     vec3 albedo = (uUseTexture > 0.5) ? texture(uTexture, vTexCoords).rgb : uKd;
     vec3 N = (uUseNormalMap > 0.5) ? GetNormalFromMap(normalize(vNormal)) : normalize(vNormal);
