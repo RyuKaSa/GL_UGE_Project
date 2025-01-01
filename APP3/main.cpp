@@ -278,8 +278,16 @@ int main(int argc, char *argv[])
 
     // Define the alpha value for transparency
     float alphaOpaque = 1.0f;   // Fully opaque
-    float alphaTransparent1 = 0.3f; // 30% opaque
-    float alphaTransparent2 = 0.5f; // 50% opaque
+    float alphaTransparent1 = 0.1f;
+    float alphaTransparent2 = 0.2f;
+    float alphaTransparent3 = 0.3f;
+    float alphaTransparent4 = 0.4f;
+    float alphaTransparent5 = 0.5f;
+    float alphaTransparent6 = 0.6f;
+    float alphaTransparent7 = 0.7f;
+    float alphaTransparent8 = 0.8f;
+    float alphaTransparent9 = 0.9f;
+
 
     // Material for the floor and walls using stone texture
     Material stoneMaterial;
@@ -426,6 +434,19 @@ int main(int argc, char *argv[])
     stone_bricks_material.normalMapID = texture_ID_stone_bricks_n;
     stone_bricks_material.alpha = alphaOpaque;
 
+    // // Material for transparent cubes with textures
+    // Material transparentMaterialWithTexture;
+    // transparentMaterialWithTexture.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
+    // transparentMaterialWithTexture.hasDiffuseMap = true;
+    // transparentMaterialWithTexture.diffuseMapID = textureID; // Ensure textureID is loaded
+    // transparentMaterialWithTexture.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    // transparentMaterialWithTexture.shininess = 32.0f; // Shininess exponent
+    // transparentMaterialWithTexture.hasSpecularMap = false; // Assuming no specular map
+    // transparentMaterialWithTexture.specularMapID = 0;
+    // transparentMaterialWithTexture.hasNormalMap = true;
+    // transparentMaterialWithTexture.normalMapID = textureID_normalMap; // Ensure textureID_normalMap is loaded
+    // transparentMaterialWithTexture.alpha = alphaTransparent2; // 50% opaque
+
     // Material for glass and purple stained glass
     Material glass_material;
     glass_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -437,7 +458,7 @@ int main(int argc, char *argv[])
     glass_material.specularMapID = 0;
     glass_material.hasNormalMap = false;
     glass_material.normalMapID = 0;
-    glass_material.alpha = alphaTransparent1;
+    glass_material.alpha = alphaTransparent5;
 
     Material purple_stained_glass_material;
     purple_stained_glass_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -449,7 +470,7 @@ int main(int argc, char *argv[])
     purple_stained_glass_material.specularMapID = 0;
     purple_stained_glass_material.hasNormalMap = false;
     purple_stained_glass_material.normalMapID = 0;
-    purple_stained_glass_material.alpha = alphaTransparent1;
+    purple_stained_glass_material.alpha = alphaTransparent5;
 
     // Material for iron block
     Material iron_block_material;
@@ -560,10 +581,10 @@ int main(int argc, char *argv[])
     );
 
     // Adding "glass" cube
-    utils_scene::addCube(
+    utils_scene::addTransparentCube(
         "glass",                 // Name
         initialPosition2,        // Position
-        initialSize,             // Size
+        initialSize * 0.999f,    // Size (slightly smaller to avoid z-fighting)
         glass_material,          // Material
         glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
         0.0f,                     // Rotation angle (e.g., 0 degrees)
@@ -573,10 +594,10 @@ int main(int argc, char *argv[])
     );
 
     // Adding "purple_stained_glass" cube
-    utils_scene::addCube(
+    utils_scene::addTransparentCube(
         "purple_stained_glass",  // Name
         glm::vec3(12.0f, 2.0f, 5.0f), // Position
-        initialSize,             // Size
+        initialSize * 0.999f,    // Size (slightly smaller to avoid z-fighting)
         purple_stained_glass_material, // Material
         glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
         0.0f,                     // Rotation angle (e.g., 0 degrees)
@@ -936,17 +957,17 @@ int main(int argc, char *argv[])
     );
 
     // // Add a simple point light to the scene 2
-    // int newLightID2 = utils_light::addLight(
-    //     simpleLights,
-    //     glm::vec3(5.0f, 4.0f, 19.0f), // position
-    //     glm::vec3(1.0f, 1.0f, 1.0f), // color
-    //     1.0f                         // intensity
-    // );
+    int newLightID2 = utils_light::addLight(
+        simpleLights,
+        glm::vec3(5.0f, 1.0f, 19.0f), // position
+        glm::vec3(0.3f, 0.4f, 1.0f), // color
+        1.0f                         // intensity
+    );
 
     // light pos 32 2 11
     int newLightID3 = utils_light::addLight(
         simpleLights,
-        glm::vec3(32.0f, 2.0f, 11.0f), // position
+        glm::vec3(32.0f, 2.0f, 19.0f), // position
         glm::vec3(1.0f, 0.0f, 1.0f), // color
         1.0f                         // intensity
     );
@@ -954,7 +975,7 @@ int main(int argc, char *argv[])
     // light pos 32 2 13
     int newLightID4 = utils_light::addLight(
         simpleLights,
-        glm::vec3(32.0f, 2.0f, 13.0f), // position
+        glm::vec3(37.0f, 2.0f, 13.0f), // position
         glm::vec3(1.0f, 1.0f, 1.0f), // color
         1.0f                         // intensity
     );
@@ -1205,14 +1226,17 @@ int main(int argc, char *argv[])
         GLint uLightPos_vsLocation = currentRoom->getUniformLocation("uLightPos_vs");
         GLint uLightIntensityLocation = currentRoom->getUniformLocation("uLightIntensity");
 
-        // Retrieve 'uAlpha' only if in room2
-        GLint uAlphaLocation = -1;
-        if (inRoom2) {
-            uAlphaLocation = currentRoom->getUniformLocation("uAlpha");
-            if (uAlphaLocation == -1) {
-                std::cerr << "Failed to get 'uAlpha' location in room2 shader" << std::endl;
-            }
-        }
+        // Retrieve 'uAlpha' only if in room2 (deprecated, we add transparency to room 1 as well)
+        // GLint uAlphaLocation = -1;
+        // if (inRoom2) {
+        //     uAlphaLocation = currentRoom->getUniformLocation("uAlpha");
+        //     if (uAlphaLocation == -1) {
+        //         std::cerr << "Failed to get 'uAlpha' location in room2 shader" << std::endl;
+        //     }
+        // }
+
+        // retrieve alpha, regardless of room
+        GLint uAlphaLocation = currentRoom->getUniformLocation("uAlpha");
 
         // simpel point lights here
         int numLights = (int)simpleLights.size();
@@ -1318,14 +1342,6 @@ int main(int argc, char *argv[])
             // Retrieve the material from the object
             const Material& mat = materialManager.getMaterial(object.materialIndex);
             // print material properties once
-            if (object.name == "transparent_cube1") {
-                std::cout << "Material Properties for " << object.name << std::endl;
-                std::cout << "  has diffuse map: " << mat.hasDiffuseMap << std::endl;
-                std::cout << "  Diffuse: " << mat.Kd << std::endl;
-                std::cout << "  Specular: " << mat.Ks << std::endl;
-                std::cout << "  Shininess: " << mat.shininess << std::endl;
-                std::cout << "  Alpha: " << mat.alpha << std::endl;
-            }
 
             // 1) Diffuse color
             if (uKdLocation != -1) {
@@ -1444,10 +1460,9 @@ int main(int argc, char *argv[])
 
         // Disable face culling to render both front and back faces
         // glDisable(GL_CULL_FACE);
-        // Render all transparent objects
 
         // Render all transparent objects
-        if (inRoom2 && !utils_scene::sceneObjectsTransparent.empty())
+        if (!utils_scene::sceneObjectsTransparent.empty())
         {
             // Enable blending
             glEnable(GL_BLEND);

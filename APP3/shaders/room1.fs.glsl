@@ -176,6 +176,12 @@ void main() {
     // Combine main lighting and additional lighting
     vec3 lighting = mainLighting + additionalLighting;
 
-    // Set the final fragment color with alpha transparency
-    FragColor = vec4(lighting, uAlpha);
+    // Sample the texture's color and alpha
+    vec4 texColor = texture(uTexture, vTexCoords);
+
+    // Combine texture alpha with uniform alpha
+    float finalAlpha = texColor.a * uAlpha;
+
+    // Set the final fragment color with combined alpha
+    FragColor = vec4(lighting * texColor.rgb, finalAlpha);
 }
