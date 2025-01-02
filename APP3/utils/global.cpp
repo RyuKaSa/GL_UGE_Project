@@ -22,6 +22,6 @@ double rockingChairStartTime = 0.0;
 float sensitivity = 0.1f;
 float currentFrame = 0.0f;
 
-int MAX_ADDITIONAL_LIGHTS = 4; // Maximum number of additional lights excluding the main point light which has shadows
+int MAX_ADDITIONAL_LIGHTS = 8; // Maximum number of additional lights excluding the main point light which has shadows
 
 bool wireframeMode = false;

@@ -1,7 +1,7 @@
 #version 330 core
 
 // Maximum number of additional point lights
-#define MAX_ADDITIONAL_LIGHTS 4
+#define MAX_ADDITIONAL_LIGHTS 8
 
 // Uniforms for additional point lights
 uniform int uNumAdditionalLights;

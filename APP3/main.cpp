@@ -585,6 +585,19 @@ int main(int argc, char *argv[])
     deepslate_emerald_ore_material.normalMapID = texture_ID_deepslate_emerald_ore_n;
     deepslate_emerald_ore_material.alpha = alphaOpaque;
 
+    // add transparent iron block
+    Material transparent_iron_block_material;
+    transparent_iron_block_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f);
+    transparent_iron_block_material.hasDiffuseMap = true;
+    transparent_iron_block_material.diffuseMapID = testure_ID_iron_block;
+    transparent_iron_block_material.Ks = glm::vec3(0.8f, 0.8f, 0.8f);
+    transparent_iron_block_material.shininess = 64.0f;
+    transparent_iron_block_material.hasSpecularMap = true;
+    transparent_iron_block_material.specularMapID = texture_ID_iron_block_s;
+    transparent_iron_block_material.hasNormalMap = true;
+    transparent_iron_block_material.normalMapID = texture_ID_iron_block_n;
+    transparent_iron_block_material.alpha = alphaTransparent5;
+
     // Add materials to the MaterialManager
     materialManager.addOrGetMaterial(stone_bricks_material);
     materialManager.addOrGetMaterial(glass_material);
@@ -850,7 +863,7 @@ int main(int argc, char *argv[])
         "transparent_cube",           // Name
         transparentCubePosition,      // Position
         transparentCubeSize,          // Size
-        transparentMaterialNoTexture, // Material
+        transparent_iron_block_material,          // Material
         glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
         0.0f,                         // Rotation angle
         cubeVAO,                      // VAO ID
@@ -864,7 +877,7 @@ int main(int argc, char *argv[])
         "transparent_cube2",            // Name
         transparentCubePosition2,       // Position
         transparentCubeSize,            // Size
-        transparentMaterialWithTexture, // Material
+        purple_stained_glass_material, // Material
         glm::vec3(0.0f, 1.0f, 0.0f),    // Rotation axis (Y-axis)
         0.0f,                           // Rotation angle
         cubeVAO,                        // VAO ID
@@ -878,7 +891,7 @@ int main(int argc, char *argv[])
         "transparent_cube3",            // Name
         transparentCubePosition3,       // Position
         transparentCubeSize,            // Size
-        transparentMaterialWithTexture, // Material
+        glass_material, // Material
         glm::vec3(0.0f, 1.0f, 0.0f),    // Rotation axis (Y-axis)
         0.0f,                           // Rotation angle
         cubeVAO,                        // VAO ID
@@ -1101,6 +1114,14 @@ int main(int argc, char *argv[])
         1.0f                           // intensity
     );
 
+    // pos 10 1 10
+    int newLightID5 = utils_light::addLight(
+        simpleLights,
+        glm::vec3(10.0f, 1.0f, 10.0f), // position
+        glm::vec3(1.0f, 0.0f, 1.0f),   // color
+        1.0f                           // intensity
+    );
+
     // update a light position during the loop
     // utils_light::updateLightPosition(simpleLights, newLightID, glm::vec3(5.0f, 2.0f, 1.0f));
 
@@ -1246,6 +1267,21 @@ int main(int argc, char *argv[])
 
         // new method for light color, set to its material Kd
         glm::vec3 lightIntensity = lightMaterial.Kd;
+
+        // simple light ID 5, dynamic light
+        glm::vec3 lightPosWorld5;
+        lightPosWorld5.x = 10.0f + 1.0f * cos(currentFrame);
+        lightPosWorld5.y = 1.0f;
+        lightPosWorld5.z = 10.0f + 1.0f * sin(currentFrame);
+
+        simpleLights[4].position = lightPosWorld5;
+
+        // also change its color
+        simpleLights[4].color = glm::vec3(
+            (sin(currentFrame) + 1.0f) / 2.0f,       // Red oscillates between 0 and 1
+            (cos(currentFrame) + 1.0f) / 2.0f,       // Green oscillates between 0 and 1
+            (sin(currentFrame * 0.5f) + 1.0f) / 2.0f // Blue oscillates more slowly between 0 and 1
+        );
 
         // light position on the camera
         // glm::vec3 lightPosWorld = cameraPos + glm::vec3(0.0f, 1.0f, 0.0f); // Slightly elevate the light position above the camera
@@ -1772,6 +1808,79 @@ int main(int argc, char *argv[])
 
         // back to previosu shader
 
+        lightShader.use();
+
+        // material is lightMaterial
+        const Material &mat = lightMaterial;
+
+        // Create model matrix with translation and scaling
+        glm::mat4 modelMatrix = glm::mat4(1.0f);
+
+        // Translate the sphere to the light source position
+        modelMatrix = glm::translate(modelMatrix, lightPosWorld);
+
+        // Scale the sphere to make it smaller
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1f)); // Scale down to 10%
+
+        // Calculate matrices
+        glm::mat4 mvMatrix = ViewMatrix * modelMatrix;
+        glm::mat4 mvpMatrix = ProjMatrix * mvMatrix;
+        glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(mvMatrix)));
+
+        // Pass matrices to the shader
+        glUniformMatrix4fv(light_uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+        glUniformMatrix4fv(light_uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
+        glUniformMatrix3fv(light_uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+
+        // Retrieve the material for the object
+
+        // 1) Diffuse Color
+        if (light_uKdLocation != -1)
+        {
+            glUniform3fv(light_uKdLocation, 1, glm::value_ptr(mat.Kd));
+        }
+
+        // Draw the smaller sphere
+        glBindVertexArray(sphereVAO);
+        glDrawArrays(GL_TRIANGLES, 0, sphereVertexCountGL);
+        glBindVertexArray(0);
+
+        glUseProgram(0);
+
+        lightShader.use();
+
+        // Set material properties once for all point lights
+        glUniform3fv(light_uKdLocation, 1, glm::value_ptr(simpleLightMaterial.Kd));
+        glUniform3fv(light_uKsLocation, 1, glm::value_ptr(simpleLightMaterial.Ks));
+        glUniform1f(light_uShininessLocation, simpleLightMaterial.shininess);
+        glUniform1f(glGetUniformLocation(lightShader.getGLId(), "uAlpha"), simpleLightMaterial.alpha);
+
+        for (const auto& light : simpleLights) {
+            // Create model matrix for each light sphere
+            glm::mat4 modelMatrix = glm::mat4(1.0f);
+            modelMatrix = glm::translate(modelMatrix, light.position); // Position each sphere
+            modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1f));    // Scale down each sphere
+
+            glm::mat4 mvMatrix = ViewMatrix * modelMatrix;
+            glm::mat4 mvpMatrix = ProjMatrix * mvMatrix;
+            glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(mvMatrix)));
+
+            // Pass transformation matrices
+            glUniformMatrix4fv(light_uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+            glUniformMatrix4fv(light_uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
+            glUniformMatrix3fv(light_uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+
+            // Set light-specific diffuse color (optional: if you want per-light color)
+            glUniform3fv(light_uKdLocation, 1, glm::value_ptr(light.color));
+
+            // Render light sphere
+            glBindVertexArray(sphereVAO);
+            glDrawArrays(GL_TRIANGLES, 0, sphereVertexCountGL);
+            glBindVertexArray(0);
+        }
+
+        glUseProgram(0);
+
         currentRoom->use();
 
         // Disable face culling to render both front and back faces
@@ -1948,78 +2057,6 @@ int main(int argc, char *argv[])
             }
         }
 
-        lightShader.use();
-
-        // material is lightMaterial
-        const Material &mat = lightMaterial;
-
-        // Create model matrix with translation and scaling
-        glm::mat4 modelMatrix = glm::mat4(1.0f);
-
-        // Translate the sphere to the light source position
-        modelMatrix = glm::translate(modelMatrix, lightPosWorld);
-
-        // Scale the sphere to make it smaller
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1f)); // Scale down to 10%
-
-        // Calculate matrices
-        glm::mat4 mvMatrix = ViewMatrix * modelMatrix;
-        glm::mat4 mvpMatrix = ProjMatrix * mvMatrix;
-        glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(mvMatrix)));
-
-        // Pass matrices to the shader
-        glUniformMatrix4fv(light_uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
-        glUniformMatrix4fv(light_uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
-        glUniformMatrix3fv(light_uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
-
-        // Retrieve the material for the object
-
-        // 1) Diffuse Color
-        if (light_uKdLocation != -1)
-        {
-            glUniform3fv(light_uKdLocation, 1, glm::value_ptr(mat.Kd));
-        }
-
-        // Draw the smaller sphere
-        glBindVertexArray(sphereVAO);
-        glDrawArrays(GL_TRIANGLES, 0, sphereVertexCountGL);
-        glBindVertexArray(0);
-
-        glUseProgram(0);
-
-        lightShader.use();
-
-        // Set material properties once for all point lights
-        glUniform3fv(light_uKdLocation, 1, glm::value_ptr(simpleLightMaterial.Kd));
-        glUniform3fv(light_uKsLocation, 1, glm::value_ptr(simpleLightMaterial.Ks));
-        glUniform1f(light_uShininessLocation, simpleLightMaterial.shininess);
-        glUniform1f(glGetUniformLocation(lightShader.getGLId(), "uAlpha"), simpleLightMaterial.alpha);
-
-        for (const auto& light : simpleLights) {
-            // Create model matrix for each light sphere
-            glm::mat4 modelMatrix = glm::mat4(1.0f);
-            modelMatrix = glm::translate(modelMatrix, light.position); // Position each sphere
-            modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1f));    // Scale down each sphere
-
-            glm::mat4 mvMatrix = ViewMatrix * modelMatrix;
-            glm::mat4 mvpMatrix = ProjMatrix * mvMatrix;
-            glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(mvMatrix)));
-
-            // Pass transformation matrices
-            glUniformMatrix4fv(light_uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
-            glUniformMatrix4fv(light_uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
-            glUniformMatrix3fv(light_uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
-
-            // Set light-specific diffuse color (optional: if you want per-light color)
-            glUniform3fv(light_uKdLocation, 1, glm::value_ptr(light.color));
-
-            // Render light sphere
-            glBindVertexArray(sphereVAO);
-            glDrawArrays(GL_TRIANGLES, 0, sphereVertexCountGL);
-            glBindVertexArray(0);
-        }
-
-        glUseProgram(0);
 
         // for (const auto &object : utils_scene::sceneObjects) {
         //     std::cout << "Object: " << object.name << ", Material Index: " << object.materialIndex << std::endl;
