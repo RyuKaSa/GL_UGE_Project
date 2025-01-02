@@ -7,6 +7,8 @@
 
 namespace utils_loader {
 
+extern std::vector<GLuint> allTextures;
+
 // Function to load textures
 void loadTextures(GLuint& textureID, GLuint& stoneTextureID, GLuint& brownTerracottaTextureID, GLuint& soccerTextureID,
                   GLuint& textureID_normalMap, GLuint& stoneTextureID_normalMap, GLuint& brownTerracottaTextureID_normalMap, GLuint& soccerTextureID_normalMap,

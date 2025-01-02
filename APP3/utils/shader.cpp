@@ -19,6 +19,13 @@ Shader::Shader(const std::string& vertexPath, const std::string& fragmentPath) {
     }
 }
 
+// Shader::~Shader() {
+//     if (m_program.getGLId() != 0) {
+//         glDeleteProgram(m_program.getGLId());
+//         std::cout << "Deleted shader program with ID: " << m_program.getGLId() << std::endl;
+//     }
+// }
+
 void Shader::use() const {
     m_program.use();
 }
@@ -34,5 +41,13 @@ GLint Shader::getUniformLocation(const std::string& name) const {
 GLuint Shader::getGLId() const { // New method implementation
     return m_program.getGLId();
 }
+
+// clean up
+// void Shader::deleteProgram() {
+//     if (m_program.getGLId() != 0) {
+//         glDeleteProgram(m_program.getGLId());
+//         std::cout << "Explicitly deleted shader program with ID: " << m_program.getGLId() << std::endl;
+//     }
+// }
 
 } // namespace utils_loader

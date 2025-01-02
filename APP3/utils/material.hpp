@@ -48,6 +48,10 @@ struct Material
           hasNormalMap(false),
           normalMapID(0),
           alpha(1.0f) {}
+
+    // destructor
+    ~Material() {}
+    
 };
 
 #endif // MATERIAL_HPP

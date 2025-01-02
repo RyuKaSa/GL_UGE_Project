@@ -8,6 +8,8 @@
 
 namespace utils_object {
 
+std::vector<GLuint> allTextures;
+
 void GetRockingChairPositionAndRotation(
     double currentTime,
     double frequency,
@@ -55,6 +57,12 @@ GLuint LoadTextureFromFile(const char* path) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         stbi_image_free(data);
+
+        // print ID
+        std::cout << "Texture ID: " << textureID << std::endl;
+
+        // register the texture, easier for cleanup
+        allTextures.push_back(textureID);
 
         return textureID;
     } else {

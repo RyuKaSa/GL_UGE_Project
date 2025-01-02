@@ -8,6 +8,8 @@
 
 namespace utils_loader {
 
+std::vector<GLuint> allTextures;
+
 // Load textures
 void loadTextures(GLuint& textureID, GLuint& stoneTextureID, GLuint& brownTerracottaTextureID, GLuint& soccerTextureID,
                   GLuint& textureID_normalMap, GLuint& stoneTextureID_normalMap, GLuint& brownTerracottaTextureID_normalMap, GLuint& soccerTextureID_normalMap,
@@ -102,6 +104,38 @@ void loadTextures(GLuint& textureID, GLuint& stoneTextureID, GLuint& brownTerrac
     // check textures and normals fir the chair : 
     std::cout << "Chair Base Color Texture ID: " << chairBaseColorTextureID << std::endl;
     std::cout << "Chair Normal Map Texture ID: " << chairNormalMapTextureID << std::endl;
+
+    // add all textures to the allTextures vector
+    allTextures.push_back(textureID);
+    allTextures.push_back(stoneTextureID);
+    allTextures.push_back(brownTerracottaTextureID);
+    allTextures.push_back(soccerTextureID);
+    allTextures.push_back(textureID_normalMap);
+    allTextures.push_back(stoneTextureID_normalMap);
+    allTextures.push_back(brownTerracottaTextureID_normalMap);
+    allTextures.push_back(soccerTextureID_normalMap);
+    allTextures.push_back(chairBaseColorTextureID);
+
+    allTextures.push_back(texture_ID_deepslate_emerald_ore);
+    allTextures.push_back(texture_ID_deepslate_emerald_ore_n);
+    allTextures.push_back(texture_ID_deepslate_emerald_ore_s);
+    allTextures.push_back(texture_ID_glass);
+    allTextures.push_back(texture_ID_purple_stained_glass);
+    allTextures.push_back(testure_ID_iron_block);
+    allTextures.push_back(texture_ID_iron_block_n);
+    allTextures.push_back(texture_ID_iron_block_s);
+    allTextures.push_back(texture_ID_note_block);
+    allTextures.push_back(texture_ID_note_block_n);
+    allTextures.push_back(texture_ID_note_block_s);
+    allTextures.push_back(texture_ID_oak_planks);
+    allTextures.push_back(texture_ID_oak_planks_n);
+    allTextures.push_back(texture_ID_oak_planks_s);
+    allTextures.push_back(texture_ID_stone_bricks);
+    allTextures.push_back(texture_ID_stone_bricks_n);
+    allTextures.push_back(texture_ID_stone_bricks_s);
+    allTextures.push_back(skyboxTextureID);
+
+    std::cout << "All textures added to the allTextures vector" << std::endl;
 }
 
 // Setup depth cube map

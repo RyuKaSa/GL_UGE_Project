@@ -9,6 +9,8 @@
 
 namespace utils_object {
 
+extern std::vector<GLuint> allTextures;
+
 struct ModelData {
     std::vector<float> vertices;
     std::vector<float> normals;
