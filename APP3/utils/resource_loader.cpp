@@ -3,6 +3,9 @@
 #include <glimac/Image.hpp>
 #include <iostream>
 
+#include <cstdlib>
+#include <ctime>
+
 namespace utils_loader {
 
 // Load textures
@@ -15,6 +18,7 @@ void loadTextures(GLuint& textureID, GLuint& stoneTextureID, GLuint& brownTerrac
                   GLuint& texture_ID_note_block, GLuint& texture_ID_note_block_n, GLuint& texture_ID_note_block_s,
                   GLuint& texture_ID_oak_planks, GLuint& texture_ID_oak_planks_n, GLuint& texture_ID_oak_planks_s,
                   GLuint& texture_ID_stone_bricks, GLuint& texture_ID_stone_bricks_n, GLuint& texture_ID_stone_bricks_s,
+                  GLuint& skyboxTextureID,
                   const glimac::FilePath& applicationPath) {
     textureID = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_HD/cobblestone_8bit.png");
     stoneTextureID = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_HD/stone_8bit.png");
@@ -58,6 +62,40 @@ void loadTextures(GLuint& textureID, GLuint& stoneTextureID, GLuint& brownTerrac
     texture_ID_stone_bricks_n = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/stone_bricks/stone_bricks_n.png");
     texture_ID_stone_bricks_s = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/stone_bricks/stone_bricks_s.png");
 
+    // skyboxTextureID = loadTexture(applicationPath.dirPath() + "../APP3/assets/skybox/skybox.png");
+    // we can randomly chosoe at start one of the skyboxes, skybox1 to skybox4, but we need to load the 4 skyboxes
+    GLuint sky1, sky2, sky3, sky4;
+
+    sky1 = loadTexture(applicationPath.dirPath() + "../APP3/assets/skybox/1.png");
+    sky2 = loadTexture(applicationPath.dirPath() + "../APP3/assets/skybox/2.png");
+    sky3 = loadTexture(applicationPath.dirPath() + "../APP3/assets/skybox/3.png");
+    sky4 = loadTexture(applicationPath.dirPath() + "../APP3/assets/skybox/4.png");
+
+    // randomly choose one of the variables sky1 to sky4 for skyboxTextureID
+    srand(static_cast<unsigned int>(time(0)));
+
+    int random = rand() % 4 + 1;
+
+    switch (random) {
+    case 1:
+        skyboxTextureID = sky1;
+        break;
+    case 2:
+        skyboxTextureID = sky2;
+        break;
+    case 3:
+        skyboxTextureID = sky3;
+        break;
+    case 4:
+        skyboxTextureID = sky4;
+        break;
+    default:
+        skyboxTextureID = sky1;
+        break;
+    }
+
+    // print the skybox file
+    std::cout << "Skybox file: " << random << ".png" << std::endl;
 
     std::cout << "Textures loaded successfully" << std::endl;
 

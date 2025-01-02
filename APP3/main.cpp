@@ -85,8 +85,14 @@ int main(int argc, char *argv[])
         applicationPath.dirPath() + "APP3/shaders/point_shadow_depth.fs.glsl"
     );
 
+    // skybox shader
+    utils_loader::Shader skyboxShader(
+        applicationPath.dirPath() + "APP3/shaders/skybox.vs.glsl",
+        applicationPath.dirPath() + "APP3/shaders/skybox.fs.glsl"
+    );
+
     // Check shaders
-    if (room1.getID() == 0 || room2.getID() == 0 || depthShader.getID() == 0) {
+    if (room1.getID() == 0 || room2.getID() == 0 || depthShader.getID() == 0 || skyboxShader.getID() == 0) {
         std::cerr << "Failed to compile/link one or more shaders. Exiting." << std::endl;
         return -1;
     }
@@ -105,6 +111,7 @@ int main(int argc, char *argv[])
     GLuint texture_ID_note_block, texture_ID_note_block_n, texture_ID_note_block_s;
     GLuint texture_ID_oak_planks, texture_ID_oak_planks_n, texture_ID_oak_planks_s;
     GLuint texture_ID_stone_bricks, texture_ID_stone_bricks_n, texture_ID_stone_bricks_s;
+    GLuint skyboxTextureID;
 
     utils_loader::loadTextures(textureID, stoneTextureID, brownTerracottaTextureID, soccerTextureID,
                 textureID_normalMap, stoneTextureID_normalMap, brownTerracottaTextureID_normalMap, soccerTextureID_normalMap,
@@ -115,6 +122,7 @@ int main(int argc, char *argv[])
                 texture_ID_note_block, texture_ID_note_block_n, texture_ID_note_block_s,
                 texture_ID_oak_planks, texture_ID_oak_planks_n, texture_ID_oak_planks_s,
                 texture_ID_stone_bricks, texture_ID_stone_bricks_n, texture_ID_stone_bricks_s,
+                skyboxTextureID,
                 applicationPath);
 
     GLuint depthCubeMap, shadowMapFBO;
@@ -229,6 +237,54 @@ int main(int argc, char *argv[])
     glUniform1i(glGetUniformLocation(room2.getID(), "uNormalMap"), 2);    
     glUniform1i(glGetUniformLocation(room2.getID(), "depthMap"), 1);      
     room2.use(); // Unbind the shader program
+
+    // Set up skybox shader
+    skyboxShader.use();
+    std::cout << "Sky Shader program in use" << std::endl;
+
+    // Get uniform locations
+    GLint sky_uMVPMatrixLocation = glGetUniformLocation(skyboxShader.getGLId(), "uMVPMatrix");
+    GLint sky_uMVMatrixLocation = glGetUniformLocation(skyboxShader.getGLId(), "uMVMatrix");
+    GLint sky_uNormalMatrixLocation = glGetUniformLocation(skyboxShader.getGLId(), "uNormalMatrix");
+    GLint sky_uTextureLocation = glGetUniformLocation(skyboxShader.getGLId(), "uTexture");
+    GLint sky_uUseTextureLocation = glGetUniformLocation(skyboxShader.getGLId(), "uUseTexture");
+
+    GLint sky_uKdLocation = glGetUniformLocation(skyboxShader.getGLId(), "uKd");
+    GLint sky_uKsLocation = glGetUniformLocation(skyboxShader.getGLId(), "uKs");
+    GLint sky_uShininessLocation = glGetUniformLocation(skyboxShader.getGLId(), "uShininess");
+    GLint sky_uLightPos_vsLocation = glGetUniformLocation(skyboxShader.getGLId(), "uLightPos_vs");
+    GLint sky_uLightIntensityLocation = glGetUniformLocation(skyboxShader.getGLId(), "uLightIntensity");
+
+    // Sanity check
+    if (sky_uMVPMatrixLocation == -1)
+        std::cerr << "Failed to get 'uMVPMatrix' location" << std::endl;
+    if (sky_uMVMatrixLocation == -1)
+        std::cerr << "Failed to get 'uMVMatrix' location" << std::endl;
+    if (sky_uNormalMatrixLocation == -1)
+        std::cerr << "Failed to get 'uNormalMatrix' location" << std::endl;
+    if (sky_uTextureLocation == -1)
+        std::cerr << "Failed to get 'uTexture' location" << std::endl;
+    if (sky_uUseTextureLocation == -1)
+        std::cerr << "Failed to get 'uUseTexture' location" << std::endl;
+    if (sky_uKdLocation == -1)
+        std::cerr << "Failed to get 'uKd' location" << std::endl;
+    if (sky_uKsLocation == -1)
+        std::cerr << "Failed to get 'uKs' location" << std::endl;
+    if (sky_uShininessLocation == -1)
+        std::cerr << "Failed to get 'uShininess' location" << std::endl;
+    // if (uLightDir_vsLocation == -1)
+    //     std::cerr << "Failed to get 'uLightDir_vs' location" << std::endl;
+    if (sky_uLightIntensityLocation == -1)
+        std::cerr << "Failed to get 'uLightIntensity' location" << std::endl;
+
+    // sample skybox texture    
+    glUniform1i(glGetUniformLocation(skyboxShader.getID(), "uTexture"), 0);
+    glUniform1i(glGetUniformLocation(skyboxShader.getID(), "uSpecularMap"), 3);  
+    glUniform1i(glGetUniformLocation(skyboxShader.getID(), "uNormalMap"), 2);    
+    glUniform1i(glGetUniformLocation(skyboxShader.getID(), "depthMap"), 1);
+
+    // unbind the shader program
+    skyboxShader.use();
 
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
@@ -533,6 +589,22 @@ int main(int argc, char *argv[])
     materialManager.addOrGetMaterial(oak_planks_material);
     materialManager.addOrGetMaterial(deepslate_emerald_ore_material);
 
+    // sky material (big sphere around the scene)
+    Material skyMaterial;
+    skyMaterial.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
+    skyMaterial.hasDiffuseMap = true;
+    skyMaterial.diffuseMapID = skyboxTextureID;
+    skyMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    skyMaterial.shininess = 0.0f; // Shininess exponent
+    skyMaterial.hasSpecularMap = false; // Assuming no specular map
+    skyMaterial.specularMapID = 0;
+    skyMaterial.hasNormalMap = false;
+    skyMaterial.normalMapID = 0;
+    skyMaterial.alpha = alphaOpaque; // Opaque
+
+    // Add sky material to the MaterialManager
+    materialManager.addOrGetMaterial(skyMaterial);
+
     std::cout << "Materials created" << std::endl;
     // After loading textures
     for (const auto& material : materialManager.materials)
@@ -561,7 +633,6 @@ int main(int argc, char *argv[])
     //             GLuint vaoID,
     //             GLsizei indexCount,
     //             bool isStatic);
-
 
     // new materials, with specular maps, one of each
     glm::vec3 initialPosition(12.0f, 2.0f, 3.0f);
@@ -800,6 +871,17 @@ int main(int argc, char *argv[])
         sphereVAO,                     // VAO ID
         sphereVertexCount,             // Vertex count
         true                           // Is static
+    );
+
+    // load skybox sphere
+    utils_scene::addSkySphere(
+        "sky",                         // Name
+        glm::vec3(0.0f, 0.0f, 0.0f), // Position
+        99.0f,                        // Radius
+        skyMaterial,                   // Material
+        sphereVAO,                     // VAO ID
+        sphereVertexCount,             // Vertex count
+        false                           // Is static
     );
 
     // Load the Heater .obj model
@@ -1079,6 +1161,15 @@ int main(int argc, char *argv[])
                 break; // Stop further checking if a collision is found
             }
         }
+        // Check collision against all objects with transparency
+        for (const auto &object : utils_scene::sceneObjectsTransparent)
+        {
+            if (checkCollision(proposedCameraPos, cameraRadius, cameraHeight, object.boundingBox))
+            {
+                collisionDetected = true;
+                break; // Stop further checking if a collision is found
+            }
+        }
 
         // Update camera position only if no collision is detected
         if (!collisionDetected)
@@ -1311,6 +1402,7 @@ int main(int argc, char *argv[])
                 });
         }
 
+        glDisable(GL_CULL_FACE);
 
         // Render all scene objects (opaque)
         for (const auto &object : utils_scene::sceneObjects)
@@ -1457,6 +1549,131 @@ int main(int argc, char *argv[])
                 glBindTexture(GL_TEXTURE_2D, 0);
             }
         }
+
+        // =======================
+        // Render Skybox Objects
+        skyboxShader.use();
+
+        for (const auto &object : utils_scene::sceneObjectsSkybox)
+        {
+            // print object name
+            // std::cout << "Object Name: " << object.name << std::endl;
+            // Transformation Matrices
+            glm::mat4 modelMatrix = glm::mat4(1.0f);
+            modelMatrix = glm::translate(modelMatrix, object.position);
+            if (object.rotationAngle != 0.0f)
+            {
+                modelMatrix = glm::rotate(modelMatrix, glm::radians(object.rotationAngle), object.rotationAxis);
+            }
+            modelMatrix = glm::scale(modelMatrix, object.scale);
+
+            glm::mat4 mvMatrix = ViewMatrix * modelMatrix;
+            glm::mat4 mvpMatrix = ProjMatrix * mvMatrix;
+            glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(mvMatrix)));
+
+            // Set Skybox Shader Uniforms
+            glUniformMatrix4fv(sky_uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+            glUniformMatrix4fv(sky_uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
+            glUniformMatrix3fv(sky_uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+
+            // Retrieve the material for the object
+            const Material &mat = materialManager.getMaterial(object.materialIndex);
+
+            // 1) Diffuse Color
+            if (sky_uKdLocation != -1) {
+                glUniform3fv(sky_uKdLocation, 1, glm::value_ptr(mat.Kd));
+            }
+
+            // 2) Specular Color
+            if (sky_uKsLocation != -1) {
+                glUniform3fv(sky_uKsLocation, 1, glm::value_ptr(mat.Ks));
+            }
+
+            // 3) Shininess
+            if (sky_uShininessLocation != -1) {
+                glUniform1f(sky_uShininessLocation, mat.shininess);
+            }
+
+            // 4) Alpha (Transparency)
+            GLint sky_uAlphaLocation = glGetUniformLocation(skyboxShader.getGLId(), "uAlpha");
+            if (sky_uAlphaLocation != -1) {
+                glUniform1f(sky_uAlphaLocation, mat.alpha);
+            }
+
+            // 5) Diffuse Map
+            if (mat.hasDiffuseMap && mat.diffuseMapID != 0) {
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, mat.diffuseMapID);
+                if (sky_uTextureLocation != -1) {
+                    glUniform1i(sky_uTextureLocation, 0);
+                }
+                if (sky_uUseTextureLocation != -1) {
+                    glUniform1f(sky_uUseTextureLocation, 1.0f);
+                }
+            } else {
+                if (sky_uUseTextureLocation != -1) {
+                    glUniform1f(sky_uUseTextureLocation, 0.0f);
+                }
+            }
+
+            // 6) Normal Map
+            GLint sky_uNormalMapLocation = glGetUniformLocation(skyboxShader.getGLId(), "uNormalMap");
+            GLint sky_uUseNormalMapLocation = glGetUniformLocation(skyboxShader.getGLId(), "uUseNormalMap");
+            if (mat.hasNormalMap && mat.normalMapID != 0) {
+                glActiveTexture(GL_TEXTURE2);
+                glBindTexture(GL_TEXTURE_2D, mat.normalMapID);
+                if (sky_uNormalMapLocation != -1) {
+                    glUniform1i(sky_uNormalMapLocation, 2);
+                }
+                if (sky_uUseNormalMapLocation != -1) {
+                    glUniform1f(sky_uUseNormalMapLocation, 1.0f);
+                }
+            } else {
+                if (sky_uUseNormalMapLocation != -1) {
+                    glUniform1f(sky_uUseNormalMapLocation, 0.0f);
+                }
+            }
+
+            // 7) Specular Map
+            GLint sky_uSpecularMapLocation = glGetUniformLocation(skyboxShader.getGLId(), "uSpecularMap");
+            GLint sky_uUseSpecularMapLocation = glGetUniformLocation(skyboxShader.getGLId(), "uUseSpecularMap");
+            if (mat.hasSpecularMap && mat.specularMapID != 0) {
+                glActiveTexture(GL_TEXTURE3);
+                glBindTexture(GL_TEXTURE_2D, mat.specularMapID);
+                if (sky_uSpecularMapLocation != -1) {
+                    glUniform1i(sky_uSpecularMapLocation, 3);
+                }
+                if (sky_uUseSpecularMapLocation != -1) {
+                    glUniform1f(sky_uUseSpecularMapLocation, 1.0f);
+                }
+            } else {
+                if (sky_uUseSpecularMapLocation != -1) {
+                    glUniform1f(sky_uUseSpecularMapLocation, 0.0f);
+                }
+            }
+
+            // Draw Skybox Object
+            glBindVertexArray(object.vaoID);
+            if (object.type == utils_scene::ObjectType::Cube) {
+                glDrawElements(GL_TRIANGLES, object.indexCount, GL_UNSIGNED_INT, 0);
+            } else if (object.type == utils_scene::ObjectType::Sphere) {
+                glDrawArrays(GL_TRIANGLES, 0, object.indexCount);
+            } else if (object.type == utils_scene::ObjectType::Model) {
+                glDrawElements(GL_TRIANGLES, object.indexCount, GL_UNSIGNED_INT, 0);
+            }
+
+            // Unbind Textures
+            glBindTexture(GL_TEXTURE_2D, 0);
+        }
+
+        glBindVertexArray(0);
+        glUseProgram(0);
+
+        // =======================
+
+        // back to previosu shader
+
+        currentRoom->use();
 
         // Disable face culling to render both front and back faces
         // glDisable(GL_CULL_FACE);

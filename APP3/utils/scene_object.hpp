@@ -45,6 +45,7 @@ namespace utils_scene
 
     extern std::vector<SceneObject> sceneObjects;
     extern std::vector<SceneObject> sceneObjectsTransparent;
+    extern std::vector<SceneObject> sceneObjectsSkybox;
 
     // Updated function declarations to accept Material
     void addCube(const std::string &name,
@@ -74,6 +75,14 @@ namespace utils_scene
                    GLuint vaoID = 0,
                    GLsizei vertexCount = 0,
                    bool isStatic = false);
+
+    void addSkySphere(const std::string &name,
+                      const glm::vec3 &position,
+                      float radius,
+                      const Material &material,
+                      GLuint vaoID = 0,
+                      GLsizei vertexCount = 0,
+                      bool isStatic = false);
 
     void createCompositeCube(const std::string &name,
                              const glm::vec3 &origin,

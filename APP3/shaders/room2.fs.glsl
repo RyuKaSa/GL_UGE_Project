@@ -55,6 +55,7 @@ uniform vec3 lightPosWorld;
 // Hardcoded map strengths
 const float NORMAL_MAP_STRENGTH = 0.0;
 const float SPECULAR_MAP_STRENGTH = 0.0;
+// we can simplify the dither effect by removing the normal map and specular map strengths, (though i'll leave them in, at 0.0)
 
 // Sampling offsets for shadow mapping
 const vec3 gridSamplingDisk[20] = vec3[](
@@ -189,7 +190,7 @@ void main() {
     float finalAlpha = texColor.a * uAlpha;
 
     // ----------------------------- //
-    //       **Dithering Effect**     //
+    //       **Dithering Effect**    //
     // ----------------------------- //
 
     // ----- **Dither Configuration (Hard-Coded)** -----
@@ -235,7 +236,7 @@ void main() {
         // Apply monochromatic dithering if enabled
         if (MONOCHROME_DITHER) {
             // Hardcoded monochromatic color
-            const vec3 MONOCHROME_COLOR = vec3((0.95), (0.68), (0.49));
+            const vec3 MONOCHROME_COLOR = vec3((0.95), (0.68), (0.49)); // i like how beige looks on mono chroma dithering
 
             // Convert to grayscale using luminance
             float luminance = dot(ditheredColor, vec3(0.299, 0.587, 0.114));

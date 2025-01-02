@@ -17,6 +17,7 @@ void loadTextures(GLuint& textureID, GLuint& stoneTextureID, GLuint& brownTerrac
                   GLuint& texture_ID_note_block, GLuint& texture_ID_note_block_n, GLuint& texture_ID_note_block_s,
                   GLuint& texture_ID_oak_planks, GLuint& texture_ID_oak_planks_n, GLuint& texture_ID_oak_planks_s,
                   GLuint& texture_ID_stone_bricks, GLuint& texture_ID_stone_bricks_n, GLuint& texture_ID_stone_bricks_s,
+                  GLuint& skyboxTextureID,
                   const glimac::FilePath& applicationPath);
 
 // Function to set up a depth cube map

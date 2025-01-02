@@ -2,7 +2,6 @@
 
 namespace utils_game_loop {
 
-
 void dynamic_loop(float &deltaTime, float &lastFrame, float &currentFrame,
                   glimac::SDLWindowManager &windowManager, glm::vec3 &cameraPos,
                   glm::vec3 &cameraFront, glm::vec3 &cameraUp, float cameraSpeed,
@@ -42,6 +41,31 @@ void dynamic_loop(float &deltaTime, float &lastFrame, float &currentFrame,
             // if (object.name == "") {
                 
             // }
+        }
+    }
+
+    // Update dynamic objects
+    for (auto& object : utils_scene::sceneObjectsSkybox) {
+        if (!object.isStatic) {
+            if (object.name == "sky") {
+                // Keep skybox centered on the camera
+                object.position = cameraPos;
+
+                // Increment the rotation angle based on speed and deltaTime
+                skyboxRotation.currentAngle += skyboxRotation.speedDegrees * deltaTime;
+
+                // Wrap the angle within [0, 360) degrees
+                if (skyboxRotation.currentAngle >= 360.0f) {
+                    skyboxRotation.currentAngle -= 360.0f;
+                }
+
+                // Apply the updated rotation angle to the object
+                object.rotationAngle = skyboxRotation.currentAngle;
+                object.rotationAxis = skyboxRotation.axis;
+
+                // Debug output
+                // std::cout << "Skybox rotation angle: " << object.rotationAngle << " degrees" << std::endl;
+            }
         }
     }
 }

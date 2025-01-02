@@ -6,6 +6,7 @@ namespace utils_scene
 
     std::vector<SceneObject> sceneObjects;
     std::vector<SceneObject> sceneObjectsTransparent;
+    std::vector<SceneObject> sceneObjectsSkybox;
 
     void addCube(const std::string &name,
                 const glm::vec3 &position,
@@ -113,6 +114,40 @@ namespace utils_scene
         sphereObject.materialIndex = materialIndex;
 
         sceneObjects.push_back(sphereObject);
+    }
+    
+    // add sphere no bounding box
+    void addSkySphere(const std::string &name,
+                   const glm::vec3 &position,
+                   float radius,
+                   const Material &material,
+                   GLuint vaoID,
+                   GLsizei vertexCount,
+                   bool isStatic)
+    {
+        SceneObject sphereObject;
+        sphereObject.name = name;
+        sphereObject.type = ObjectType::Sphere;
+        sphereObject.position = position;
+        sphereObject.initialPosition = position;
+        sphereObject.scale = glm::vec3(radius);
+        sphereObject.rotationAxis = glm::vec3(0.0f);
+        sphereObject.rotationAngle = 0.0f;
+        sphereObject.vaoID = vaoID;
+        sphereObject.indexCount = vertexCount;
+        sphereObject.isStatic = isStatic;
+
+        // Assign material using MaterialManager
+        int materialIndex = MaterialManager::getInstance().findMaterial(material);
+        if (materialIndex == -1) {
+            materialIndex = MaterialManager::getInstance().addOrGetMaterial(material);
+        }
+        sphereObject.materialIndex = materialIndex;
+
+        sceneObjectsSkybox.push_back(sphereObject);
+        // sceneObjects.push_back(sphereObject);
+        // print object name
+        std::cout << "Skybox sphere name: " << sphereObject.name << std::endl;
     }
 
     void createCompositeCube(const std::string &name,
