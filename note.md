@@ -3,6 +3,7 @@
  - 'ZQSD' for movement (azerty keyboard)
  - 'Y' for wireframe toggle
  - 'T' for chair animation toggle
+ - 'R' for light 1 toggle
 
 # 10-Nov-2024
 currently trying to separate the main file into several more digestable parts, for ease of maintenance and readability.
@@ -58,7 +59,7 @@ assignment :
  - Two separate lighting/shader pipelines (one per room) ✅
  - Animated object in at least one room ✅
  - Mirror or transparency effect in one room ✅
- - Room-specific lighting (lights in one room do not affect the other) ❌
+ - Room-specific lighting (lights in one room do not affect the other) ✅ 
  - FPS camera with restricted vertical movement ✅
  - Collision detection for walls ✅
 
@@ -75,15 +76,15 @@ assignment :
  - Uses a more “realistic” illumination model (e.g., Phong). ✅
  - At least one textured object. ✅
  - At least two lights (one movable), ✅
- - Lights affecting only Room 1. ❌
+ - Lights affecting only Room 1. ✅
  - Contains the animated object. ✅
- - One light can be switched on/off. ❌
+ - One light can be switched on/off. ✅
 
 ## Room 2:
 
  - Uses a different illumination model (can be simpler). ✅
  - Must have at least one surface with transparency or mirror. ✅ (transparency, no mirror)
- - Lights (if any) affect only Room 2. ❌
+ - Lights affect only Room 2. ✅
 
 ## Bonus:
 

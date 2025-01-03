@@ -24,6 +24,8 @@ extern bool isRockingChairPaused;
 extern double rockingChairPausedTime;
 extern double rockingChairStartTime;
 
+extern bool isLightPaused;
+
 extern float sensitivity;
 extern float currentFrame;
 

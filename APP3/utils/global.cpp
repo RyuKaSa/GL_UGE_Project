@@ -19,6 +19,8 @@ bool isRockingChairPaused = false;
 double rockingChairPausedTime = 0.0;
 double rockingChairStartTime = 0.0;
 
+bool isLightPaused = false;
+
 float sensitivity = 0.1f;
 float currentFrame = 0.0f;
 

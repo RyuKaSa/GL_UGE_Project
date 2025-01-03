@@ -70,6 +70,10 @@ void eventHandler(glimac::SDLWindowManager &windowManager, bool &done, bool &isR
                 wireframeMode = !wireframeMode;
                 glPolygonMode(GL_FRONT_AND_BACK, wireframeMode ? GL_LINE : GL_FILL);
             }
+            else if (e.key.keysym.sym == SDLK_r)
+            {
+                isLightPaused = !isLightPaused;
+            }
         }
 
         // Mouse movement

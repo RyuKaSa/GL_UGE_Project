@@ -1321,59 +1321,70 @@ int main(int argc, char *argv[])
         // dynamic loop
         utils_game_loop::dynamic_loop(deltaTime, lastFrame, currentFrame, windowManager, cameraPos, cameraFront, cameraUp, cameraSpeed, done, isRockingChairPaused, rockingChairStartTime, rockingChairPausedTime, yaw, pitch, radius, frequency, radius, length, cameraHeight);
 
-        // First Pass: Render scene to depth cube map
-        for (unsigned int i = 0; i < 6; ++i)
+        if (!isLightPaused)
         {
-            // Bind the framebuffer and attach the current cube map face
-            glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, depthCubeMap, 0);
-            glDrawBuffer(GL_NONE);
-            glReadBuffer(GL_NONE);
 
-            // Set viewport and clear depth buffer
-            glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-            glClear(GL_DEPTH_BUFFER_BIT);
-
-            // Use the depth shader program
-            depthShader.use();
-            glUniform1f(glGetUniformLocation(depthShader.getGLId(), "farPlane"), farPlane);
-            glUniform3fv(glGetUniformLocation(depthShader.getGLId(), "lightPos"), 1, glm::value_ptr(lightPosWorld));
-
-            // Set the shadow matrix for the current face
-            glUniformMatrix4fv(glGetUniformLocation(depthShader.getGLId(), "shadowMatrix"), 1, GL_FALSE, glm::value_ptr(shadowTransforms[i]));
-
-            // Render scene objects
-            for (const auto &object : utils_scene::sceneObjects)
+            // First Pass: Render scene to depth cube map
+            for (unsigned int i = 0; i < 6; ++i)
             {
-                glm::mat4 modelMatrix = glm::mat4(1.0f);
-                modelMatrix = glm::translate(modelMatrix, object.position);
-                if (object.rotationAngle != 0.0f)
-                {
-                    modelMatrix = glm::rotate(modelMatrix, glm::radians(object.rotationAngle), object.rotationAxis);
-                }
-                modelMatrix = glm::scale(modelMatrix, object.scale);
+                // Bind the framebuffer and attach the current cube map face
+                glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, depthCubeMap, 0);
+                glDrawBuffer(GL_NONE);
+                glReadBuffer(GL_NONE);
 
-                // Set model matrix for depth shader
-                glUniformMatrix4fv(glGetUniformLocation(depthShader.getGLId(), "model"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+                // Set viewport and clear depth buffer
+                glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+                glClear(GL_DEPTH_BUFFER_BIT);
 
-                glBindVertexArray(object.vaoID);
-                if (object.type == utils_scene::ObjectType::Cube)
+                // Use the depth shader program
+                depthShader.use();
+                glUniform1f(glGetUniformLocation(depthShader.getGLId(), "farPlane"), farPlane);
+                glUniform3fv(glGetUniformLocation(depthShader.getGLId(), "lightPos"), 1, glm::value_ptr(lightPosWorld));
+
+                // Set the shadow matrix for the current face
+                glUniformMatrix4fv(glGetUniformLocation(depthShader.getGLId(), "shadowMatrix"), 1, GL_FALSE, glm::value_ptr(shadowTransforms[i]));
+
+                // Render scene objects
+                for (const auto &object : utils_scene::sceneObjects)
                 {
-                    glDrawElements(GL_TRIANGLES, object.indexCount, GL_UNSIGNED_INT, 0);
+                    glm::mat4 modelMatrix = glm::mat4(1.0f);
+                    modelMatrix = glm::translate(modelMatrix, object.position);
+                    if (object.rotationAngle != 0.0f)
+                    {
+                        modelMatrix = glm::rotate(modelMatrix, glm::radians(object.rotationAngle), object.rotationAxis);
+                    }
+                    modelMatrix = glm::scale(modelMatrix, object.scale);
+
+                    // Set model matrix for depth shader
+                    glUniformMatrix4fv(glGetUniformLocation(depthShader.getGLId(), "model"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+
+                    glBindVertexArray(object.vaoID);
+                    if (object.type == utils_scene::ObjectType::Cube)
+                    {
+                        glDrawElements(GL_TRIANGLES, object.indexCount, GL_UNSIGNED_INT, 0);
+                    }
+                    else if (object.type == utils_scene::ObjectType::Sphere)
+                    {
+                        glDrawArrays(GL_TRIANGLES, 0, object.indexCount);
+                    }
+                    else if (object.type == utils_scene::ObjectType::Model)
+                    {
+                        glDrawElements(GL_TRIANGLES, object.indexCount, GL_UNSIGNED_INT, 0);
+                    }
+                    glBindVertexArray(0);
                 }
-                else if (object.type == utils_scene::ObjectType::Sphere)
-                {
-                    glDrawArrays(GL_TRIANGLES, 0, object.indexCount);
-                }
-                else if (object.type == utils_scene::ObjectType::Model)
-                {
-                    glDrawElements(GL_TRIANGLES, object.indexCount, GL_UNSIGNED_INT, 0);
-                }
-                glBindVertexArray(0);
+
+                // Optional: Unbind the framebuffer after each face
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
             }
 
-            // Optional: Unbind the framebuffer after each face
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        } // end of if (!isLightPaused)
+        else
+        {
+            // set intensity to 0
+            lightIntensity = glm::vec3(0.0f);
+            // next loop will set back to Kd of the material, unless light is still paused
         }
 
         // Second Pass: Render the scene normally with point light
@@ -1413,28 +1424,30 @@ int main(int argc, char *argv[])
         //     }
         // }
 
-        // retrieve alpha, regardless of room
+        // Retrieve 'uAlpha' regardless of room
         GLint uAlphaLocation = currentRoom->getUniformLocation("uAlpha");
 
-        // simpel point lights here
-        int numLights = (int)simpleLights.size();
+        // Determine the number of additional lights, capped by MAX_ADDITIONAL_LIGHTS
+        int numLights = static_cast<int>(simpleLights.size());
         if (numLights > MAX_ADDITIONAL_LIGHTS)
         {
             numLights = MAX_ADDITIONAL_LIGHTS;
         }
 
+        // Set the number of additional lights in the shader
         GLint numLightsLoc = glGetUniformLocation(currentRoom->getGLId(), "uNumAdditionalLights");
         glUniform1i(numLightsLoc, numLights);
 
-        // convert to view space
+        // Convert additional light positions to view space
         std::vector<glm::vec3> additionalLightPosViewSpace;
-        for (const auto &light : simpleLights)
+        additionalLightPosViewSpace.reserve(numLights);
+        for (int i = 0; i < numLights; ++i)
         {
-            glm::vec4 posView = ViewMatrix * glm::vec4(light.position, 1.0f);
+            glm::vec4 posView = ViewMatrix * glm::vec4(simpleLights[i].position, 1.0f);
             additionalLightPosViewSpace.emplace_back(glm::vec3(posView));
         }
 
-        // For each light, pass position, color, intensity
+        // Set additional light positions and colors once per frame
         for (int i = 0; i < numLights; ++i)
         {
             std::string idx = std::to_string(i);
@@ -1451,14 +1464,14 @@ int main(int argc, char *argv[])
                 ("uAdditionalLightColor[" + idx + "]").c_str());
             glUniform3fv(colorLoc, 1, glm::value_ptr(simpleLights[i].color));
 
-            // Intensity
+            // Initialize intensity to zero; will be set per object
             GLint intenLoc = glGetUniformLocation(
                 currentRoom->getGLId(),
                 ("uAdditionalLightIntensity[" + idx + "]").c_str());
-            glUniform1f(intenLoc, simpleLights[i].intensity);
+            glUniform1f(intenLoc, 0.0f);
         }
 
-        // Set light properties
+        // Set main light properties once per frame
         glUniform3fv(uLightPos_vsLocation, 1, glm::value_ptr(lightPosViewSpace));
         glUniform3fv(uLightIntensityLocation, 1, glm::value_ptr(lightIntensity));
 
@@ -1470,10 +1483,8 @@ int main(int argc, char *argv[])
         glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap);
         glUniform1i(glGetUniformLocation(currentRoom->getGLId(), "depthMap"), 1);
 
-        // Set light position in world space
+        // Set light and camera positions in world space
         glUniform3fv(glGetUniformLocation(currentRoom->getGLId(), "lightPosWorld"), 1, glm::value_ptr(lightPosWorld));
-
-        // Set camera position in world space
         glUniform3fv(glGetUniformLocation(currentRoom->getGLId(), "cameraPosWorld"), 1, glm::value_ptr(cameraPos));
 
         // Set far plane
@@ -1483,19 +1494,24 @@ int main(int argc, char *argv[])
         if (inRoom2 && !utils_scene::sceneObjectsTransparent.empty())
         {
             std::sort(utils_scene::sceneObjectsTransparent.begin(), utils_scene::sceneObjectsTransparent.end(),
-                      [&](const utils_scene::SceneObject &a, const utils_scene::SceneObject &b)
-                      {
-                          float distanceA = glm::length(cameraPos - a.position);
-                          float distanceB = glm::length(cameraPos - b.position);
-                          return distanceA > distanceB;
-                      });
+                    [&](const utils_scene::SceneObject &a, const utils_scene::SceneObject &b)
+                    {
+                        float distanceA = glm::length(cameraPos - a.position);
+                        float distanceB = glm::length(cameraPos - b.position);
+                        return distanceA > distanceB;
+                    });
         }
 
         glDisable(GL_CULL_FACE);
 
+        auto deltaObj = 0.0f;
+        auto deltaLight = 0.0f;
+        bool sameRoom = false;
+        
         // Render all scene objects (opaque)
         for (const auto &object : utils_scene::sceneObjects)
         {
+            // Setup model matrix
             glm::mat4 modelMatrix = glm::mat4(1.0f);
             modelMatrix = glm::translate(modelMatrix, object.position);
             if (object.rotationAngle != 0.0f)
@@ -1504,44 +1520,65 @@ int main(int argc, char *argv[])
             }
             modelMatrix = glm::scale(modelMatrix, object.scale);
 
+            // Calculate matrices
             glm::mat4 mvMatrix = ViewMatrix * modelMatrix;
             glm::mat4 mvpMatrix = ProjMatrix * mvMatrix;
             glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(mvMatrix)));
 
             // Set uniforms for shaders
-            glUniformMatrix4fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix)); // For vertex shader
+            glUniformMatrix4fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
             glUniformMatrix4fv(uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
             glUniformMatrix4fv(uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
             glUniformMatrix3fv(uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
-            // if room 2, set alpha value to 1.0f
-            // if (inRoom2)
-            // {
-            //     glUniform1f(uAlphaLocation, 1.0f);
-            // }
+            // Determine if the object is in the same room as the main light
+            float deltaObj   = 20.5f - object.position.x;
+            float deltaLight = 20.5f - lightPosWorld.x;
+            bool sameRoom    = (deltaObj * deltaLight) > 0; // true if object & light are on the same side
 
-            // Retrieve the material from the object
+            if (sameRoom) {
+                // Main light affects this object
+                glUniform3fv(uLightIntensityLocation, 1, glm::value_ptr(lightIntensity));
+            } else {
+                // Main light does not affect this object
+                glUniform3fv(uLightIntensityLocation, 1, glm::value_ptr(glm::vec3(0.0f)));
+            }
+
+            // **Additional Lights Uniforms**
+            for (int i = 0; i < numLights; ++i)
+            {
+                float deltaObjForAddLight   = 20.5f - object.position.x;
+                float deltaAdditionalLight  = 20.5f - simpleLights[i].position.x;
+                bool sameRoomForAddLight    = (deltaObjForAddLight * deltaAdditionalLight) > 0;
+
+                std::string idx = std::to_string(i);
+                GLint intenLoc  = glGetUniformLocation(currentRoom->getGLId(), ("uAdditionalLightIntensity[" + idx + "]").c_str());
+
+                if (sameRoomForAddLight)
+                {
+                    // Enable this additional light for the object
+                    glUniform1f(intenLoc, simpleLights[i].intensity);
+                }
+                else
+                {
+                    // Disable this additional light for the object
+                    glUniform1f(intenLoc, 0.0f);
+                }
+            }
+
+            // Retrieve the material from the manager
             const Material &mat = materialManager.getMaterial(object.materialIndex);
-            // print material properties once
 
             // 1) Diffuse color
             if (uKdLocation != -1)
             {
                 glUniform3fv(uKdLocation, 1, glm::value_ptr(mat.Kd));
             }
-            else
-            {
-                std::cerr << "Warning: 'uKd' uniform not found.\n";
-            }
 
             // 2) Specular color
             if (uKsLocation != -1)
             {
                 glUniform3fv(uKsLocation, 1, glm::value_ptr(mat.Ks));
-            }
-            else
-            {
-                std::cerr << "Warning: 'uKs' uniform not found.\n";
             }
 
             // 3) Shininess
@@ -1551,25 +1588,18 @@ int main(int argc, char *argv[])
             }
 
             // 4) Alpha
-            GLint uAlphaLoc = glGetUniformLocation(currentRoom->getGLId(), "uAlpha");
-            if (uAlphaLoc != -1)
+            if (uAlphaLocation != -1)
             {
-                glUniform1f(uAlphaLoc, mat.alpha);
+                glUniform1f(uAlphaLocation, mat.alpha);
             }
 
-            // 5) Diffuse Map
-            if (mat.hasDiffuseMap && mat.diffuseMapID != 0)
+            // Bind textures if applicable
+            if (mat.hasDiffuseMap && mat.diffuseMapID != 0 && uUseTextureLocation != -1)
             {
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, mat.diffuseMapID);
-                if (uTextureLocation != -1)
-                {
-                    glUniform1i(uTextureLocation, 0); // sampler in shader uses texture unit 0
-                }
-                if (uUseTextureLocation != -1)
-                {
-                    glUniform1f(uUseTextureLocation, 1.0f);
-                }
+                glUniform1i(uTextureLocation, 0);
+                glUniform1f(uUseTextureLocation, 1.0f);
             }
             else
             {
@@ -1579,54 +1609,7 @@ int main(int argc, char *argv[])
                 }
             }
 
-            // 6) Normal Map
-            GLint uNormalMapLoc = glGetUniformLocation(currentRoom->getGLId(), "uNormalMap");
-            GLint uUseNormalMapLoc = glGetUniformLocation(currentRoom->getGLId(), "uUseNormalMap");
-            if (mat.hasNormalMap && mat.normalMapID != 0)
-            {
-                glActiveTexture(GL_TEXTURE2);
-                glBindTexture(GL_TEXTURE_2D, mat.normalMapID);
-                if (uNormalMapLoc != -1)
-                {
-                    glUniform1i(uNormalMapLoc, 2); // normal map uses texture unit 2
-                }
-                if (uUseNormalMapLoc != -1)
-                {
-                    glUniform1f(uUseNormalMapLoc, 1.0f);
-                }
-            }
-            else
-            {
-                if (uUseNormalMapLoc != -1)
-                {
-                    glUniform1f(uUseNormalMapLoc, 0.0f);
-                }
-            }
-
-            // 7 specular map
-            GLint uSpecularMapLocation = glGetUniformLocation(currentRoom->getGLId(), "uSpecularMap");
-            GLint uUseSpecularMapLocation = glGetUniformLocation(currentRoom->getGLId(), "uUseSpecularMap");
-            if (mat.hasSpecularMap && mat.specularMapID != 0)
-            {
-                glActiveTexture(GL_TEXTURE3);
-                glBindTexture(GL_TEXTURE_2D, mat.specularMapID);
-                if (uSpecularMapLocation != -1)
-                {
-                    glUniform1i(uSpecularMapLocation, 3);
-                }
-                if (uUseSpecularMapLocation != -1)
-                {
-                    glUniform1f(uUseSpecularMapLocation, 1.0f); // Enable specular map usage
-                }
-            }
-            else
-            {
-                if (uUseSpecularMapLocation != -1)
-                {
-                    glUniform1f(uUseSpecularMapLocation, 0.0f); // Disable specular map usage
-                }
-            }
-
+            // Bind VAO and draw the object
             glBindVertexArray(object.vaoID);
             if (object.type == utils_scene::ObjectType::Cube)
             {
@@ -1640,23 +1623,9 @@ int main(int argc, char *argv[])
             {
                 glDrawElements(GL_TRIANGLES, object.indexCount, GL_UNSIGNED_INT, 0);
             }
-
-            // Unbind textures if they are used
-            if (mat.hasDiffuseMap && mat.diffuseMapID != 0)
-            {
-                glBindTexture(GL_TEXTURE_2D, 0);
-            }
-
-            if (mat.hasNormalMap && mat.normalMapID != 0)
-            {
-                glBindTexture(GL_TEXTURE_2D, 0);
-            }
-
-            if (mat.hasSpecularMap && mat.specularMapID != 0)
-            {
-                glBindTexture(GL_TEXTURE_2D, 0);
-            }
+            glBindVertexArray(0);
         }
+
 
         // =======================
         // Render Skybox Objects
@@ -1810,19 +1779,8 @@ int main(int argc, char *argv[])
 
         lightShader.use();
     
-        // only render the light sphere if the camera is in the same room as the light
-
-        auto deltaCam = 0.0f;
-        auto deltaLight = 0.0f;
-
-        deltaCam = 20.5f - cameraPos.x;
-        deltaLight = 20.5f - lightPosWorld.x;
-
-        bool room1 = (deltaCam * deltaLight > 0);
-
-        // only redner if room1 is true
-        if (room1) {
-
+        if (lightIntensity != glm::vec3(0.0f))
+        {
             // material is lightMaterial
             const Material &mat = lightMaterial;
 
@@ -1869,44 +1827,32 @@ int main(int argc, char *argv[])
         glUniform1f(light_uShininessLocation, simpleLightMaterial.shininess);
         glUniform1f(glGetUniformLocation(lightShader.getGLId(), "uAlpha"), simpleLightMaterial.alpha);
 
-        for (const auto& light : simpleLights) {
-            // only do the rest of the loop for lights that are on the same side of the x coord 20.5 as the camera
-            // this condition will allow the loop to only render the lights spheres that are in the same room as the camera
-            // with a single check, we can check if the cam pos is the same as the light pos
-            deltaCam = 20.5f - cameraPos.x;
-            deltaLight = 20.5f - light.position.x;
+        for (const auto &light : simpleLights)
+        {
+            // Always render the sphere if you like, or skip if intensity is 0
+            if (light.intensity <= 0.0f)
+                continue;
 
-            room1 = (deltaCam * deltaLight > 0);
-            // bool room2 = (deltaCam * deltaLight < 0);
+            glm::mat4 modelMatrix = glm::mat4(1.0f);
+            modelMatrix = glm::translate(modelMatrix, light.position);
+            modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1f));
 
-            // print the values
-            // std::cout << "room1: " << (deltaCam * deltaLight > 0) << std::endl;
+            glm::mat4 mvMatrix     = ViewMatrix * modelMatrix;
+            glm::mat4 mvpMatrix    = ProjMatrix * mvMatrix;
+            glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(mvMatrix)));
 
-            // we only send the light to the shader if the room1 bool is 1 (true)
-            if (room1) {
-                // Create model matrix for each light sphere
-                glm::mat4 modelMatrix = glm::mat4(1.0f);
-                modelMatrix = glm::translate(modelMatrix, light.position); // Position each sphere
-                modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1f));    // Scale down each sphere
+            // Pass transformation matrices
+            glUniformMatrix4fv(light_uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+            glUniformMatrix4fv(light_uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
+            glUniformMatrix3fv(light_uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
-                glm::mat4 mvMatrix = ViewMatrix * modelMatrix;
-                glm::mat4 mvpMatrix = ProjMatrix * mvMatrix;
-                glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(mvMatrix)));
+            // Optional: per-light color
+            glUniform3fv(light_uKdLocation, 1, glm::value_ptr(light.color));
 
-                // Pass transformation matrices
-                glUniformMatrix4fv(light_uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
-                glUniformMatrix4fv(light_uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
-                glUniformMatrix3fv(light_uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
-
-                // Set light-specific diffuse color (optional: if you want per-light color)
-                glUniform3fv(light_uKdLocation, 1, glm::value_ptr(light.color));
-
-                // Render light sphere
-                glBindVertexArray(sphereVAO);
-                glDrawArrays(GL_TRIANGLES, 0, sphereVertexCountGL);
-                glBindVertexArray(0);
-            }
-            // we can leave the exact middle out of the check, it can serve as transition
+            // Render light sphere
+            glBindVertexArray(sphereVAO);
+            glDrawArrays(GL_TRIANGLES, 0, sphereVertexCountGL);
+            glBindVertexArray(0);
         }
 
         glUseProgram(0);
@@ -1933,6 +1879,53 @@ int main(int argc, char *argv[])
                 {
                     std::cerr << "Invalid material index for object: " << object.name << std::endl;
                     continue; // Skip rendering this object
+                }
+
+                // **Main Light** (object vs. main light) for transparency
+                float deltaObjectTrans = 20.5f - object.position.x;
+                float deltaMainLight   = 20.5f - lightPosWorld.x;
+                bool sameRoomTrans     = (deltaObjectTrans * deltaMainLight) > 0;
+
+                if (sameRoomTrans)
+                {
+                    glUniform3fv(uLightPos_vsLocation, 1, glm::value_ptr(lightPosViewSpace));
+                    glUniform3fv(uLightIntensityLocation, 1, glm::value_ptr(lightIntensity));
+                }
+                else
+                {
+                    glUniform3fv(uLightIntensityLocation, 1, glm::value_ptr(glm::vec3(0.0f)));
+                }
+
+                // **Additional Lights** (object vs. each additional light)
+                int numLights = (int)simpleLights.size();
+                for (int i = 0; i < numLights; ++i)
+                {
+                    float deltaObjForAddLight   = 20.5f - object.position.x;
+                    float deltaAdditionalLight  = 20.5f - simpleLights[i].position.x;
+                    bool sameRoomForAddLight    = (deltaObjForAddLight * deltaAdditionalLight) > 0;
+
+                    std::string idx  = std::to_string(i);
+                    GLint intenLoc   = glGetUniformLocation(currentRoom->getGLId(), ("uAdditionalLightIntensity[" + idx + "]").c_str());
+
+                    if (sameRoomForAddLight)
+                    {
+                        // Position
+                        GLint posLoc = glGetUniformLocation(currentRoom->getGLId(),
+                                        ("uAdditionalLightPos[" + idx + "]").c_str());
+                        glUniform3fv(posLoc, 1, glm::value_ptr(additionalLightPosViewSpace[i]));
+
+                        // Color
+                        GLint colorLoc = glGetUniformLocation(currentRoom->getGLId(),
+                                        ("uAdditionalLightColor[" + idx + "]").c_str());
+                        glUniform3fv(colorLoc, 1, glm::value_ptr(simpleLights[i].color));
+
+                        // Intensity
+                        glUniform1f(intenLoc, simpleLights[i].intensity);
+                    }
+                    else
+                    {
+                        glUniform1f(intenLoc, 0.0f);
+                    }
                 }
 
                 // Retrieve the material from the manager
