@@ -1809,41 +1809,55 @@ int main(int argc, char *argv[])
         // back to previosu shader
 
         lightShader.use();
+    
+        // only render the light sphere if the camera is in the same room as the light
 
-        // material is lightMaterial
-        const Material &mat = lightMaterial;
+        auto deltaCam = 0.0f;
+        auto deltaLight = 0.0f;
 
-        // Create model matrix with translation and scaling
-        glm::mat4 modelMatrix = glm::mat4(1.0f);
+        deltaCam = 20.5f - cameraPos.x;
+        deltaLight = 20.5f - lightPosWorld.x;
 
-        // Translate the sphere to the light source position
-        modelMatrix = glm::translate(modelMatrix, lightPosWorld);
+        bool room1 = (deltaCam * deltaLight > 0);
 
-        // Scale the sphere to make it smaller
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1f)); // Scale down to 10%
+        // only redner if room1 is true
+        if (room1) {
 
-        // Calculate matrices
-        glm::mat4 mvMatrix = ViewMatrix * modelMatrix;
-        glm::mat4 mvpMatrix = ProjMatrix * mvMatrix;
-        glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(mvMatrix)));
+            // material is lightMaterial
+            const Material &mat = lightMaterial;
 
-        // Pass matrices to the shader
-        glUniformMatrix4fv(light_uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
-        glUniformMatrix4fv(light_uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
-        glUniformMatrix3fv(light_uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+            // Create model matrix with translation and scaling
+            glm::mat4 modelMatrix = glm::mat4(1.0f);
 
-        // Retrieve the material for the object
+            // Translate the sphere to the light source position
+            modelMatrix = glm::translate(modelMatrix, lightPosWorld);
 
-        // 1) Diffuse Color
-        if (light_uKdLocation != -1)
-        {
-            glUniform3fv(light_uKdLocation, 1, glm::value_ptr(mat.Kd));
+            // Scale the sphere to make it smaller
+            modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1f)); // Scale down to 10%
+
+            // Calculate matrices
+            glm::mat4 mvMatrix = ViewMatrix * modelMatrix;
+            glm::mat4 mvpMatrix = ProjMatrix * mvMatrix;
+            glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(mvMatrix)));
+
+            // Pass matrices to the shader
+            glUniformMatrix4fv(light_uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+            glUniformMatrix4fv(light_uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
+            glUniformMatrix3fv(light_uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+
+            // Retrieve the material for the object
+
+            // 1) Diffuse Color
+            if (light_uKdLocation != -1)
+            {
+                glUniform3fv(light_uKdLocation, 1, glm::value_ptr(mat.Kd));
+            }
+
+            // Draw the smaller sphere
+            glBindVertexArray(sphereVAO);
+            glDrawArrays(GL_TRIANGLES, 0, sphereVertexCountGL);
+            glBindVertexArray(0);
         }
-
-        // Draw the smaller sphere
-        glBindVertexArray(sphereVAO);
-        glDrawArrays(GL_TRIANGLES, 0, sphereVertexCountGL);
-        glBindVertexArray(0);
 
         glUseProgram(0);
 
@@ -1856,27 +1870,43 @@ int main(int argc, char *argv[])
         glUniform1f(glGetUniformLocation(lightShader.getGLId(), "uAlpha"), simpleLightMaterial.alpha);
 
         for (const auto& light : simpleLights) {
-            // Create model matrix for each light sphere
-            glm::mat4 modelMatrix = glm::mat4(1.0f);
-            modelMatrix = glm::translate(modelMatrix, light.position); // Position each sphere
-            modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1f));    // Scale down each sphere
+            // only do the rest of the loop for lights that are on the same side of the x coord 20.5 as the camera
+            // this condition will allow the loop to only render the lights spheres that are in the same room as the camera
+            // with a single check, we can check if the cam pos is the same as the light pos
+            deltaCam = 20.5f - cameraPos.x;
+            deltaLight = 20.5f - light.position.x;
 
-            glm::mat4 mvMatrix = ViewMatrix * modelMatrix;
-            glm::mat4 mvpMatrix = ProjMatrix * mvMatrix;
-            glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(mvMatrix)));
+            room1 = (deltaCam * deltaLight > 0);
+            // bool room2 = (deltaCam * deltaLight < 0);
 
-            // Pass transformation matrices
-            glUniformMatrix4fv(light_uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
-            glUniformMatrix4fv(light_uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
-            glUniformMatrix3fv(light_uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+            // print the values
+            // std::cout << "room1: " << (deltaCam * deltaLight > 0) << std::endl;
 
-            // Set light-specific diffuse color (optional: if you want per-light color)
-            glUniform3fv(light_uKdLocation, 1, glm::value_ptr(light.color));
+            // we only send the light to the shader if the room1 bool is 1 (true)
+            if (room1) {
+                // Create model matrix for each light sphere
+                glm::mat4 modelMatrix = glm::mat4(1.0f);
+                modelMatrix = glm::translate(modelMatrix, light.position); // Position each sphere
+                modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1f));    // Scale down each sphere
 
-            // Render light sphere
-            glBindVertexArray(sphereVAO);
-            glDrawArrays(GL_TRIANGLES, 0, sphereVertexCountGL);
-            glBindVertexArray(0);
+                glm::mat4 mvMatrix = ViewMatrix * modelMatrix;
+                glm::mat4 mvpMatrix = ProjMatrix * mvMatrix;
+                glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(mvMatrix)));
+
+                // Pass transformation matrices
+                glUniformMatrix4fv(light_uMVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+                glUniformMatrix4fv(light_uMVMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
+                glUniformMatrix3fv(light_uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+
+                // Set light-specific diffuse color (optional: if you want per-light color)
+                glUniform3fv(light_uKdLocation, 1, glm::value_ptr(light.color));
+
+                // Render light sphere
+                glBindVertexArray(sphereVAO);
+                glDrawArrays(GL_TRIANGLES, 0, sphereVertexCountGL);
+                glBindVertexArray(0);
+            }
+            // we can leave the exact middle out of the check, it can serve as transition
         }
 
         glUseProgram(0);

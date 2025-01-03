@@ -26,14 +26,22 @@ In the meantime, I did the dual shader pipeline, the rrom2 shader is just a colo
 Also did the multiple point lights, they are also dynamic, can change color and position during the while loop. I did not implement shadows for these extra point lights, for both performance and complexity reasons, as the shadows are already a bonus feature.
 Wireframe toggle has been added.
 
+# 2-Jan-2025
+Material struct, more adapted than the given one in Geometry.hpp.
+Added Specular Maps, gives good enough results, thanks to a mix of diffuse, normal and specular maps.
+Room 2 has transparency, and a dither effect, hard coded monochrome dither on a Bayer matrix, the color and size, and mono boolean can be changed in the shader code.
+Added a skybox, more precisely a spheremap, and runnign the app randomly chooses one of 4 space spheremaps.
+For randomization, I use a time seed, otherwise the same spheremap is chosen every time the app is run.
+Added small spheres to each light source, to see their position, and color. They are not affected by the room shaders, as it beats the purpose of the different lights in each room, granted it can look weird in room 2 with the dither effect. 
+
 ## note
 
-If i implemente a big thing, i can try to test it in APP2, to keep APP1 working on previous version.
+If i implemente a big thing, i can try to test it in APP2, to keep APP1 working on previous version. (now on APP3_executable)
 
 # How to run the thing
 
 ```bash
-mkdir bin; cd bin; cmake ..; make -j4; ./main_executable
+mkdir bin; cd bin; cmake ..; make -j4; ./APP3_executable
 ```
 
 assignment : 
@@ -42,41 +50,48 @@ assignment :
 
 # Features to Implement
 
- - C++ application with OpenGL 3+ (shaders, no fixed pipeline)
- - Loading/importing of geometry or .obj/.ply models
- - Skybox rendering (visible from anywhere, no ceiling)
- - Two separate lighting/shader pipelines (one per room)
- - Animated object in at least one room
- - Mirror or transparency effect in one room
- - Room-specific lighting (lights in one room do not affect the other)
- - FPS camera with restricted vertical movement
- - Collision detection for walls
+ - C++ application with OpenGL 3+ (shaders, no fixed pipeline) ✅
+ - Windowed app with event loop ✅
+ - Must compile on Linux (no memory leaks, documented, uses Git). ❌ (MacOS, no Valgrind)
+ - Loading/importing of geometry or .obj/.ply models ✅
+ - Skybox rendering (visible from anywhere, no ceiling) ✅
+ - Two separate lighting/shader pipelines (one per room) ✅
+ - Animated object in at least one room ✅
+ - Mirror or transparency effect in one room ✅
+ - Room-specific lighting (lights in one room do not affect the other) ❌
+ - FPS camera with restricted vertical movement ✅
+ - Collision detection for walls ✅
 
 # Conditions (Assignment Constraints)
 
 ## General Scene:
 
- - Two rooms connected by a passage, as per the floor plan (strict geometry).
- - Minimum two “exhibit” objects in each room.
- - Skybox must be present (no ceilings).
- - Must compile on Linux (no memory leaks, documented, uses Git).
+ - Two rooms connected by a passage, as per the floor plan (strict geometry). ✅
+ - Minimum two “exhibit” objects in each room. ❌
+ - Skybox must be present (no ceilings). ✅
 
 ## Room 1:
 
- - Uses a more “realistic” illumination model (e.g., Phong).
- - At least one textured object.
- - At least two lights (one movable), affecting only Room 1.
- - Contains the animated object.
+ - Uses a more “realistic” illumination model (e.g., Phong). ✅
+ - At least one textured object. ✅
+ - At least two lights (one movable), ✅
+ - Lights affecting only Room 1. ❌
+ - Contains the animated object. ✅
+ - One light can be switched on/off. ❌
 
 ## Room 2:
 
- - Uses a different illumination model (can be simpler).
- - Must have at least one surface with transparency or mirror.
- - Lights (if any) affect only Room 2.
+ - Uses a different illumination model (can be simpler). ✅
+ - Must have at least one surface with transparency or mirror. ✅ (transparency, no mirror)
+ - Lights (if any) affect only Room 2. ❌
 
+## Bonus:
+
+ - Shadows (main point light). ✅
+ - Normal maps. ✅
+ - Specular maps. ✅
 
 **Map:**
-
 
 ---
 

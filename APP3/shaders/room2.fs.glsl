@@ -195,7 +195,7 @@ void main() {
 
     // ----- **Dither Configuration (Hard-Coded)** -----
     const bool ENABLE_DITHER = true;          // Toggle dithering: true to enable, false to disable
-    const bool MONOCHROME_DITHER = true;     // Toggle monochromatic dithering: true for monochrome, false for color
+    const bool MONOCHROME_DITHER = false;     // Toggle monochromatic dithering: true for monochrome, false for color
     const int COLOR_LEVELS = 8;               // Number of color levels per channel (e.g., 8 for 3-bit color)
 
     // 4x4 Bayer Matrix (Normalized)
