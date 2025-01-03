@@ -154,6 +154,38 @@ vec3 AdditionalLights(vec3 albedo, vec3 N) {
     return totalLight;
 }
 
+// **Transmission Lighting for Main and Additional Lights**
+vec3 TransmissionLighting(vec3 albedo, vec3 N) {
+    vec3 transmissionLight = vec3(0.0);
+
+    // Reverse the normal for back-face lighting
+    vec3 N_back = -N;
+
+    // Main Light Transmission
+    vec3 L = normalize(uLightPos_vs - vFragPos);
+    float distance = length(uLightPos_vs - vFragPos);
+    float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
+    float NdotL = max(dot(N_back, L), 0.0); // Use reversed normal
+    vec3 mainDiffuse = albedo * uLightIntensity * NdotL * attenuation;
+
+    transmissionLight += mainDiffuse;
+
+    // Additional Lights Transmission
+    for (int i = 0; i < uNumAdditionalLights; ++i) {
+        vec3 L_add = normalize(uAdditionalLightPos[i] - vFragPos);
+        float distance_add = length(uAdditionalLightPos[i] - vFragPos);
+        float attenuation_add = 1.0 / (1.0 + 0.09 * distance_add + 0.032 * distance_add * distance_add);
+        float NdotL_add = max(dot(N_back, L_add), 0.0); // Use reversed normal
+
+        vec3 additionalDiffuse = albedo * uAdditionalLightColor[i] * NdotL_add * uAdditionalLightIntensity[i] * attenuation_add;
+
+        transmissionLight += additionalDiffuse;
+    }
+
+    // Apply alpha as transmission strength
+    return transmissionLight * uAlpha;
+}
+
 // **Fragment Shader Main Function**
 void main() {
     // Determine albedo based on whether a diffuse texture is used
@@ -173,8 +205,11 @@ void main() {
     // Calculate additional lights' lighting contributions
     vec3 additionalLighting = AdditionalLights(albedo, N);
 
-    // Combine main lighting and additional lighting
-    vec3 lighting = mainLighting + additionalLighting;
+    // Calculate transmission lighting for both main and additional lights
+    vec3 transmissionLighting = TransmissionLighting(albedo, N);
+
+    // Combine all light sources
+    vec3 lighting = mainLighting + additionalLighting + transmissionLighting;
 
     // Sample the texture's color and alpha
     vec4 texColor = texture(uTexture, vTexCoords);

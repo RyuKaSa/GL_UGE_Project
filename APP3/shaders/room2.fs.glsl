@@ -53,9 +53,8 @@ uniform samplerCube depthMap;
 uniform vec3 lightPosWorld;
 
 // Hardcoded map strengths
-const float NORMAL_MAP_STRENGTH = 0.0;
-const float SPECULAR_MAP_STRENGTH = 0.0;
-// we can simplify the dither effect by removing the normal map and specular map strengths, (though i'll leave them in, at 0.0)
+const float NORMAL_MAP_STRENGTH = 0.3;
+const float SPECULAR_MAP_STRENGTH = 3.0;
 
 // Sampling offsets for shadow mapping
 const vec3 gridSamplingDisk[20] = vec3[](
@@ -155,13 +154,43 @@ vec3 AdditionalLights(vec3 albedo, vec3 N) {
     return totalLight;
 }
 
+// **Transmission Lighting for Main and Additional Lights**
+vec3 TransmissionLighting(vec3 albedo, vec3 N) {
+    vec3 transmissionLight = vec3(0.0);
+
+    // Reverse the normal for back-face lighting
+    vec3 N_back = -N;
+
+    // --- Main Light Transmission ---
+    vec3 L = normalize(uLightPos_vs - vFragPos);
+    float distance = length(uLightPos_vs - vFragPos);
+    float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
+    float NdotL = max(dot(N_back, L), 0.0); // Use reversed normal
+    vec3 mainDiffuse = albedo * uLightIntensity * NdotL * attenuation;
+    transmissionLight += mainDiffuse;
+
+    // --- Additional Lights Transmission ---
+    for (int i = 0; i < uNumAdditionalLights; ++i) {
+        vec3 L_add = normalize(uAdditionalLightPos[i] - vFragPos);
+        float distance_add = length(uAdditionalLightPos[i] - vFragPos);
+        float attenuation_add = 1.0 / (1.0 + 0.09 * distance_add + 0.032 * distance_add * distance_add);
+        float NdotL_add = max(dot(N_back, L_add), 0.0); // Use reversed normal
+
+        vec3 additionalDiffuse = albedo * uAdditionalLightColor[i] * NdotL_add * uAdditionalLightIntensity[i] * attenuation_add;
+
+        transmissionLight += additionalDiffuse;
+    }
+
+    // Apply alpha as transmission strength
+    return transmissionLight * uAlpha;
+}
+
 // **Helper Function: Quantize a Single Color Channel**
 float quantizeChannel(float color, int levels) {
     float step = 1.0 / float(levels);
     return floor(color / step + 0.5) * step;
 }
 
-// **Fragment Shader Main Function**
 void main() {
     // Determine albedo based on whether a diffuse texture is used
     vec3 albedo = (uUseTexture > 0.5) ? texture(uTexture, vTexCoords).rgb : uKd;
@@ -180,8 +209,11 @@ void main() {
     // Calculate additional lights' lighting contributions
     vec3 additionalLighting = AdditionalLights(albedo, N);
 
-    // Combine main lighting and additional lighting
-    vec3 lighting = mainLighting + additionalLighting;
+    // Calculate transmission lighting for both main and additional lights
+    vec3 transmissionLighting = TransmissionLighting(albedo, N);
+
+    // Combine all light sources
+    vec3 lighting = mainLighting + additionalLighting + transmissionLighting;
 
     // Sample the texture's color and alpha
     vec4 texColor = texture(uTexture, vTexCoords);
@@ -207,10 +239,7 @@ void main() {
     );
 
     if (ENABLE_DITHER) {
-        // Calculate fragment's position within the 4x4 Bayer matrix
-        // Mapping multiple pixels per pattern for better coverage
-        // Adjust scaling factor as needed to control pattern density
-        float scaledX = gl_FragCoord.x / 4.0; // Scale down to map multiple pixels per pattern
+        float scaledX = gl_FragCoord.x / 4.0; 
         float scaledY = gl_FragCoord.y / 4.0;
         int x = int(mod(scaledX, 4.0));
         int y = int(mod(scaledY, 4.0));
@@ -218,7 +247,6 @@ void main() {
 
         float threshold = bayerMatrix[index];
 
-        // Apply dithering to RGB channels
         vec3 ditheredColor = lighting * texColor.rgb;
 
         for(int i = 0; i < 3; ++i) { // Iterate over R, G, B
@@ -233,23 +261,15 @@ void main() {
             }
         }
 
-        // Apply monochromatic dithering if enabled
         if (MONOCHROME_DITHER) {
-            // Hardcoded monochromatic color
-            const vec3 MONOCHROME_COLOR = vec3((0.95), (0.68), (0.49)); // i like how beige looks on mono chroma dithering
-
-            // Convert to grayscale using luminance
+            const vec3 MONOCHROME_COLOR = vec3(0.95, 0.68, 0.49); 
             float luminance = dot(ditheredColor, vec3(0.299, 0.587, 0.114));
             float quantizedLuminance = quantizeChannel(luminance + threshold / float(COLOR_LEVELS), COLOR_LEVELS);
-            
-            // Map the quantized luminance to the hardcoded color
             ditheredColor = MONOCHROME_COLOR * quantizedLuminance;
         }
 
-        // Update the finalColor with ditheredColor
         FragColor = vec4(ditheredColor, finalAlpha);
     } else {
-        // If dithering is disabled, render without dither
         FragColor = vec4(lighting * texColor.rgb, finalAlpha);
     }
 }

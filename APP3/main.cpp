@@ -1427,6 +1427,12 @@ int main(int argc, char *argv[])
         // Retrieve 'uAlpha' regardless of room
         GLint uAlphaLocation = currentRoom->getUniformLocation("uAlpha");
 
+        // Retrieve additional uniforms for Shader 2
+        GLint uNormalMapLocation = currentRoom->getUniformLocation("uNormalMap");
+        GLint uUseNormalMapLocation = currentRoom->getUniformLocation("uUseNormalMap");
+        GLint uSpecularMapLocation = currentRoom->getUniformLocation("uSpecularMap");
+        GLint uUseSpecularMapLocation = currentRoom->getUniformLocation("uUseSpecularMap");
+
         // Determine the number of additional lights, capped by MAX_ADDITIONAL_LIGHTS
         int numLights = static_cast<int>(simpleLights.size());
         if (numLights > MAX_ADDITIONAL_LIGHTS)
@@ -1507,7 +1513,7 @@ int main(int argc, char *argv[])
         auto deltaObj = 0.0f;
         auto deltaLight = 0.0f;
         bool sameRoom = false;
-        
+
         // Render all scene objects (opaque)
         for (const auto &object : utils_scene::sceneObjects)
         {
@@ -1606,6 +1612,38 @@ int main(int argc, char *argv[])
                 if (uUseTextureLocation != -1)
                 {
                     glUniform1f(uUseTextureLocation, 0.0f);
+                }
+            }
+
+            // Bind normal map if applicable
+            if (mat.hasNormalMap && mat.normalMapID != 0 && uUseNormalMapLocation != -1)
+            {
+                glActiveTexture(GL_TEXTURE2); // Use texture unit 2 for normal maps
+                glBindTexture(GL_TEXTURE_2D, mat.normalMapID);
+                glUniform1i(uNormalMapLocation, 2);
+                glUniform1f(uUseNormalMapLocation, 1.0f);
+            }
+            else
+            {
+                if (uUseNormalMapLocation != -1)
+                {
+                    glUniform1f(uUseNormalMapLocation, 0.0f);
+                }
+            }
+
+            // Bind specular map if applicable
+            if (mat.hasSpecularMap && mat.specularMapID != 0 && uUseSpecularMapLocation != -1)
+            {
+                glActiveTexture(GL_TEXTURE3); // Use texture unit 3 for specular maps
+                glBindTexture(GL_TEXTURE_2D, mat.specularMapID);
+                glUniform1i(uSpecularMapLocation, 3);
+                glUniform1f(uUseSpecularMapLocation, 1.0f);
+            }
+            else
+            {
+                if (uUseSpecularMapLocation != -1)
+                {
+                    glUniform1f(uUseSpecularMapLocation, 0.0f);
                 }
             }
 
