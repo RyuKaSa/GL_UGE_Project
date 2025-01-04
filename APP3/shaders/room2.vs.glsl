@@ -20,9 +20,9 @@ uniform int uNumAdditionalLights;
 uniform vec3 uAdditionalLightPos[MAX_ADDITIONAL_LIGHTS]; // Additional lights in view space
 
 // Constants for Gravitational Pull
-const float GRAVITY_STRENGTH = 1.0;   // Controls intensity of gravitational pull
+const float GRAVITY_STRENGTH = 1.3;   // Controls intensity of gravitational pull
 const float GRAVITY_RANGE = 3.0;     // Maximum range of gravitational effect
-const float GRAVITY_FALLOFF = 0.1;    // Prevents division by zero
+const float GRAVITY_FALLOFF = 0.5;    // Prevents division by zero
 
 // Outputs to Fragment Shader
 out vec3 vNormal;
@@ -42,11 +42,25 @@ vec3 calculateGravitationalPull(vec3 vertexPos, vec3 lightPos, float strength, f
     float distance = length(lightPos - vertexPos);
 
     if (distance < GRAVITY_RANGE) {
-        float pullStrength = strength / (distance * distance + GRAVITY_FALLOFF);
+        float pullStrength = strength / (distance + GRAVITY_FALLOFF);
         pullStrength *= triangleRandom; // Triangle-specific randomness
         return toLight * pullStrength;
     }
     return vec3(0.0);
+}
+
+// Triangle Shrink Function
+float calculateShrinkFactor(vec3 vertexPos, vec3 lightPos) {
+    float distance = length(lightPos - vertexPos);
+    if (distance < GRAVITY_RANGE) {
+        return clamp(1.0 - (distance / GRAVITY_RANGE), 0.5, 1.0); // Min shrink to 50%
+    }
+    return 1.0; // No shrink beyond range
+}
+
+// Triangle Center Approximation
+vec3 calculateTriangleCenter(vec3 v0, vec3 v1, vec3 v2) {
+    return (v0 + v1 + v2) / 3.0;
 }
 
 void main() {
@@ -68,8 +82,25 @@ void main() {
     // Apply gravitational pull displacement
     vec3 displacedPosition = aPosition + (inverse(uMVMatrix) * vec4(totalDisplacement, 0.0)).xyz;
 
-    // Transform the displaced position
-    gl_Position = uMVPMatrix * vec4(displacedPosition, 1.0);
+    // Calculate triangle center (approximate using neighboring vertices)
+    vec3 triangleCenter = calculateTriangleCenter(aPosition, aTangent, aBitangent);
+
+    // Apply shrink factor based on gravitational pull
+    float shrinkFactor = calculateShrinkFactor(viewPosition, uLightPos_vs);
+    for (int i = 0; i < uNumAdditionalLights; ++i) {
+        shrinkFactor *= calculateShrinkFactor(viewPosition, uAdditionalLightPos[i]);
+    }
+
+    // Limit the maximum displacement towards the triangle center
+    vec3 toCenter = triangleCenter - displacedPosition;
+    float maxDisplacement = 0.5;
+    vec3 clampedToCenter = normalize(toCenter) * min(length(toCenter), maxDisplacement);
+
+    // Interpolate vertex towards triangle center for shrink effect
+    vec3 shrunkPosition = displacedPosition + clampedToCenter * (1.0 - shrinkFactor);
+
+    // Final transformation
+    gl_Position = uMVPMatrix * vec4(shrunkPosition, 1.0);
 
     // Pass data to Fragment Shader
     vNormal = uNormalMatrix * aNormal;
