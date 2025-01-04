@@ -1129,7 +1129,7 @@ int main(int argc, char *argv[])
     // sun1
     utils_scene::addTransparentSphere(
         "sun",                      // Name
-        glm::vec3(9.5f, 30.0f, 11.5f), // Position
+        glm::vec3(9.5f, 34.0f, 11.5f), // Position
         3.3f,                       // Radius
         sunMaterial,                // Material
         sphereVAO,                  // VAO ID
@@ -1258,6 +1258,238 @@ int main(int argc, char *argv[])
         true                       // Is static
     );
 
+    // display cases we will add a glass cube with a planet inside, for each planet
+
+    // mercury
+    utils_scene::addTransparentCube(
+        "mercury_case",                 // Name
+        glm::vec3(4.0f, 1.501f, 3.0f),   // Position
+        glm::vec3(2.0f, 2.0f, 2.0f),   // Size
+        glass_material,                 // Material
+        glm::vec3(0.0f, 1.0f, 0.0f),   // Rotation axis (Y-axis)
+        0.0f,                          // Rotation angle
+        cubeVAO,                       // VAO ID
+        cubeIndexCount,                // Index count
+        true                           // Is static
+    );
+
+    // venus
+    utils_scene::addTransparentCube(
+        "venus_case",                 // Name
+        glm::vec3(8.0f, 1.501f, 3.0f),   // Position
+        glm::vec3(2.0f, 2.0f, 2.0f),   // Size
+        glass_material,                 // Material
+        glm::vec3(0.0f, 1.0f, 0.0f),   // Rotation axis (Y-axis)
+        0.0f,                          // Rotation angle
+        cubeVAO,                       // VAO ID
+        cubeIndexCount,                // Index count
+        true                           // Is static
+    );
+
+    // earth
+    utils_scene::addTransparentCube(
+        "earth_case",                 // Name
+        glm::vec3(12.0f, 1.501f, 3.0f),   // Position
+        glm::vec3(2.0f, 2.0f, 2.0f),   // Size
+        glass_material,                 // Material
+        glm::vec3(0.0f, 1.0f, 0.0f),   // Rotation axis (Y-axis)
+        0.0f,                          // Rotation angle
+        cubeVAO,                       // VAO ID
+        cubeIndexCount,                // Index count
+        true                           // Is static
+    );
+
+    // mars
+    utils_scene::addTransparentCube(
+        "mars_case",                 // Name
+        glm::vec3(16.0f, 1.501f, 3.0f),   // Position
+        glm::vec3(2.0f, 2.0f, 2.0f),   // Size
+        glass_material,                 // Material
+        glm::vec3(0.0f, 1.0f, 0.0f),   // Rotation axis (Y-axis)
+        0.0f,                          // Rotation angle
+        cubeVAO,                       // VAO ID
+        cubeIndexCount,                // Index count
+        true                           // Is static
+    );
+
+    // right side:
+    // jupiter
+    utils_scene::addTransparentCube(
+        "jupiter_case",                 // Name
+        glm::vec3(16.0f, 1.501f, 20.0f),   // Position
+        glm::vec3(2.0f, 2.0f, 2.0f),   // Size
+        glass_material,                 // Material
+        glm::vec3(0.0f, 1.0f, 0.0f),   // Rotation axis (Y-axis)
+        0.0f,                          // Rotation angle
+        cubeVAO,                       // VAO ID
+        cubeIndexCount,                // Index count
+        true                           // Is static
+    );
+
+    // saturn
+    utils_scene::addTransparentCube(
+        "saturn_case",                 // Name
+        glm::vec3(12.0f, 1.501f, 20.0f),   // Position
+        glm::vec3(2.0f, 2.0f, 2.0f),   // Size
+        glass_material,                 // Material
+        glm::vec3(0.0f, 1.0f, 0.0f),   // Rotation axis (Y-axis)
+        0.0f,                          // Rotation angle
+        cubeVAO,                       // VAO ID
+        cubeIndexCount,                // Index count
+        true                           // Is static
+    );
+
+    // uranus
+    utils_scene::addTransparentCube(
+        "uranus_case",                 // Name
+        glm::vec3(8.0f, 1.501f, 20.0f),   // Position
+        glm::vec3(2.0f, 2.0f, 2.0f),   // Size
+        glass_material,                 // Material
+        glm::vec3(0.0f, 1.0f, 0.0f),   // Rotation axis (Y-axis)
+        0.0f,                          // Rotation angle
+        cubeVAO,                       // VAO ID
+        cubeIndexCount,                // Index count
+        true                           // Is static
+    );
+
+    // neptune
+    utils_scene::addTransparentCube(
+        "neptune_case",                 // Name
+        glm::vec3(4.0f, 1.501f, 20.0f),   // Position
+        glm::vec3(2.0f, 2.0f, 2.0f),   // Size
+        glass_material,                 // Material
+        glm::vec3(0.0f, 1.0f, 0.0f),   // Rotation axis (Y-axis)
+        0.0f,                          // Rotation angle
+        cubeVAO,                       // VAO ID
+        cubeIndexCount,                // Index count
+        true                           // Is static
+    );
+
+    // =======================
+    // now we can load the planets that go in each case
+
+    // mercury
+    utils_scene::addSphere(
+        "mercury_display",         // Name
+        glm::vec3(4.0f, 1.5f, 3.0f), // Position
+        0.6f,                      // Radius
+        mercuryMaterial,           // Material
+        sphereVAO,                 // VAO ID
+        sphereVertexCount,         // Vertex count
+        true                       // Is static
+    );
+
+    // venus
+    utils_scene::addSphere(
+        "venus_display",         // Name
+        glm::vec3(8.0f, 1.5f, 3.0f), // Position
+        0.6f,                      // Radius
+        venusMaterial,           // Material
+        sphereVAO,                 // VAO ID
+        sphereVertexCount,         // Vertex count
+        true                       // Is static
+    );
+
+    // venus atmosphere
+    utils_scene::addTransparentSphere(
+        "venus_atmosphere_display",         // Name
+        glm::vec3(8.0f, 1.5f, 3.0f), // Position
+        0.62f,                      // Radius
+        venusAtmosphereMaterial,           // Material
+        sphereVAO,                 // VAO ID
+        sphereVertexCount,         // Vertex count
+        true                       // Is static
+    );
+
+    // earth
+    utils_scene::addSphere(
+        "earth_display",         // Name
+        glm::vec3(12.0f, 1.5f, 3.0f), // Position
+        0.6f,                      // Radius
+        earthMaterial,           // Material
+        sphereVAO,                 // VAO ID
+        sphereVertexCount,         // Vertex count
+        true                       // Is static
+    );
+
+    // earth atmosphere
+    utils_scene::addTransparentSphere(
+        "earth_atmosphere_display",         // Name
+        glm::vec3(12.0f, 1.5f, 3.0f), // Position
+        0.62f,                      // Radius
+        earthAtmosphereMaterial,           // Material
+        sphereVAO,                 // VAO ID
+        sphereVertexCount,         // Vertex count
+        true                       // Is static
+    );
+
+    // mars
+    utils_scene::addSphere(
+        "mars_display",         // Name
+        glm::vec3(16.0f, 1.5f, 3.0f), // Position
+        0.6f,                      // Radius
+        marsMaterial,           // Material
+        sphereVAO,                 // VAO ID
+        sphereVertexCount,         // Vertex count
+        true                       // Is static
+    );
+
+    // otehr side
+    // jupiter
+    utils_scene::addSphere(
+        "jupiter_display",         // Name
+        glm::vec3(16.0f, 1.5f, 20.0f), // Position
+        0.6f,                      // Radius
+        jupiterMaterial,           // Material
+        sphereVAO,                 // VAO ID
+        sphereVertexCount,         // Vertex count
+        true                       // Is static
+    );
+
+    // saturn
+    utils_scene::addSphere(
+        "saturn_display",         // Name
+        glm::vec3(12.0f, 1.5f, 20.0f), // Position
+        0.6f,                      // Radius
+        saturnMaterial,           // Material
+        sphereVAO,                 // VAO ID
+        sphereVertexCount,         // Vertex count
+        true                       // Is static
+    );
+
+    // saturn ring
+    utils_scene::addTransparentSphere(
+        "saturn_ring_display",         // Name
+        glm::vec3(12.0f, 1.5f, 20.0f), // Position
+        1.1f,                      // Radius
+        saturnRingMaterial,           // Material
+        sphereVAO,                 // VAO ID
+        sphereVertexCount,         // Vertex count
+        true                       // Is static
+    );
+
+    // uranus
+    utils_scene::addSphere(
+        "uranus_display",         // Name
+        glm::vec3(8.0f, 1.5f, 20.0f), // Position
+        0.6f,                      // Radius
+        uranusMaterial,           // Material
+        sphereVAO,                 // VAO ID
+        sphereVertexCount,         // Vertex count
+        true                       // Is static
+    );
+
+    // neptune
+    utils_scene::addSphere(
+        "neptune_display",         // Name
+        glm::vec3(4.0f, 1.5f, 20.0f), // Position
+        0.6f,                      // Radius
+        neptuneMaterial,           // Material
+        sphereVAO,                 // VAO ID
+        sphereVertexCount,         // Vertex count
+        true                       // Is static
+    );
+
     // // Load the Heater .obj model
     // utils_object::ModelData heaterModelData;
     // std::string modelPath = applicationPath.dirPath() + "assets/models/HeaterOBJ/Heater.obj";
@@ -1354,7 +1586,7 @@ int main(int argc, char *argv[])
     rockingChairModelBoundingBox.max *= rockingChairModelScale;
 
     // Apply translation (position)
-    glm::vec3 rockingChairModelPosition(9.0f, 0.55f, 21.5f);
+    glm::vec3 rockingChairModelPosition(10.0f, 0.55f, 22.5f);
     rockingChairModelBoundingBox.min += rockingChairModelPosition;
     rockingChairModelBoundingBox.max += rockingChairModelPosition;
 
@@ -1394,7 +1626,7 @@ int main(int argc, char *argv[])
     AABB torusBoundingBox = computeAABB(torusModelData.vertices);
     // replace bounding box with new scale
 
-    glm::vec3 torusPosition(19.0f, 1.0f, 13.0f);
+    glm::vec3 torusPosition(29.0f, 1.0f, 21.0f);
     glm::vec3 torusScale(0.05f, 0.05f, 0.05f);
 
     torusBoundingBox.min *= torusScale;
@@ -1436,20 +1668,20 @@ int main(int argc, char *argv[])
     // );
 
     // // light pos 32 2 11
-    int newLightID3 = utils_light::addLight(
-        simpleLights,
-        glm::vec3(32.0f, 2.0f, 19.0f), // position
-        glm::vec3(1.0f, 0.0f, 1.0f),   // color
-        1.0f                           // intensity
-    );
+    // int newLightID3 = utils_light::addLight(
+    //     simpleLights,
+    //     glm::vec3(32.0f, 2.0f, 19.0f), // position
+    //     glm::vec3(1.0f, 0.0f, 1.0f),   // color
+    //     1.0f                           // intensity
+    // );
 
-    // light pos 32 2 13
-    int newLightID4 = utils_light::addLight(
-        simpleLights,
-        glm::vec3(37.0f, 2.0f, 13.0f), // position
-        glm::vec3(1.0f, 1.0f, 1.0f),   // color
-        1.0f                           // intensity
-    );
+    // // light pos 32 2 13
+    // int newLightID4 = utils_light::addLight(
+    //     simpleLights,
+    //     glm::vec3(37.0f, 2.0f, 13.0f), // position
+    //     glm::vec3(1.0f, 1.0f, 1.0f),   // color
+    //     1.0f                           // intensity
+    // );
 
     // // pos 10 1 10
     // int newLightID5 = utils_light::addLight(
@@ -1458,6 +1690,72 @@ int main(int argc, char *argv[])
     //     glm::vec3(1.0f, 0.0f, 1.0f),   // color
     //     1.0f                           // intensity
     // );
+
+    // one light for each planet case, a little bit above the planet
+    // mercury
+    int newLightID1 = utils_light::addLight(
+        simpleLights,
+        glm::vec3(4.0f, 3.0f, 3.0f), // position
+        glm::vec3(1.0f, 1.0f, 1.0f),  // color
+        0.2f                          // intensity
+    );
+
+    // venus
+    int newLightID2 = utils_light::addLight(
+        simpleLights,
+        glm::vec3(8.0f, 3.0f, 3.0f), // position
+        glm::vec3(1.0f, 1.0f, 1.0f),  // color
+        0.2f                        // intensity
+    );
+
+    // earth
+    int newLightID3 = utils_light::addLight(
+        simpleLights,
+        glm::vec3(12.0f, 3.0f, 3.0f), // position
+        glm::vec3(1.0f, 1.0f, 1.0f),  // color
+        0.2f                          // intensity
+    );
+
+    // mars
+    int newLightID4 = utils_light::addLight(
+        simpleLights,
+        glm::vec3(16.0f, 3.0f, 3.0f), // position
+        glm::vec3(1.0f, 1.0f, 1.0f),  // color
+        0.2f                          // intensity
+    );
+
+    // jupiter
+    int newLightID5 = utils_light::addLight(
+        simpleLights,
+        glm::vec3(16.0f, 3.0f, 20.0f), // position
+        glm::vec3(1.0f, 1.0f, 1.0f),   // color
+        0.2f                           // intensity
+    );
+
+    // saturn
+    int newLightID6 = utils_light::addLight(
+        simpleLights,
+        glm::vec3(12.0f, 3.0f, 20.0f), // position
+        glm::vec3(1.0f, 1.0f, 1.0f),   // color
+        0.2f                           // intensity
+    );
+
+    // uranus
+    int newLightID7 = utils_light::addLight(
+        simpleLights,
+        glm::vec3(8.0f, 3.0f, 20.0f), // position
+        glm::vec3(1.0f, 1.0f, 1.0f),   // color
+        0.2f                           // intensity
+    );
+
+    // neptune
+    int newLightID8 = utils_light::addLight(
+        simpleLights,
+        glm::vec3(4.0f, 3.0f, 20.0f), // position
+        glm::vec3(1.0f, 1.0f, 1.0f),   // color
+        0.2f                           // intensity
+    );
+
 
     // update a light position during the loop
     // utils_light::updateLightPosition(simpleLights, newLightID, glm::vec3(5.0f, 2.0f, 1.0f));
@@ -1651,6 +1949,12 @@ int main(int argc, char *argv[])
 
         utils_scene::updatePlanetPositions(currentFrame, spiralCenter);
 
+
+        // update the display lights
+        utils_light::updateDynamicLights(simpleLights, currentFrame);
+
+        // update the display planets (they should rotate)
+        utils_scene::updateDisplayPlanetPositions(currentFrame);
 
 
         // light position on the camera

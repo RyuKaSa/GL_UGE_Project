@@ -8,20 +8,23 @@ namespace utils_scene
     std::map<std::string, PlanetSpiralParams> planetSpiralParameters;
 
     // Base Values
-    const float BASE_EARTH_SPEED = 0.1f;  // Base speed for Earth revolution (arbitrary)
-    const float MIN_DISTANCE = 3.0f;      // Minimum scaled distance (Mercury)
-    const float MAX_DISTANCE = 25.0f;     // Maximum scaled distance (Neptune)
-    const float MIN_HEIGHT = -4.0f;       // Minimum height offset
-    const float MAX_HEIGHT = -20.0f;      // Maximum height offset
+    const float BASE_EARTH_SPEED = 0.2f;  // Base speed for Earth revolution (arbitrary)
+    const float MIN_DISTANCE = 2.0f;      // Minimum scaled distance (Mercury)
+    const float MAX_DISTANCE = 10.0f;     // Maximum scaled distance (Neptune)
+    const float MIN_HEIGHT = -5.0f;       // Minimum height offset
+    const float MAX_HEIGHT = -30.0f;      // Maximum height offset
 
     // Relative orbital speed multipliers (scaled from Earth's speed)
     std::map<std::string, float> speedScale = {
         {"mercury", 4.15f},
         {"venus", 1.63f},
+        {"venus_atmosphere", 1.63f},
         {"earth", 1.0f},
+        {"earth_atmosphere", 1.0f},
         {"mars", 0.63f},
         {"jupiter", 0.484f},
         {"saturn", 0.334f},
+        {"saturn_ring", 0.334f},
         {"uranus", 0.112f},
         {"neptune", 0.066f}
     };
@@ -30,10 +33,13 @@ namespace utils_scene
     std::map<std::string, float> distanceScale = {
         {"mercury", 0.0f},  // Closest to MIN_DISTANCE
         {"venus", 0.2f},
+        {"venus_atmosphere", 0.2f},
         {"earth", 0.3f},
+        {"earth_atmosphere", 0.3f},
         {"mars", 0.4f},
         {"jupiter", 0.6f},
         {"saturn", 0.8f},
+        {"saturn_ring", 0.8f},
         {"uranus", 0.9f},
         {"neptune", 1.0f}   // Farthest at MAX_DISTANCE
     };
@@ -70,6 +76,26 @@ namespace utils_scene
 
             // Apply the new position
             setObjectPosition(planetName, newPosition);
+        }
+    }
+
+    void updateDisplayPlanetPositions(float currentFrame) {
+        // Fixed rotation speed for display planets
+        const float ROTATION_SPEED = 1.3f;
+        const glm::vec3 ROTATION_AXIS = glm::vec3(0.5f, 0.5f, 1.0f);
+
+        // List of planet display names
+        std::vector<std::string> displayPlanets = {
+            "mercury_display", "venus_display", "venus_atmosphere_display",
+            "earth_display", "earth_atmosphere_display", "mars_display",
+            "jupiter_display", "saturn_display", "saturn_ring_display",
+            "uranus_display", "neptune_display"
+        };
+
+        // Apply rotation to each display planet
+        for (const auto &planetName : displayPlanets) {
+            float rotationAngle = currentFrame * ROTATION_SPEED; // Calculate angle dynamically
+            setObjectRotation(planetName, ROTATION_AXIS, rotationAngle);
         }
     }
 
@@ -197,7 +223,7 @@ namespace utils_scene
         sphereObject.position = position;
         sphereObject.initialPosition = position;
         // if name is saturn_ring, override the scale, keep the radius for the just the radius, and squish the ring
-        if (name == "saturn_ring") {
+        if (name == "saturn_ring" || name == "saturn_ring_display") {
             sphereObject.scale = glm::vec3(radius, 0.01f, radius);
         } else {
             sphereObject.scale = glm::vec3(radius);
@@ -388,6 +414,28 @@ namespace utils_scene
             if (obj.name == name)
             {
                 obj.position = position;
+            }
+        }
+    }
+
+    // set obect rotation
+    void setObjectRotation(const std::string &name, const glm::vec3 &rotationAxis, float rotationAngle)
+    {
+        for (auto &obj : sceneObjects)
+        {
+            if (obj.name == name)
+            {
+                obj.rotationAxis = rotationAxis;
+                obj.rotationAngle = rotationAngle;
+            }
+        }
+        // for transparent objects
+        for (auto &obj : sceneObjectsTransparent)
+        {
+            if (obj.name == name)
+            {
+                obj.rotationAxis = rotationAxis;
+                obj.rotationAngle = rotationAngle;
             }
         }
     }

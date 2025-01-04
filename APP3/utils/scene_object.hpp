@@ -35,7 +35,10 @@ namespace utils_scene
 
     // Function to update planet positions
     void updatePlanetPositions(float currentFrame, const glm::vec3& spiralCenter);
-    
+
+    // Function to update display planet positions
+    void updateDisplayPlanetPositions(float currentFrame);
+
     struct SceneObject
     {
         std::string name;
@@ -141,6 +144,8 @@ namespace utils_scene
 
     // setObjectPosition
     void setObjectPosition(const std::string &name, const glm::vec3 &position);
+
+    void setObjectRotation(const std::string &name, const glm::vec3 &rotationAxis, float rotationAngle);
 
 } // namespace utils_scene
 

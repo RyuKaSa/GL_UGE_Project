@@ -41,6 +41,12 @@ namespace utils_light {
     // Changes a light’s intensity
     void updateLightIntensity(std::vector<SimplePointLight>& lights, int lightID, float newIntensity);
 
+    // Generates a pseudo-random value based on a seed
+    float pseudoRandom(float seed);
+
+    // void update simple light pso and colors
+    void updateDynamicLights(std::vector<SimplePointLight>& lights, float currentFrame);
+
 } // namespace utils_light
 
 #endif // LIGHTS_HPP

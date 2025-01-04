@@ -82,4 +82,45 @@ namespace utils_light
         }
     }
 
+// Simple hash function for pseudo-random generation
+    float pseudoRandom(float seed)
+    {
+        return glm::fract(sin(seed) * 43758.5453f);
+    }
+
+    // Update all lights dynamically
+    void updateDynamicLights(std::vector<SimplePointLight> &lights, float currentFrame)
+    {
+        // Constants for dynamic behavior
+        const float HEIGHT_AMPLITUDE = 0.004f;  // Max vertical displacement
+        const float COLOR_VARIATION_SPEED = 2.5f; // Speed of color variation
+        const glm::vec3 BASE_COLOR = glm::vec3(1.0f, 0.8f, 0.6f); // Base light color
+
+        // Update each light dynamically
+        for (size_t i = 0; i < lights.size(); i++) {
+            SimplePointLight &light = lights[i];
+
+        // **Dynamic Vertical Movement**
+        float verticalOffset = sin(currentFrame * 0.5f + i * 0.5f) * HEIGHT_AMPLITUDE;
+        light.position.y += verticalOffset; // Adjust Y-position dynamically
+
+        // **Dynamic Color Variation**
+        float colorFactorR = (sin(currentFrame + i * COLOR_VARIATION_SPEED) + 1.0f) / 2.0f;
+        float colorFactorG = (sin(currentFrame + i * COLOR_VARIATION_SPEED + 2.0f) + 1.0f) / 2.0f; // Offset phase by 2
+        float colorFactorB = (sin(currentFrame + i * COLOR_VARIATION_SPEED + 4.0f) + 1.0f) / 2.0f; // Offset phase by 4
+
+        light.color = glm::vec3(BASE_COLOR.r * colorFactorR,
+                                BASE_COLOR.g * colorFactorG,
+                                BASE_COLOR.b * colorFactorB);
+
+        // **Dynamic Intensity Variation**
+        float intensityFactor = (sin(currentFrame + i * COLOR_VARIATION_SPEED) + 1.0f) / 2.0f;
+        // clamp the intensity factor to be between 0.2 and 0.8
+        intensityFactor = glm::clamp(intensityFactor, 0.2f, 0.8f);
+        light.intensity = intensityFactor;
+
+        }
+    }
+    
+
 } // namespace utils_light
