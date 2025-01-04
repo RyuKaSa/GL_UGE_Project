@@ -6,6 +6,7 @@
 #include "global.hpp"
 #include "material.hpp"  
 #include "material_manager.hpp"
+#include <map>
 #include <vector>
 #include <string>
 
@@ -19,6 +20,22 @@ namespace utils_scene
         Model
     };
 
+// Define a struct to hold spiral parameters for planets
+    struct PlanetSpiralParams {
+        float spiralRadius;
+        float spiralSpeed;
+        float fixedHeight;
+    };
+
+    // Map to hold parameters for each planet
+    extern std::map<std::string, PlanetSpiralParams> planetSpiralParameters;
+
+    // Function to initialize planet spiral parameters
+    void initializePlanetSpiralParameters();
+
+    // Function to update planet positions
+    void updatePlanetPositions(float currentFrame, const glm::vec3& spiralCenter);
+    
     struct SceneObject
     {
         std::string name;
@@ -121,6 +138,9 @@ namespace utils_scene
 
     // getTransparentObjectPosition
     glm::vec3 getTransparentObjectPosition(const std::string &name);
+
+    // setObjectPosition
+    void setObjectPosition(const std::string &name, const glm::vec3 &position);
 
 } // namespace utils_scene
 

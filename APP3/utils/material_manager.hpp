@@ -33,7 +33,7 @@ public:
         return materials.back();
     }
 
-    // Singleton pattern for global access (optional)
+    // Singleton pattern for global access
     static MaterialManager& getInstance() {
         static MaterialManager instance;
         return instance;

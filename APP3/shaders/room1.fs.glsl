@@ -65,25 +65,40 @@ const vec3 gridSamplingDisk[20] = vec3[](
     vec3( 0,  1, -1), vec3( 0, -1, -1), vec3( 1,  1,  1), vec3(-1, -1, -1)
 );
 
+float Random(vec3 seed, int i) {
+    return fract(sin(dot(seed + vec3(i), vec3(12.9898, 78.233, 37.719))) * 43758.5453);
+}
+
 // **Shadow Calculation**
 float ShadowCalculation(vec3 fragPosWorld) {
     vec3 fragToLight = fragPosWorld - lightPosWorld;
     float currentDepth = length(fragToLight);
     float shadow = 0.0;
-    float bias = 0.25; 
-    int samples = 20;
+    float bias = 0.25; // Reduced bias for accuracy
+    int samples = 25; // Number of random samples
     float viewDistance = length(cameraPosWorld - fragPosWorld);
-    float diskRadius = (0.0 + (viewDistance / farPlane)) / 50.0;
+    float diskRadius = (0.25 + (viewDistance / farPlane)) / 20.0; // Adjust blur radius (putting lwoer to hide the jagged edges)
+
+    float totalWeight = 0.0;
 
     for (int i = 0; i < samples; ++i) {
-        vec3 samplePos = fragToLight + gridSamplingDisk[i] * diskRadius;
+        // Random offsets based on the fragment position and loop index
+        float randX = Random(fragPosWorld, i) * 2.0 - 1.0;
+        float randY = Random(fragPosWorld, i + samples) * 2.0 - 1.0;
+        float randZ = Random(fragPosWorld, i + samples * 2) * 2.0 - 1.0;
+
+        vec3 offset = vec3(randX, randY, randZ) * diskRadius;
+        vec3 samplePos = fragToLight + offset;
+
         float closestDepth = texture(depthMap, samplePos).r * farPlane;
 
         if (currentDepth - bias > closestDepth) {
             shadow += 1.0;
         }
+        totalWeight += 1.0;
     }
-    shadow /= float(samples);
+
+    shadow /= totalWeight; // Normalize the shadow value
     return shadow;
 }
 
@@ -108,7 +123,8 @@ float GetSpecularIntensity() {
 vec3 MainLightDiffuse(vec3 albedo, vec3 N) {
     vec3 L = normalize(uLightPos_vs - vFragPos);
     float distance = length(uLightPos_vs - vFragPos);
-    float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
+    // float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
+    float attenuation = 1.0 / (1.0 + 0.005 * distance + 0.001 * distance * distance);
 
     float NdotL = max(dot(N, L), 0.0);
     return albedo * uLightIntensity * NdotL * attenuation;
@@ -121,7 +137,8 @@ vec3 MainLightSpecular(vec3 N) {
     vec3 H = normalize(L + V);
 
     float distance = length(uLightPos_vs - vFragPos);
-    float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
+    // float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
+    float attenuation = 1.0 / (1.0 + 0.005 * distance + 0.001 * distance * distance);
 
     float NdotH = max(dot(N, H), 0.0);
     float specularIntensity = GetSpecularIntensity();

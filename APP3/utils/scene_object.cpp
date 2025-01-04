@@ -4,6 +4,75 @@
 namespace utils_scene
 {
 
+    // **Define** the map for planet spiral parameters
+    std::map<std::string, PlanetSpiralParams> planetSpiralParameters;
+
+    // Base Values
+    const float BASE_EARTH_SPEED = 0.1f;  // Base speed for Earth revolution (arbitrary)
+    const float MIN_DISTANCE = 3.0f;      // Minimum scaled distance (Mercury)
+    const float MAX_DISTANCE = 25.0f;     // Maximum scaled distance (Neptune)
+    const float MIN_HEIGHT = -4.0f;       // Minimum height offset
+    const float MAX_HEIGHT = -20.0f;      // Maximum height offset
+
+    // Relative orbital speed multipliers (scaled from Earth's speed)
+    std::map<std::string, float> speedScale = {
+        {"mercury", 4.15f},
+        {"venus", 1.63f},
+        {"earth", 1.0f},
+        {"mars", 0.63f},
+        {"jupiter", 0.484f},
+        {"saturn", 0.334f},
+        {"uranus", 0.112f},
+        {"neptune", 0.066f}
+    };
+
+    // Relative distance multipliers (scaled between MIN_DISTANCE and MAX_DISTANCE)
+    std::map<std::string, float> distanceScale = {
+        {"mercury", 0.0f},  // Closest to MIN_DISTANCE
+        {"venus", 0.2f},
+        {"earth", 0.3f},
+        {"mars", 0.4f},
+        {"jupiter", 0.6f},
+        {"saturn", 0.8f},
+        {"uranus", 0.9f},
+        {"neptune", 1.0f}   // Farthest at MAX_DISTANCE
+    };
+
+    // **Initialize Parameters**
+    void initializePlanetSpiralParameters() {
+        for (auto it = speedScale.begin(); it != speedScale.end(); ++it) {
+            const std::string& planet = it->first;
+            float speed = it->second;
+
+            // Interpolate distance and height directly
+            float scaledDistance = MIN_DISTANCE + (MAX_DISTANCE - MIN_DISTANCE) * distanceScale[planet];
+            float scaledHeight = MIN_HEIGHT + (MAX_HEIGHT - MIN_HEIGHT) * distanceScale[planet];
+
+            planetSpiralParameters[planet] = {
+                scaledDistance,               // Scaled Radius
+                BASE_EARTH_SPEED * speed,     // Scaled Speed
+                scaledHeight                  // Scaled Height
+            };
+        }
+    }
+
+    // **Update planet positions dynamically**
+    void updatePlanetPositions(float currentFrame, const glm::vec3& spiralCenter) {
+        for (const auto& pair : planetSpiralParameters) {
+            const std::string& planetName = pair.first;
+            const PlanetSpiralParams& params = pair.second;
+
+            // Calculate new position based on spiral motion
+            glm::vec3 newPosition;
+            newPosition.x = spiralCenter.x + params.spiralRadius * cos(currentFrame * params.spiralSpeed);
+            newPosition.y = spiralCenter.y + params.fixedHeight;
+            newPosition.z = spiralCenter.z + params.spiralRadius * sin(currentFrame * params.spiralSpeed);
+
+            // Apply the new position
+            setObjectPosition(planetName, newPosition);
+        }
+    }
+
     std::vector<SceneObject> sceneObjects;
     std::vector<SceneObject> sceneObjectsTransparent;
     std::vector<SceneObject> sceneObjectsSkybox;
@@ -301,6 +370,26 @@ namespace utils_scene
             }
         }
         return glm::vec3(0.0f);
+    }
+
+    // setObjectPosition
+    void setObjectPosition(const std::string &name, const glm::vec3 &position)
+    {
+        for (auto &obj : sceneObjects)
+        {
+            if (obj.name == name)
+            {
+                obj.position = position;
+            }
+        }
+        // for transparent objects
+        for (auto &obj : sceneObjectsTransparent)
+        {
+            if (obj.name == name)
+            {
+                obj.position = position;
+            }
+        }
     }
 
 } // namespace utils_scene

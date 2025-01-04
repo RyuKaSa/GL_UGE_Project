@@ -307,11 +307,6 @@ int main(int argc, char *argv[])
     // Set the clear color to a dark gray
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
-    // Light properties
-    float spiralRadius = 2.0f; // Radius of the spiral
-    float spiralSpeed = 0.5f;  // Speed of the spiral movement
-    float fixedHeight = 1.5f;  // Height variation of the light
-
     // Light space matrix for shadows
     glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 50.0f);
     glm::mat4 lightView = glm::lookAt(glm::vec3(5.0f, 10.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -1134,7 +1129,7 @@ int main(int argc, char *argv[])
     // sun1
     utils_scene::addTransparentSphere(
         "sun",                      // Name
-        glm::vec3(9.5f, 20.0f, 1.5f), // Position
+        glm::vec3(9.5f, 30.0f, 11.5f), // Position
         3.3f,                       // Radius
         sunMaterial,                // Material
         sphereVAO,                  // VAO ID
@@ -1425,22 +1420,22 @@ int main(int argc, char *argv[])
     std::vector<utils_light::SimplePointLight> simpleLights;
 
     // Add a simple point light to the scene
-    int newLightID = utils_light::addLight(
-        simpleLights,
-        glm::vec3(5.0f, 2.5f, 15.0f), // position
-        glm::vec3(1.0f, 1.0f, 1.0f),  // color
-        1.0f                          // intensity
-    );
+    // int newLightID = utils_light::addLight(
+    //     simpleLights,
+    //     glm::vec3(5.0f, 2.5f, 15.0f), // position
+    //     glm::vec3(1.0f, 1.0f, 1.0f),  // color
+    //     1.0f                          // intensity
+    // );
 
-    // // Add a simple point light to the scene 2
-    int newLightID2 = utils_light::addLight(
-        simpleLights,
-        glm::vec3(5.0f, 1.0f, 19.0f), // position
-        glm::vec3(0.3f, 0.4f, 1.0f),  // color
-        1.0f                          // intensity
-    );
+    // // // Add a simple point light to the scene 2
+    // int newLightID2 = utils_light::addLight(
+    //     simpleLights,
+    //     glm::vec3(5.0f, 1.0f, 19.0f), // position
+    //     glm::vec3(0.3f, 0.4f, 1.0f),  // color
+    //     1.0f                          // intensity
+    // );
 
-    // light pos 32 2 11
+    // // light pos 32 2 11
     int newLightID3 = utils_light::addLight(
         simpleLights,
         glm::vec3(32.0f, 2.0f, 19.0f), // position
@@ -1456,13 +1451,13 @@ int main(int argc, char *argv[])
         1.0f                           // intensity
     );
 
-    // pos 10 1 10
-    int newLightID5 = utils_light::addLight(
-        simpleLights,
-        glm::vec3(10.0f, 1.0f, 10.0f), // position
-        glm::vec3(1.0f, 0.0f, 1.0f),   // color
-        1.0f                           // intensity
-    );
+    // // pos 10 1 10
+    // int newLightID5 = utils_light::addLight(
+    //     simpleLights,
+    //     glm::vec3(10.0f, 1.0f, 10.0f), // position
+    //     glm::vec3(1.0f, 0.0f, 1.0f),   // color
+    //     1.0f                           // intensity
+    // );
 
     // update a light position during the loop
     // utils_light::updateLightPosition(simpleLights, newLightID, glm::vec3(5.0f, 2.0f, 1.0f));
@@ -1481,6 +1476,8 @@ int main(int argc, char *argv[])
 
     // =======================
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    utils_scene::initializePlanetSpiralParameters();
 
     // Main loop variables
     bool done = false;
@@ -1610,40 +1607,50 @@ int main(int argc, char *argv[])
             cameraUp                 // Up vector
         );
 
-        glm::vec3 spiralCenter(9.0f, 1.0f, 3.0f); // Center of the spiral
+
 
         // Spiral movement around spiralCenter
+
+        // Light properties
+        // float spiralRadius = 2.0f; // Radius of the spiral
+        // float spiralSpeed = 0.5f;  // Speed of the spiral movement
+        // float fixedHeight = 1.5f;  // Height variation of the light
         // glm::vec3 lightPosWorld;
         // lightPosWorld.x = spiralCenter.x + spiralRadius * cos(currentFrame * spiralSpeed);
         // lightPosWorld.y = fixedHeight + spiralCenter.y;
         // lightPosWorld.z = spiralCenter.z + spiralRadius * sin(currentFrame * spiralSpeed);
 
         // fixed light position
-        glm::vec3 lightPosWorld = glm::vec3(2.0f, 0.6f, 2.0f);
+        glm::vec3 lightPosWorld;
 
         // new method for light color, set to its material Kd
-        glm::vec3 lightIntensity = lightMaterial.Kd;
+        glm::vec3 lightIntensity = lightMaterial.Kd * 1.0f;
 
         // simple light ID 5, dynamic light
-        glm::vec3 lightPosWorld5;
-        lightPosWorld5.x = 10.0f + 1.0f * cos(currentFrame);
-        lightPosWorld5.y = 1.0f;
-        lightPosWorld5.z = 10.0f + 1.0f * sin(currentFrame);
+        // glm::vec3 lightPosWorld5;
+        // lightPosWorld5.x = 10.0f + 1.0f * cos(currentFrame);
+        // lightPosWorld5.y = 1.0f;
+        // lightPosWorld5.z = 10.0f + 1.0f * sin(currentFrame);
 
-        simpleLights[4].position = lightPosWorld5;
+        // simpleLights[4].position = lightPosWorld5;
 
         // also change its color
-        simpleLights[4].color = glm::vec3(
-            (sin(currentFrame) + 1.0f) / 2.0f,       // Red oscillates between 0 and 1
-            (cos(currentFrame) + 1.0f) / 2.0f,       // Green oscillates between 0 and 1
-            (sin(currentFrame * 0.5f) + 1.0f) / 2.0f // Blue oscillates more slowly between 0 and 1
-        );
+        // simpleLights[4].color = glm::vec3(
+        //     (sin(currentFrame) + 1.0f) / 2.0f,       // Red oscillates between 0 and 1
+        //     (cos(currentFrame) + 1.0f) / 2.0f,       // Green oscillates between 0 and 1
+        //     (sin(currentFrame * 0.5f) + 1.0f) / 2.0f // Blue oscillates more slowly between 0 and 1
+        // );
 
         // set the main light position to the sun position
         // get the position of the sun using the transparent lsit of objects, name is "sun"
+        // Fetch sun's position dynamically
         glm::vec3 sunPosition = utils_scene::getTransparentObjectPosition("sun");
-
         lightPosWorld = sunPosition;
+
+        glm::vec3 spiralCenter = utils_scene::getTransparentObjectPosition("sun");
+
+        utils_scene::updatePlanetPositions(currentFrame, spiralCenter);
+
 
 
         // light position on the camera
@@ -2335,7 +2342,7 @@ int main(int argc, char *argv[])
                         glUniform1f(intenLoc, 0.0f);
                     }
                 }
-                
+
                 // Retrieve the material
                 const Material &mat = materialManager.getMaterial(object.materialIndex);
 
