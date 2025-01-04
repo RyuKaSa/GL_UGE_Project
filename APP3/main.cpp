@@ -324,7 +324,7 @@ int main(int argc, char *argv[])
     float yaw = -90.0f; // Yaw angle initialized to -90 degrees to look towards negative Z
     float pitch = 0.0f; // Pitch angle
 
-    float cameraSpeed = 10.0f; // Adjust accordingly
+    float cameraSpeed = 7.0f; // Adjust accordingly (10.0f is kinda fast but good for debugging)
     float deltaTime = 0.0f;    // Time between current frame and last frame
     float lastFrame = 0.0f;    // Time of last frame
 
@@ -1193,23 +1193,37 @@ int main(int argc, char *argv[])
 
         glm::vec3 proposedCameraPos = cameraPos; // Temporary camera position for collision testing
 
-        // Calculate proposed camera position based on input
+        // Calculate proposed camera direction based on input
+        glm::vec3 movementDirection = glm::vec3(0.0f);
+
+        // Forward and Backward
         if (state[SDL_SCANCODE_W])
         {
-            proposedCameraPos += adjustedSpeed * frontDirection;
+            movementDirection += frontDirection;
         }
         if (state[SDL_SCANCODE_S])
         {
-            proposedCameraPos -= adjustedSpeed * frontDirection;
+            movementDirection -= frontDirection;
         }
+
+        // Left and Right
         if (state[SDL_SCANCODE_A])
         {
-            proposedCameraPos -= rightDirection * adjustedSpeed;
+            movementDirection -= rightDirection;
         }
         if (state[SDL_SCANCODE_D])
         {
-            proposedCameraPos += rightDirection * adjustedSpeed;
+            movementDirection += rightDirection;
         }
+
+        // Normalize to prevent diagonal speed boost
+        if (glm::length(movementDirection) > 0.0f)
+        {
+            movementDirection = glm::normalize(movementDirection);
+        }
+
+        // Apply movement speed
+        proposedCameraPos += movementDirection * adjustedSpeed;
 
         // Check collision against all objects
         bool collisionDetected = false;
