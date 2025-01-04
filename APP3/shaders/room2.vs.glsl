@@ -15,7 +15,7 @@ uniform mat3 uNormalMatrix;   // Normal matrix
 // Light Properties
 uniform vec3 uLightPos_vs;    // Main light position in view space
 
-#define MAX_ADDITIONAL_LIGHTS 8
+#define MAX_ADDITIONAL_LIGHTS 100
 uniform int uNumAdditionalLights;          
 uniform vec3 uAdditionalLightPos[MAX_ADDITIONAL_LIGHTS]; // Additional lights in view space
 

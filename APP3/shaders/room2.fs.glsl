@@ -4,7 +4,7 @@
 //              UNIFORMS & CONSTANTS
 // ---------------------------------------------
 
-#define MAX_ADDITIONAL_LIGHTS 8
+#define MAX_ADDITIONAL_LIGHTS 100
 
 // Additional Lights
 uniform int uNumAdditionalLights;

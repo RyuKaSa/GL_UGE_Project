@@ -18,3 +18,6 @@ https://www.turbosquid.com/FullPreview/2119559
 
 skybox :
 https://space-spheremaps.itch.io/space-spheremaps
+
+planets spheremaps :
+https://www.solarsystemscope.com/textures/

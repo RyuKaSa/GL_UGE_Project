@@ -114,6 +114,10 @@ int main(int argc, char *argv[])
     GLuint texture_ID_oak_planks, texture_ID_oak_planks_n, texture_ID_oak_planks_s;
     GLuint texture_ID_stone_bricks, texture_ID_stone_bricks_n, texture_ID_stone_bricks_s;
     GLuint skyboxTextureID;
+    GLuint sunTextureID, mercuryTextureID, venusTextureID, venus_atmosphereTextureID;
+    GLuint marsTextureID, jupiterTextureID, saturnTextureID, saturn_ringTextureID;
+    GLuint uranusTextureID, neptuneTextureID;
+    GLuint earthTextureID, earth_nTextureID, earth_sTextureID, earth_atmosphereTextureID;
 
     utils_loader::loadTextures(textureID, stoneTextureID, brownTerracottaTextureID, soccerTextureID,
                                textureID_normalMap, stoneTextureID_normalMap, brownTerracottaTextureID_normalMap, soccerTextureID_normalMap,
@@ -125,6 +129,10 @@ int main(int argc, char *argv[])
                                texture_ID_oak_planks, texture_ID_oak_planks_n, texture_ID_oak_planks_s,
                                texture_ID_stone_bricks, texture_ID_stone_bricks_n, texture_ID_stone_bricks_s,
                                skyboxTextureID,
+                               sunTextureID, mercuryTextureID, venusTextureID, venus_atmosphereTextureID,
+                               marsTextureID, jupiterTextureID, saturnTextureID, saturn_ringTextureID,
+                               uranusTextureID, neptuneTextureID,
+                               earthTextureID, earth_nTextureID, earth_sTextureID, earth_atmosphereTextureID,
                                applicationPath);
 
     GLuint depthCubeMap, shadowMapFBO;
@@ -311,7 +319,7 @@ int main(int argc, char *argv[])
 
     // Setup projection matrix for cube map
     float nearPlane = 1.0f;
-    float farPlane = 25.0f;
+    float farPlane = 50.0f;
     glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), 1.0f, nearPlane, farPlane);
 
     // Camera parameters
@@ -415,18 +423,18 @@ int main(int argc, char *argv[])
     transparentMaterialWithTexture.normalMapID = textureID_normalMap; // Ensure textureID_normalMap is loaded
     transparentMaterialWithTexture.alpha = alphaTransparent2;         // 50% opaque
 
-    // Material for the heater model (no textures)
-    Material heaterMaterial;
-    heaterMaterial.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
-    heaterMaterial.hasDiffuseMap = false;
-    heaterMaterial.diffuseMapID = 0;
-    heaterMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    heaterMaterial.shininess = 32.0f;                // Shininess exponent
-    heaterMaterial.hasSpecularMap = false;
-    heaterMaterial.specularMapID = 0;
-    heaterMaterial.hasNormalMap = false;
-    heaterMaterial.normalMapID = 0;
-    heaterMaterial.alpha = alphaOpaque; // Opaque
+    // // Material for the heater model (no textures)
+    // Material heaterMaterial;
+    // heaterMaterial.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
+    // heaterMaterial.hasDiffuseMap = false;
+    // heaterMaterial.diffuseMapID = 0;
+    // heaterMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    // heaterMaterial.shininess = 32.0f;                // Shininess exponent
+    // heaterMaterial.hasSpecularMap = false;
+    // heaterMaterial.specularMapID = 0;
+    // heaterMaterial.hasNormalMap = false;
+    // heaterMaterial.normalMapID = 0;
+    // heaterMaterial.alpha = alphaOpaque; // Opaque
 
     // Material for the rocking chair model with textures
     Material rockingChairMaterial;
@@ -476,7 +484,7 @@ int main(int argc, char *argv[])
     materialManager.addOrGetMaterial(terracottaMaterial);
     materialManager.addOrGetMaterial(transparentMaterialNoTexture);
     materialManager.addOrGetMaterial(transparentMaterialWithTexture);
-    materialManager.addOrGetMaterial(heaterMaterial);
+    // materialManager.addOrGetMaterial(heaterMaterial);
     materialManager.addOrGetMaterial(rockingChairMaterial);
     materialManager.addOrGetMaterial(torusMaterial);
     materialManager.addOrGetMaterial(soccerMaterial);
@@ -644,6 +652,181 @@ int main(int argc, char *argv[])
     materialManager.addOrGetMaterial(lightMaterial);
     materialManager.addOrGetMaterial(simpleLightMaterial);
 
+    // planet materials in order
+
+    // sun material
+    Material sunMaterial;
+    sunMaterial.Kd = glm::vec3(1.0f, 0.8f, 0.6f);
+    sunMaterial.hasDiffuseMap = true;
+    sunMaterial.diffuseMapID = sunTextureID;
+    sunMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    sunMaterial.shininess = 0.0f;                // Shininess exponent
+    sunMaterial.hasSpecularMap = false;
+    sunMaterial.specularMapID = 0;
+    sunMaterial.hasNormalMap = false;
+    sunMaterial.normalMapID = 0;
+    sunMaterial.alpha = alphaTransparent9; // Transparent
+
+    // mercury material
+    Material mercuryMaterial;
+    mercuryMaterial.Kd = glm::vec3(0.5f, 0.5f, 0.5f);
+    mercuryMaterial.hasDiffuseMap = true;
+    mercuryMaterial.diffuseMapID = mercuryTextureID;
+    mercuryMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    mercuryMaterial.shininess = 20.0f;                // Shininess exponent
+    mercuryMaterial.hasSpecularMap = false;
+    mercuryMaterial.specularMapID = 0;
+    mercuryMaterial.hasNormalMap = false;
+    mercuryMaterial.normalMapID = 0;
+    mercuryMaterial.alpha = alphaOpaque; // Opaque
+
+    // venus material
+    Material venusMaterial;
+    venusMaterial.Kd = glm::vec3(0.8f, 0.7f, 0.6f);
+    venusMaterial.hasDiffuseMap = true;
+    venusMaterial.diffuseMapID = venusTextureID;
+    venusMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    venusMaterial.shininess = 25.0f;                // Shininess exponent
+    venusMaterial.hasSpecularMap = false;
+    venusMaterial.specularMapID = 0;
+    venusMaterial.hasNormalMap = false;
+    venusMaterial.normalMapID = 0;
+    venusMaterial.alpha = alphaOpaque; // Opaque
+
+    // venus atmosphere is transparent
+    Material venusAtmosphereMaterial;
+    venusAtmosphereMaterial.Kd = glm::vec3(0.7f, 0.7f, 0.9f);
+    venusAtmosphereMaterial.hasDiffuseMap = true;
+    venusAtmosphereMaterial.diffuseMapID = venus_atmosphereTextureID;
+    venusAtmosphereMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    venusAtmosphereMaterial.shininess = 5.0f;                // Shininess exponent
+    venusAtmosphereMaterial.hasSpecularMap = false;
+    venusAtmosphereMaterial.specularMapID = 0;
+    venusAtmosphereMaterial.hasNormalMap = false;
+    venusAtmosphereMaterial.normalMapID = 0;
+    venusAtmosphereMaterial.alpha = alphaTransparent3; // Transparent
+
+    // earth material, has diffuse, specular, and normal maps
+    Material earthMaterial;
+    earthMaterial.Kd = glm::vec3(0.4f, 0.6f, 0.8f);
+    earthMaterial.hasDiffuseMap = true;
+    earthMaterial.diffuseMapID = earthTextureID;
+    earthMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    earthMaterial.shininess = 30.0f;                // Shininess exponent
+    earthMaterial.hasSpecularMap = true;
+    earthMaterial.specularMapID = earth_sTextureID;
+    earthMaterial.hasNormalMap = true;
+    earthMaterial.normalMapID = earth_nTextureID;
+    earthMaterial.alpha = alphaOpaque; // Opaque
+
+    // earth atmosphere is transparent
+    Material earthAtmosphereMaterial;
+    earthAtmosphereMaterial.Kd = glm::vec3(0.6f, 0.7f, 0.9f); // White color
+    earthAtmosphereMaterial.hasDiffuseMap = true;
+    earthAtmosphereMaterial.diffuseMapID = earth_atmosphereTextureID;
+    earthAtmosphereMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    earthAtmosphereMaterial.shininess = 8.0f;                // Shininess exponent
+    earthAtmosphereMaterial.hasSpecularMap = false;
+    earthAtmosphereMaterial.specularMapID = 0;
+    earthAtmosphereMaterial.hasNormalMap = false;
+    earthAtmosphereMaterial.normalMapID = 0;
+    earthAtmosphereMaterial.alpha = alphaTransparent3;
+
+    // mars material
+    Material marsMaterial;
+    marsMaterial.Kd = glm::vec3(0.6f, 0.3f, 0.2f);
+    marsMaterial.hasDiffuseMap = true;
+    marsMaterial.diffuseMapID = marsTextureID;
+    marsMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    marsMaterial.shininess = 15.0f;                // Shininess exponent
+    marsMaterial.hasSpecularMap = false;
+    marsMaterial.specularMapID = 0;
+    marsMaterial.hasNormalMap = false;
+    marsMaterial.normalMapID = 0;
+    marsMaterial.alpha = alphaOpaque; // Opaque
+
+    // jupiter material
+    Material jupiterMaterial;
+    jupiterMaterial.Kd = glm::vec3(0.7f, 0.6f, 0.5f);
+    jupiterMaterial.hasDiffuseMap = true;
+    jupiterMaterial.diffuseMapID = jupiterTextureID;
+    jupiterMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    jupiterMaterial.shininess = 18.0f;                // Shininess exponent
+    jupiterMaterial.hasSpecularMap = false;
+    jupiterMaterial.specularMapID = 0;
+    jupiterMaterial.hasNormalMap = false;
+    jupiterMaterial.normalMapID = 0;
+    jupiterMaterial.alpha = alphaOpaque; // Opaque
+
+    // saturn material
+    Material saturnMaterial;
+    saturnMaterial.Kd = glm::vec3(0.8f, 0.7f, 0.6f);
+    saturnMaterial.hasDiffuseMap = true;
+    saturnMaterial.diffuseMapID = saturnTextureID;
+    saturnMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    saturnMaterial.shininess = 25.0f;                // Shininess exponent
+    saturnMaterial.hasSpecularMap = false;
+    saturnMaterial.specularMapID = 0;
+    saturnMaterial.hasNormalMap = false;
+    saturnMaterial.normalMapID = 0;
+    saturnMaterial.alpha = alphaOpaque; // Opaque
+
+    // saturn ring material
+    Material saturnRingMaterial;
+    saturnRingMaterial.Kd = glm::vec3(0.9f, 0.8f, 0.7f);
+    saturnRingMaterial.hasDiffuseMap = true;
+    saturnRingMaterial.diffuseMapID = saturn_ringTextureID;
+    saturnRingMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    saturnRingMaterial.shininess = 60.0f;                // Shininess exponent
+    saturnRingMaterial.hasSpecularMap = false;
+    saturnRingMaterial.specularMapID = 0;
+    saturnRingMaterial.hasNormalMap = false;
+    saturnRingMaterial.normalMapID = 0;
+    saturnRingMaterial.alpha = alphaTransparent4; // Transparent
+
+    // uranus material
+    Material uranusMaterial;
+    uranusMaterial.Kd = glm::vec3(0.5f, 0.7f, 0.8f);
+    uranusMaterial.hasDiffuseMap = true;
+    uranusMaterial.diffuseMapID = uranusTextureID;
+    uranusMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    uranusMaterial.shininess = 20.0f;                // Shininess exponent
+    uranusMaterial.hasSpecularMap = false;
+    uranusMaterial.specularMapID = 0;
+    uranusMaterial.hasNormalMap = false;
+    uranusMaterial.normalMapID = 0;
+    uranusMaterial.alpha = alphaOpaque; // Opaque
+
+    // neptune material
+    Material neptuneMaterial;
+    neptuneMaterial.Kd = glm::vec3(0.4f, 0.6f, 0.9f);
+    neptuneMaterial.hasDiffuseMap = true;
+    neptuneMaterial.diffuseMapID = neptuneTextureID;
+    neptuneMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    neptuneMaterial.shininess = 22.0f;                // Shininess exponent
+    neptuneMaterial.hasSpecularMap = false;
+    neptuneMaterial.specularMapID = 0;
+    neptuneMaterial.hasNormalMap = false;
+    neptuneMaterial.normalMapID = 0;
+    neptuneMaterial.alpha = alphaOpaque; // Opaque
+
+    // fuck pluto, not a real planet
+
+    // add to manager
+    materialManager.addOrGetMaterial(sunMaterial);
+    materialManager.addOrGetMaterial(mercuryMaterial);
+    materialManager.addOrGetMaterial(venusMaterial);
+    materialManager.addOrGetMaterial(venusAtmosphereMaterial);
+    materialManager.addOrGetMaterial(earthMaterial);
+    materialManager.addOrGetMaterial(earthAtmosphereMaterial);
+    materialManager.addOrGetMaterial(marsMaterial);
+    materialManager.addOrGetMaterial(jupiterMaterial);
+    materialManager.addOrGetMaterial(saturnMaterial);
+    materialManager.addOrGetMaterial(saturnRingMaterial);
+    materialManager.addOrGetMaterial(uranusMaterial);
+    materialManager.addOrGetMaterial(neptuneMaterial);
+
+
     std::cout << "Materials created" << std::endl;
     // After loading textures
     for (const auto &material : materialManager.materials)
@@ -674,8 +857,8 @@ int main(int argc, char *argv[])
     //             bool isStatic);
 
     // new materials, with specular maps, one of each
-    glm::vec3 initialPosition(12.0f, 2.0f, 3.0f);
-    glm::vec3 initialPosition2(12.0f, 2.0f, 4.0f);
+    glm::vec3 initialPosition(25.0f, 2.0f, 3.0f);
+    glm::vec3 initialPosition2(25.0f, 2.0f, 4.0f);
     glm::vec3 initialSize(1.0f, 1.0f, 1.0f);
     // Adding "stone_bricks" cube
     utils_scene::addCube(
@@ -706,7 +889,7 @@ int main(int argc, char *argv[])
     // Adding "purple_stained_glass" cube
     utils_scene::addTransparentCube(
         "purple_stained_glass",        // Name
-        glm::vec3(12.0f, 2.0f, 5.0f),  // Position
+        glm::vec3(25.0f, 2.0f, 5.0f),  // Position
         initialSize * 0.999f,          // Size (slightly smaller to avoid z-fighting)
         purple_stained_glass_material, // Material
         glm::vec3(0.0f, 1.0f, 0.0f),   // Rotation axis (Y-axis)
@@ -719,7 +902,7 @@ int main(int argc, char *argv[])
     // Adding "iron_block" cube
     utils_scene::addCube(
         "iron_block",                 // Name
-        glm::vec3(12.0f, 2.0f, 6.0f), // Position
+        glm::vec3(25.0f, 2.0f, 6.0f), // Position
         initialSize,                  // Size
         iron_block_material,          // Material
         glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
@@ -732,7 +915,7 @@ int main(int argc, char *argv[])
     // Adding "note_block" cube
     utils_scene::addCube(
         "note_block",                 // Name
-        glm::vec3(12.0f, 2.0f, 7.0f), // Position
+        glm::vec3(25.0f, 2.0f, 7.0f), // Position
         initialSize,                  // Size
         note_block_material,          // Material
         glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
@@ -745,7 +928,7 @@ int main(int argc, char *argv[])
     // Adding "oak_planks" cube
     utils_scene::addCube(
         "oak_planks",                 // Name
-        glm::vec3(12.0f, 2.0f, 8.0f), // Position
+        glm::vec3(25.0f, 2.0f, 8.0f), // Position
         initialSize,                  // Size
         oak_planks_material,          // Material
         glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
@@ -758,7 +941,7 @@ int main(int argc, char *argv[])
     // Adding "deepslate_emerald_ore" cube
     utils_scene::addCube(
         "deepslate_emerald_ore",        // Name
-        glm::vec3(12.0f, 2.0f, 9.0f),   // Position
+        glm::vec3(25.0f, 2.0f, 9.0f),   // Position
         initialSize,                    // Size
         deepslate_emerald_ore_material, // Material
         glm::vec3(0.0f, 1.0f, 0.0f),    // Rotation axis (Y-axis)
@@ -782,7 +965,7 @@ int main(int argc, char *argv[])
     );
 
     // wall X1
-    glm::vec3 wallPosition1(0.0f, 1.0f, 0.0f);
+    glm::vec3 wallPosition1(0.0f, 1.0f, -1.0f);
     glm::vec3 wallSizeX(42.0f, 3.0f, 1.0f);
     utils_scene::createCompositeCube(
         "wall_X1",      // Name
@@ -795,7 +978,7 @@ int main(int argc, char *argv[])
     );
 
     // wall X2
-    glm::vec3 wallPosition2(0.0f, 1.0f, 23.0f);
+    glm::vec3 wallPosition2(0.0f, 1.0f, 24.0f);
     utils_scene::createCompositeCube(
         "wall_X2",      // Name
         wallPosition2,  // Position
@@ -807,8 +990,8 @@ int main(int argc, char *argv[])
     );
 
     // wall Z1
-    glm::vec3 wallPosition3(0.0f, 1.0f, 1.0f);
-    glm::vec3 wallSizeZ1(1.0f, 3.0f, 22.0f);
+    glm::vec3 wallPosition3(-1.0f, 1.0f, 0.0f);
+    glm::vec3 wallSizeZ1(1.0f, 3.0f, 24.0f);
     utils_scene::createCompositeCube(
         "wall_Z1",      // Name
         wallPosition3,  // Position
@@ -820,7 +1003,7 @@ int main(int argc, char *argv[])
     );
 
     // wall Z2
-    glm::vec3 wallPosition4(41.0f, 1.0f, 1.0f);
+    glm::vec3 wallPosition4(42.0f, 1.0f, 0.0f);
     utils_scene::createCompositeCube(
         "wall_Z2",      // Name
         wallPosition4,  // Position
@@ -832,8 +1015,8 @@ int main(int argc, char *argv[])
     );
 
     // separation wall, Z3
-    glm::vec3 wallPosition5(20.0f, 1.0f, 1.0f);
-    glm::vec3 wallSizeZ2(2.0f, 3.0f, 9.0f);
+    glm::vec3 wallPosition5(20.0f, 1.0f, 0.0f);
+    glm::vec3 wallSizeZ2(2.0f, 3.0f, 10.0f);
     utils_scene::createCompositeCube(
         "wall_Z3",          // Name
         wallPosition5,      // Position
@@ -857,58 +1040,72 @@ int main(int argc, char *argv[])
     );
 
     // transparent cube in room 2
-    glm::vec3 transparentCubePosition(32.0f, 2.0f, 10.0f);
-    glm::vec3 transparentCubeSize(1.0f, 1.0f, 1.0f);
-    utils_scene::addTransparentCube(
-        "transparent_cube",           // Name
-        transparentCubePosition,      // Position
-        transparentCubeSize,          // Size
-        transparent_iron_block_material,          // Material
-        glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
-        0.0f,                         // Rotation angle
-        cubeVAO,                      // VAO ID
-        cubeIndexCount,               // Index count
-        true                          // Is static
-    );
+    // utils_scene::addTransparentCube(
+    //     "transparent_cube",           // Name
+    //     transparentCubePosition,      // Position
+    //     transparentCubeSize,          // Size
+    //     transparent_iron_block_material,          // Material
+    //     glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
+    //     0.0f,                         // Rotation angle
+    //     cubeVAO,                      // VAO ID
+    //     cubeIndexCount,               // Index count
+    //     true                          // Is static
+    // );
 
     // second transparent cube in room 2
-    glm::vec3 transparentCubePosition2(32.0f, 2.0f, 12.0f);
-    utils_scene::addTransparentCube(
-        "transparent_cube2",            // Name
-        transparentCubePosition2,       // Position
-        transparentCubeSize,            // Size
-        purple_stained_glass_material, // Material
-        glm::vec3(0.0f, 1.0f, 0.0f),    // Rotation axis (Y-axis)
-        0.0f,                           // Rotation angle
-        cubeVAO,                        // VAO ID
-        cubeIndexCount,                 // Index count
-        true                            // Is static
-    );
+    // glm::vec3 transparentCubePosition2(32.0f, 2.0f, 12.0f);
+    // utils_scene::addTransparentCube(
+    //     "transparent_cube2",            // Name
+    //     transparentCubePosition2,       // Position
+    //     transparentCubeSize,            // Size
+    //     purple_stained_glass_material, // Material
+    //     glm::vec3(0.0f, 1.0f, 0.0f),    // Rotation axis (Y-axis)
+    //     0.0f,                           // Rotation angle
+    //     cubeVAO,                        // VAO ID
+    //     cubeIndexCount,                 // Index count
+    //     true                            // Is static
+    // );
 
     // third transparent cube in room 2
-    glm::vec3 transparentCubePosition3(32.0f, 2.0f, 14.0f);
-    utils_scene::addTransparentCube(
-        "transparent_cube3",            // Name
-        transparentCubePosition3,       // Position
-        transparentCubeSize,            // Size
-        glass_material, // Material
-        glm::vec3(0.0f, 1.0f, 0.0f),    // Rotation axis (Y-axis)
-        0.0f,                           // Rotation angle
-        cubeVAO,                        // VAO ID
-        cubeIndexCount,                 // Index count
-        true                            // Is static
-    );
+    // glm::vec3 transparentCubePosition(32.0f, 2.0f, 10.0f);
+    // glm::vec3 transparentCubePosition3(33.0f, 1.501f, 11.5f);
+    // glm::vec3 transparentCubeSize(10.0f, 2.0f, 10.0f);
+    // utils_scene::addTransparentCube(
+    //     "transparent_cube3",            // Name
+    //     transparentCubePosition3,       // Position
+    //     transparentCubeSize,            // Size
+    //     glass_material, // Material
+    //     glm::vec3(0.0f, 1.0f, 0.0f),    // Rotation axis (Y-axis)
+    //     0.0f,                           // Rotation angle
+    //     cubeVAO,                        // VAO ID
+    //     cubeIndexCount,                 // Index count
+    //     true                            // Is static
+    // );
+
+    // glm::vec3 transparentCubePosition4(27.0f, 1.001f, 7.0f);
+    // glm::vec3 transparentCubeSize(10.0f, 2.0f, 10.0f);
+    // utils_scene::createTransparentCompositeCube(
+    //     "glassthing",          // Name
+    //     transparentCubePosition4,      // Position
+    //     transparentCubeSize,         // Size
+    //     glass_material, // Material
+    //     cubeVAO,            // VAO ID
+    //     cubeIndexCount,     // Index count
+    //     true                // Is static
+    // );
+
+    // 
 
     // load a soccer ball as sophisticated object
-    utils_scene::addSphere(
-        "soccer_ball",                // Name
-        glm::vec3(2.0f, 1.5f, 10.0f), // Position
-        0.3f,                         // Radius
-        soccerMaterial,               // Material
-        sphereVAO,                    // VAO ID
-        sphereVertexCount,            // Vertex count
-        true                          // Is static
-    );
+    // utils_scene::addSphere(
+    //     "soccer_ball",                // Name
+    //     glm::vec3(27.0f, 3.0f, 10.0f), // Position
+    //     0.3f,                         // Radius
+    //     soccerMaterial,               // Material
+    //     sphereVAO,                    // VAO ID
+    //     sphereVertexCount,            // Vertex count
+    //     true                          // Is static
+    // );
 
     // load skybox sphere
     utils_scene::addSkySphere(
@@ -921,49 +1118,194 @@ int main(int argc, char *argv[])
         false                        // Is static
     );
 
-    // Load the Heater .obj model
-    utils_object::ModelData heaterModelData;
-    std::string modelPath = applicationPath.dirPath() + "assets/models/HeaterOBJ/Heater.obj";
-    if (!utils_object::loadOBJ(modelPath, applicationPath.dirPath() + "assets/models/HeaterOBJ/", heaterModelData))
-    {
-        std::cerr << "Failed to load model heater" << std::endl;
-    }
-    else
-    {
-        std::cout << "Heater Model Loaded: "
-                  << heaterModelData.vertices.size() / 3 << " vertices, "
-                  << heaterModelData.indices.size() << " indices." << std::endl;
-    }
+    // planet balls
+    // positions:
+    // sun: 9.5f, 3.0f, 11.5f (size1 = 1.3f) size2 = 1.2f size3 = 1.1f
+    // emrcury: 8.5f, 3.0f, 11.5f
+    // venus: 7.5f, 3.0f, 11.5f
+    // earth: 5.0f, 3.0f, 12.0f (size1 = 0.3f) size2 = 0.34f
+    // mars: 3.5f, 3.0f, 11.5f
+    // jupiter: 3.0f, 3.0f, 11.5f
+    // saturn: -0.5f, 3.0f, 11.5f
+    // uranus: -2.5f, 3.0f, 11.5f
+    // neptune: -4.5f, 3.0f, 11.5f
 
-    // Set up OpenGL buffers for the model
-    setupModelBuffers(heaterModelData);
 
-    // Compute Bounding Box for the Model
-    AABB heaterModelBoundingBox = computeAABB(heaterModelData.vertices);
-
-    // Apply scale
-    glm::vec3 heaterModelScale(0.6f, 0.6f, 0.6f);
-    heaterModelBoundingBox.min *= heaterModelScale;
-    heaterModelBoundingBox.max *= heaterModelScale;
-
-    // Apply translation (position)
-    glm::vec3 heaterModelPosition(0.6f, 1.1f, 6.0f);
-    heaterModelBoundingBox.min += heaterModelPosition;
-    heaterModelBoundingBox.max += heaterModelPosition;
-
-    // Add the heater model with the material
-    utils_scene::addModel(
-        "heater",                                             // Name
-        heaterModelPosition,                                  // Position
-        heaterModelScale,                                     // Scale
-        heaterMaterial,                                       // Material
-        heaterModelData.vao,                                  // VAO ID
-        static_cast<GLsizei>(heaterModelData.indices.size()), // Index Count
-        heaterModelBoundingBox,                               // Bounding Box
-        glm::vec3(0.0f, 1.0f, 0.0f),                          // Rotation Axis (Y-axis)
-        0.0f,                                                 // Rotation Angle
-        true                                                  // Is static
+    // sun1
+    utils_scene::addTransparentSphere(
+        "sun",                      // Name
+        glm::vec3(9.5f, 20.0f, 1.5f), // Position
+        3.3f,                       // Radius
+        sunMaterial,                // Material
+        sphereVAO,                  // VAO ID
+        sphereVertexCount,          // Vertex count
+        true                        // Is static
     );
+
+    // mercury
+    utils_scene::addSphere(
+        "mercury",                  // Name
+        glm::vec3(9.5f, 3.0f, 3.5f), // Position
+        0.3f,                      // Radius
+        mercuryMaterial,           // Material
+        sphereVAO,                 // VAO ID
+        sphereVertexCount,         // Vertex count
+        true                       // Is static
+    );
+
+    // venus
+    utils_scene::addSphere(
+        "venus",                  // Name
+        glm::vec3(9.5f, 3.0f, 4.5f), // Position
+        0.34f,                      // Radius
+        venusMaterial,           // Material
+        sphereVAO,                 // VAO ID
+        sphereVertexCount,         // Vertex count
+        true                       // Is static
+    );
+
+    // venus atmosphere
+    utils_scene::addTransparentSphere(
+        "venus_atmosphere",                  // Name
+        glm::vec3(10.5f, 3.0f, 4.5f), // Position
+        0.36f,                      // Radius
+        venusAtmosphereMaterial,           // Material
+        sphereVAO,                 // VAO ID
+        sphereVertexCount,         // Vertex count
+        true                       // Is static
+    );
+
+    // earth
+    utils_scene::addSphere(
+        "earth",                  // Name
+        glm::vec3(9.5f, 3.0f, 5.5f), // Position
+        0.3f,                      // Radius
+        earthMaterial,           // Material
+        sphereVAO,                 // VAO ID
+        sphereVertexCount,         // Vertex count
+        true                       // Is static
+    );
+
+    // earth atmosphere
+    utils_scene::addTransparentSphere(
+        "earth_atmosphere",                  // Name
+        glm::vec3(10.5f, 3.0f, 5.5f), // Position
+        0.34f,                      // Radius
+        earthAtmosphereMaterial,           // Material
+        sphereVAO,                 // VAO ID
+        sphereVertexCount,         // Vertex count
+        true                       // Is static
+    );
+
+    // mars
+    utils_scene::addSphere(
+        "mars",                  // Name
+        glm::vec3(9.5f, 3.0f, 6.5f), // Position
+        0.3f,                      // Radius
+        marsMaterial,           // Material
+        sphereVAO,                 // VAO ID
+        sphereVertexCount,         // Vertex count
+        true                       // Is static
+    );
+
+    // jupiter
+    utils_scene::addSphere(
+        "jupiter",                  // Name
+        glm::vec3(9.5f, 3.0f, 7.5f), // Position
+        0.8f,                      // Radius
+        jupiterMaterial,           // Material
+        sphereVAO,                 // VAO ID
+        sphereVertexCount,         // Vertex count
+        true                       // Is static
+    );
+
+    // saturn
+    utils_scene::addSphere(
+        "saturn",                  // Name
+        glm::vec3(9.5f, 3.0f, 9.5f), // Position
+        0.7f,                      // Radius
+        saturnMaterial,           // Material
+        sphereVAO,                 // VAO ID
+        sphereVertexCount,         // Vertex count
+        true                       // Is static
+    );
+
+    // saturn ring
+    utils_scene::addTransparentSphere(
+        "saturn_ring",                  // Name
+        glm::vec3(13.0f, 3.0f, 9.5f), // Position
+        1.4f,                      // Radius
+        saturnRingMaterial,           // Material
+        sphereVAO,                 // VAO ID
+        sphereVertexCount,         // Vertex count
+        true                       // Is static
+    );
+
+    // uranus
+    utils_scene::addSphere(
+        "uranus",                  // Name
+        glm::vec3(9.5f, 3.0f, 11.5f), // Position
+        0.45f,                      // Radius
+        uranusMaterial,           // Material
+        sphereVAO,                 // VAO ID
+        sphereVertexCount,         // Vertex count
+        true                       // Is static
+    );
+
+    // neptune
+    utils_scene::addSphere(
+        "neptune",                  // Name
+        glm::vec3(9.5f, 3.0f, 13.5f), // Position
+        0.42f,                      // Radius
+        neptuneMaterial,           // Material
+        sphereVAO,                 // VAO ID
+        sphereVertexCount,         // Vertex count
+        true                       // Is static
+    );
+
+    // // Load the Heater .obj model
+    // utils_object::ModelData heaterModelData;
+    // std::string modelPath = applicationPath.dirPath() + "assets/models/HeaterOBJ/Heater.obj";
+    // if (!utils_object::loadOBJ(modelPath, applicationPath.dirPath() + "assets/models/HeaterOBJ/", heaterModelData))
+    // {
+    //     std::cerr << "Failed to load model heater" << std::endl;
+    // }
+    // else
+    // {
+    //     std::cout << "Heater Model Loaded: "
+    //               << heaterModelData.vertices.size() / 3 << " vertices, "
+    //               << heaterModelData.indices.size() << " indices." << std::endl;
+    // }
+
+    // // Set up OpenGL buffers for the model
+    // setupModelBuffers(heaterModelData);
+
+    // // Compute Bounding Box for the Model
+    // AABB heaterModelBoundingBox = computeAABB(heaterModelData.vertices);
+
+    // // Apply scale
+    // glm::vec3 heaterModelScale(0.6f, 0.6f, 0.6f);
+    // heaterModelBoundingBox.min *= heaterModelScale;
+    // heaterModelBoundingBox.max *= heaterModelScale;
+
+    // // Apply translation (position)
+    // glm::vec3 heaterModelPosition(0.6f, 1.1f, 6.0f);
+    // heaterModelBoundingBox.min += heaterModelPosition;
+    // heaterModelBoundingBox.max += heaterModelPosition;
+
+    // // Add the heater model with the material
+    // utils_scene::addModel(
+    //     "heater",                                             // Name
+    //     heaterModelPosition,                                  // Position
+    //     heaterModelScale,                                     // Scale
+    //     heaterMaterial,                                       // Material
+    //     heaterModelData.vao,                                  // VAO ID
+    //     static_cast<GLsizei>(heaterModelData.indices.size()), // Index Count
+    //     heaterModelBoundingBox,                               // Bounding Box
+    //     glm::vec3(0.0f, 1.0f, 0.0f),                          // Rotation Axis (Y-axis)
+    //     0.0f,                                                 // Rotation Angle
+    //     true                                                  // Is static
+    // );
 
     // Load the Rocking Chair model
     utils_object::ModelData rockingChairModelData;
@@ -1017,7 +1359,7 @@ int main(int argc, char *argv[])
     rockingChairModelBoundingBox.max *= rockingChairModelScale;
 
     // Apply translation (position)
-    glm::vec3 rockingChairModelPosition(9.0f, 0.55f, 20.0f);
+    glm::vec3 rockingChairModelPosition(9.0f, 0.55f, 21.5f);
     rockingChairModelBoundingBox.min += rockingChairModelPosition;
     rockingChairModelBoundingBox.max += rockingChairModelPosition;
 
@@ -1057,7 +1399,7 @@ int main(int argc, char *argv[])
     AABB torusBoundingBox = computeAABB(torusModelData.vertices);
     // replace bounding box with new scale
 
-    glm::vec3 torusPosition(9.0f, 1.0f, 3.0f);
+    glm::vec3 torusPosition(19.0f, 1.0f, 13.0f);
     glm::vec3 torusScale(0.05f, 0.05f, 0.05f);
 
     torusBoundingBox.min *= torusScale;
@@ -1271,13 +1613,13 @@ int main(int argc, char *argv[])
         glm::vec3 spiralCenter(9.0f, 1.0f, 3.0f); // Center of the spiral
 
         // Spiral movement around spiralCenter
-        glm::vec3 lightPosWorld;
-        lightPosWorld.x = spiralCenter.x + spiralRadius * cos(currentFrame * spiralSpeed);
-        lightPosWorld.y = fixedHeight + spiralCenter.y;
-        lightPosWorld.z = spiralCenter.z + spiralRadius * sin(currentFrame * spiralSpeed);
+        // glm::vec3 lightPosWorld;
+        // lightPosWorld.x = spiralCenter.x + spiralRadius * cos(currentFrame * spiralSpeed);
+        // lightPosWorld.y = fixedHeight + spiralCenter.y;
+        // lightPosWorld.z = spiralCenter.z + spiralRadius * sin(currentFrame * spiralSpeed);
 
         // fixed light position
-        // glm::vec3 lightPosWorld = glm::vec3(2.0f, 0.6f, 2.0f);
+        glm::vec3 lightPosWorld = glm::vec3(2.0f, 0.6f, 2.0f);
 
         // new method for light color, set to its material Kd
         glm::vec3 lightIntensity = lightMaterial.Kd;
@@ -1296,6 +1638,13 @@ int main(int argc, char *argv[])
             (cos(currentFrame) + 1.0f) / 2.0f,       // Green oscillates between 0 and 1
             (sin(currentFrame * 0.5f) + 1.0f) / 2.0f // Blue oscillates more slowly between 0 and 1
         );
+
+        // set the main light position to the sun position
+        // get the position of the sun using the transparent lsit of objects, name is "sun"
+        glm::vec3 sunPosition = utils_scene::getTransparentObjectPosition("sun");
+
+        lightPosWorld = sunPosition;
+
 
         // light position on the camera
         // glm::vec3 lightPosWorld = cameraPos + glm::vec3(0.0f, 1.0f, 0.0f); // Slightly elevate the light position above the camera
@@ -1986,13 +2335,25 @@ int main(int argc, char *argv[])
                         glUniform1f(intenLoc, 0.0f);
                     }
                 }
-
-                // Retrieve the material from the manager
+                
+                // Retrieve the material
                 const Material &mat = materialManager.getMaterial(object.materialIndex);
 
-                // Set alpha uniform from Material (uAlpha)
-                if (uAlphaLocation != -1)
-                {
+                // **Alpha Check for Special Opaque-like Rendering (alpha == 0.9)**
+                if (abs(mat.alpha - 0.9f) < 0.001f) {
+                    // Treat object as opaque
+                    glEnable(GL_CULL_FACE); // Enable face culling to prevent inside rendering
+                    glDepthMask(GL_TRUE);   // Enable depth writing for proper occlusion
+                    glDisable(GL_BLEND);    // Disable blending for solid rendering
+                } else {
+                    // Standard transparency handling
+                    glDisable(GL_CULL_FACE); // Disable face culling for transparency
+                    glDepthMask(GL_FALSE);   // Disable depth writing for blending
+                    glEnable(GL_BLEND);      // Ensure blending is enabled
+                }
+
+                // Set alpha uniform
+                if (uAlphaLocation != -1) {
                     glUniform1f(uAlphaLocation, mat.alpha);
                 }
 
@@ -2180,9 +2541,9 @@ int main(int argc, char *argv[])
     }
 
     // Clean up model buffers
-    glDeleteBuffers(1, &heaterModelData.vbo);
-    glDeleteBuffers(1, &heaterModelData.ebo);
-    glDeleteVertexArrays(1, &heaterModelData.vao);
+    // glDeleteBuffers(1, &heaterModelData.vbo);
+    // glDeleteBuffers(1, &heaterModelData.ebo);
+    // glDeleteVertexArrays(1, &heaterModelData.vao);
 
     glDeleteBuffers(1, &rockingChairModelData.vbo);
     glDeleteBuffers(1, &rockingChairModelData.ebo);

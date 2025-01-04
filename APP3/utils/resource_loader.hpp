@@ -20,6 +20,10 @@ void loadTextures(GLuint& textureID, GLuint& stoneTextureID, GLuint& brownTerrac
                   GLuint& texture_ID_oak_planks, GLuint& texture_ID_oak_planks_n, GLuint& texture_ID_oak_planks_s,
                   GLuint& texture_ID_stone_bricks, GLuint& texture_ID_stone_bricks_n, GLuint& texture_ID_stone_bricks_s,
                   GLuint& skyboxTextureID,
+                  GLuint& sunTextureID, GLuint& mercuryTextureID, GLuint& venusTextureID, GLuint& venus_atmosphereTextureID,
+                  GLuint& marsTextureID, GLuint& jupiterTextureID, GLuint& saturnTextureID, GLuint& saturn_ringTextureID,
+                  GLuint& uranusTextureID, GLuint& neptuneTextureID,
+                  GLuint& earthTextureID, GLuint& earth_nTextureID, GLuint& earth_sTextureID, GLuint& earth_atmosphereTextureID,
                   const glimac::FilePath& applicationPath);
 
 // Function to set up a depth cube map

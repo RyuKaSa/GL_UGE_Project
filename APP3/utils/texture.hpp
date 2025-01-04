@@ -9,4 +9,6 @@ extern std::map<std::string, GLuint> textures;
 
 GLuint loadTexture(const std::string& texturePath);
 
+GLuint loadTextureBall(const std::string& texturePath);
+
 #endif // TEXTURE_HPP

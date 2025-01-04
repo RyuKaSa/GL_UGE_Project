@@ -102,9 +102,6 @@ namespace utils_scene
         sphereObject.indexCount = vertexCount;
         sphereObject.isStatic = isStatic;
 
-        // Calculate bounding box
-        sphereObject.boundingBox.min = position - glm::vec3(radius);
-        sphereObject.boundingBox.max = position + glm::vec3(radius);
 
         // Assign material using MaterialManager
         int materialIndex = MaterialManager::getInstance().findMaterial(material);
@@ -114,6 +111,42 @@ namespace utils_scene
         sphereObject.materialIndex = materialIndex;
 
         sceneObjects.push_back(sphereObject);
+    }
+
+    // transparent sphere
+    void addTransparentSphere(const std::string &name,
+                   const glm::vec3 &position,
+                   float radius,
+                   const Material &material,
+                   GLuint vaoID,
+                   GLsizei vertexCount,
+                   bool isStatic)
+    {
+        SceneObject sphereObject;
+        sphereObject.name = name;
+        sphereObject.type = ObjectType::Sphere;
+        sphereObject.position = position;
+        sphereObject.initialPosition = position;
+        // if name is saturn_ring, override the scale, keep the radius for the just the radius, and squish the ring
+        if (name == "saturn_ring") {
+            sphereObject.scale = glm::vec3(radius, 0.01f, radius);
+        } else {
+            sphereObject.scale = glm::vec3(radius);
+        }
+        sphereObject.rotationAxis = glm::vec3(0.0f);
+        sphereObject.rotationAngle = 0.0f;
+        sphereObject.vaoID = vaoID;
+        sphereObject.indexCount = vertexCount;
+        sphereObject.isStatic = isStatic;
+
+        // Assign material using MaterialManager
+        int materialIndex = MaterialManager::getInstance().findMaterial(material);
+        if (materialIndex == -1) {
+            materialIndex = MaterialManager::getInstance().addOrGetMaterial(material);
+        }
+        sphereObject.materialIndex = materialIndex;
+
+        sceneObjectsTransparent.push_back(sphereObject);
     }
     
     // add sphere no bounding box
@@ -186,6 +219,42 @@ namespace utils_scene
         }
     }
 
+    void createTransparentCompositeCube(const std::string &name,
+                                        const glm::vec3 &origin,
+                                        const glm::vec3 &size,
+                                        const Material &material,
+                                        GLuint vaoID,
+                                        GLsizei indexCount,
+                                        bool isStatic)
+    {
+        int numCubesX = static_cast<int>(size.x);
+        int numCubesY = static_cast<int>(size.y);
+        int numCubesZ = static_cast<int>(size.z);
+
+        for (int x = 0; x < numCubesX; ++x)
+        {
+            for (int y = 0; y < numCubesY; ++y)
+            {
+                for (int z = 0; z < numCubesZ; ++z)
+                {
+                    glm::vec3 position = origin + glm::vec3(x, y, z);
+                    std::string cubeName = name + "_" + std::to_string(x) + "_" + std::to_string(y) + "_" + std::to_string(z);
+                    addTransparentCube(
+                        cubeName,        // Name
+                        position,        // Position
+                        glm::vec3(1.0f), // Scale (individual cubes are 1x1x1 units)
+                        material,        // Material
+                        glm::vec3(0.0f), // Rotation axis
+                        0.0f,            // Rotation angle
+                        vaoID,           // VAO ID
+                        indexCount,      // Index count
+                        isStatic         // Is static
+                    );
+                }
+            }
+        }
+    }
+
     void addModel(const std::string &name,
                   const glm::vec3 &position,
                   const glm::vec3 &scale,
@@ -219,6 +288,19 @@ namespace utils_scene
         obj.materialIndex = materialIndex;
 
         sceneObjects.push_back(obj);
+    }
+
+    // getTransparentObjectPosition
+    glm::vec3 getTransparentObjectPosition(const std::string &name)
+    {
+        for (const auto &obj : sceneObjectsTransparent)
+        {
+            if (obj.name == name)
+            {
+                return obj.position;
+            }
+        }
+        return glm::vec3(0.0f);
     }
 
 } // namespace utils_scene

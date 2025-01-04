@@ -76,6 +76,14 @@ namespace utils_scene
                    GLsizei vertexCount = 0,
                    bool isStatic = false);
 
+    void addTransparentSphere(const std::string &name,
+                      const glm::vec3 &position,
+                      float radius,
+                      const Material &material,
+                      GLuint vaoID = 0,
+                      GLsizei vertexCount = 0,
+                      bool isStatic = false);
+
     void addSkySphere(const std::string &name,
                       const glm::vec3 &position,
                       float radius,
@@ -92,6 +100,14 @@ namespace utils_scene
                              GLsizei indexCount,
                              bool isStatic);
 
+    void createTransparentCompositeCube(const std::string &name,
+                                        const glm::vec3 &origin,
+                                        const glm::vec3 &size,
+                                        const Material &material,
+                                        GLuint vaoID,
+                                        GLsizei indexCount,
+                                        bool isStatic);
+
     void addModel(const std::string &name,
                   const glm::vec3 &position,
                   const glm::vec3 &scale,
@@ -102,6 +118,9 @@ namespace utils_scene
                   const glm::vec3 &rotationAxis = glm::vec3(0.0f),
                   float rotationAngle = 0.0f,
                   bool isStatic = false);
+
+    // getTransparentObjectPosition
+    glm::vec3 getTransparentObjectPosition(const std::string &name);
 
 } // namespace utils_scene
 

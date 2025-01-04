@@ -1,7 +1,7 @@
 #version 330 core
 
 // Maximum number of additional point lights
-#define MAX_ADDITIONAL_LIGHTS 8
+#define MAX_ADDITIONAL_LIGHTS 100
 
 // Uniforms for additional point lights
 uniform int uNumAdditionalLights;
@@ -193,35 +193,35 @@ void main() {
     // Determine albedo based on whether a diffuse texture is used
     vec3 albedo = (uUseTexture > 0.5) ? texture(uTexture, vTexCoords).rgb : uKd;
     
-    // Determine normal based on whether a normal map is used
-    vec3 N = (uUseNormalMap > 0.5) ? GetNormalFromMap(normalize(vNormal)) : normalize(vNormal);
-
     // Sample the texture's color and alpha
     vec4 texColor = texture(uTexture, vTexCoords);
     float finalAlpha = texColor.a * uAlpha;
 
     vec3 lighting = vec3(0.0);
 
-    // Check if material is transparent
-    if (uAlpha < 1.0) {
-        // Transparent Material: Omni-Directional Lighting
-        lighting = CalculateOmniDirectionalLighting(albedo, N);
-    } else {
-        // Opaque Material: Standard Lighting with Shadows
+    if (abs(uAlpha - 0.9) < 0.001) {
+        // **Special Case: Flat Texture Render for alpha == 0.9**
+        lighting = albedo; // Directly use the texture color without lighting
+    } 
+    else if (uAlpha < 0.9) {
+        // **Transparent Material: Omni-Directional Lighting**
+        lighting = CalculateOmniDirectionalLighting(albedo, normalize(vNormal));
+    } 
+    else {
+        // **Fully Opaque Path: Standard Lighting with Shadows**
+        vec3 N = (uUseNormalMap > 0.5) ? GetNormalFromMap(normalize(vNormal)) : normalize(vNormal);
         float shadow = ShadowCalculation(vFragPosWorld);
 
-        // Calculate main light's lighting contributions
+        // Standard opaque lighting
         vec3 mainDiffuse = MainLightDiffuse(albedo, N);
         vec3 mainSpecular = MainLightSpecular(N);
         vec3 mainLighting = (mainDiffuse + mainSpecular) * (1.0 - shadow);
 
-        // Calculate additional lights' lighting contributions
         vec3 additionalLighting = AdditionalLights(albedo, N);
 
-        // Combine all light sources
         lighting = mainLighting + additionalLighting;
     }
 
-    // Set the final fragment color with combined alpha
+    // Final fragment output
     FragColor = vec4(lighting * texColor.rgb, finalAlpha);
 }

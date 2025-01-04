@@ -21,6 +21,11 @@ void loadTextures(GLuint& textureID, GLuint& stoneTextureID, GLuint& brownTerrac
                   GLuint& texture_ID_oak_planks, GLuint& texture_ID_oak_planks_n, GLuint& texture_ID_oak_planks_s,
                   GLuint& texture_ID_stone_bricks, GLuint& texture_ID_stone_bricks_n, GLuint& texture_ID_stone_bricks_s,
                   GLuint& skyboxTextureID,
+                  GLuint& sunTextureID, GLuint& mercuryTextureID, GLuint& venusTextureID, GLuint& venus_atmosphereTextureID,
+                  GLuint& marsTextureID, GLuint& jupiterTextureID, GLuint& saturnTextureID, GLuint& saturn_ringTextureID,
+                  GLuint& uranusTextureID, GLuint& neptuneTextureID,
+                  GLuint& earthTextureID, GLuint& earth_nTextureID, GLuint& earth_sTextureID, GLuint& earth_atmosphereTextureID,
+                  
                   const glimac::FilePath& applicationPath) {
     textureID = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_HD/cobblestone_8bit.png");
     stoneTextureID = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_HD/stone_8bit.png");
@@ -105,6 +110,43 @@ void loadTextures(GLuint& textureID, GLuint& stoneTextureID, GLuint& brownTerrac
     std::cout << "Chair Base Color Texture ID: " << chairBaseColorTextureID << std::endl;
     std::cout << "Chair Normal Map Texture ID: " << chairNormalMapTextureID << std::endl;
 
+    // planets in order
+
+    // sun
+    sunTextureID = loadTextureBall(applicationPath.dirPath() + "../APP3/assets/planets/sun/sun.png");
+
+    // mercury
+    mercuryTextureID = loadTextureBall(applicationPath.dirPath() + "../APP3/assets/planets/mercury/mercury.png");
+
+    // venus
+    venusTextureID = loadTextureBall(applicationPath.dirPath() + "../APP3/assets/planets/venus/surface.png");
+    // venus atmosphere
+    venus_atmosphereTextureID = loadTextureBall(applicationPath.dirPath() + "../APP3/assets/planets/venus/atmosphere.png");
+
+    // earth
+    earthTextureID = loadTextureBall(applicationPath.dirPath() + "../APP3/assets/planets/earth/earth.png");
+    earth_nTextureID = loadTextureBall(applicationPath.dirPath() + "../APP3/assets/planets/earth/earth_n.png");
+    earth_sTextureID = loadTextureBall(applicationPath.dirPath() + "../APP3/assets/planets/earth/earth_s.png");
+    // earth atmosphere
+    earth_atmosphereTextureID = loadTextureBall(applicationPath.dirPath() + "../APP3/assets/planets/earth/atmosphere.png");
+
+    // mars
+    marsTextureID = loadTextureBall(applicationPath.dirPath() + "../APP3/assets/planets/mars/mars.png");
+
+    // jupiter
+    jupiterTextureID = loadTextureBall(applicationPath.dirPath() + "../APP3/assets/planets/jupiter/jupiter.png");
+
+    // saturn
+    saturnTextureID = loadTextureBall(applicationPath.dirPath() + "../APP3/assets/planets/saturn/saturn.png");
+    // saturn ring
+    saturn_ringTextureID = loadTextureBall(applicationPath.dirPath() + "../APP3/assets/planets/saturn/rings.png");
+
+    // uranus
+    uranusTextureID = loadTextureBall(applicationPath.dirPath() + "../APP3/assets/planets/uranus/uranus.png");
+
+    // neptune
+    neptuneTextureID = loadTextureBall(applicationPath.dirPath() + "../APP3/assets/planets/neptune/neptune.png");
+
     // add all textures to the allTextures vector
     allTextures.push_back(textureID);
     allTextures.push_back(stoneTextureID);
@@ -134,6 +176,10 @@ void loadTextures(GLuint& textureID, GLuint& stoneTextureID, GLuint& brownTerrac
     allTextures.push_back(texture_ID_stone_bricks_n);
     allTextures.push_back(texture_ID_stone_bricks_s);
     allTextures.push_back(skyboxTextureID);
+
+    allTextures.push_back(earthTextureID);
+    allTextures.push_back(earth_nTextureID);
+    allTextures.push_back(earth_sTextureID);
 
     std::cout << "All textures added to the allTextures vector" << std::endl;
 }

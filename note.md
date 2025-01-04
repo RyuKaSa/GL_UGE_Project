@@ -35,6 +35,10 @@ Added a skybox, more precisely a spheremap, and runnign the app randomly chooses
 For randomization, I use a time seed, otherwise the same spheremap is chosen every time the app is run.
 Added small spheres to each light source, to see their position, and color. They are not affected by the room shaders, as it beats the purpose of the different lights in each room, granted it can look weird in room 2 with the dither effect. 
 
+# 4-Jan-2025
+Better omnidirectional transmisison for transparent objects, and the transparency is more realistic, with weighted normales and inverse normals, to mimic direct refraction.
+new vertex shader on room 2 for gravity pull.warp effect on the triangles, distance based on vertex position and all light positions, as if mini suns with great mass. going hand in hand with the space spheremaps, its now a space themed room, in minecraft blocks, but with better visuals.
+
 ## note
 
 If i implemente a big thing, i can try to test it in APP2, to keep APP1 working on previous version. (now on APP3_executable)
