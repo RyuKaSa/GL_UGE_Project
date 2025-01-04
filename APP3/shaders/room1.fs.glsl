@@ -154,36 +154,38 @@ vec3 AdditionalLights(vec3 albedo, vec3 N) {
     return totalLight;
 }
 
-// **Transmission Lighting for Main and Additional Lights**
-vec3 TransmissionLighting(vec3 albedo, vec3 N) {
-    vec3 transmissionLight = vec3(0.0);
+// **Omni-Directional Lighting for Transparency**
+vec3 CalculateOmniDirectionalLighting(vec3 albedo, vec3 N) {
+    vec3 omniLight = vec3(0.0);
 
-    // Reverse the normal for back-face lighting
-    vec3 N_back = -N;
-
-    // Main Light Transmission
-    vec3 L = normalize(uLightPos_vs - vFragPos);
+    // Main Light Contribution
     float distance = length(uLightPos_vs - vFragPos);
-    float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
-    float NdotL = max(dot(N_back, L), 0.0); // Use reversed normal
-    vec3 mainDiffuse = albedo * uLightIntensity * NdotL * attenuation;
+    float attenuation = 1.0 / (1.0 + 0.05 * distance + 0.01 * distance * distance);
+    vec3 L = normalize(uLightPos_vs - vFragPos);
 
-    transmissionLight += mainDiffuse;
+    float NdotL = max(dot(N, L), 0.0);       
+    float NdotL_inv = max(dot(-N, L), 0.0);  
 
-    // Additional Lights Transmission
+    // Reduce weight for side directions
+    float weight = (NdotL > 0.5 || NdotL_inv > 0.5) ? 1.0 : 0.5; 
+
+    omniLight += albedo * uLightIntensity * attenuation * weight;
+
+    // Additional Lights Contribution
     for (int i = 0; i < uNumAdditionalLights; ++i) {
-        vec3 L_add = normalize(uAdditionalLightPos[i] - vFragPos);
         float distance_add = length(uAdditionalLightPos[i] - vFragPos);
-        float attenuation_add = 1.0 / (1.0 + 0.09 * distance_add + 0.032 * distance_add * distance_add);
-        float NdotL_add = max(dot(N_back, L_add), 0.0); // Use reversed normal
+        float attenuation_add = 1.0 / (1.0 + 0.05 * distance_add + 0.01 * distance_add * distance_add);
+        vec3 L_add = normalize(uAdditionalLightPos[i] - vFragPos);
 
-        vec3 additionalDiffuse = albedo * uAdditionalLightColor[i] * NdotL_add * uAdditionalLightIntensity[i] * attenuation_add;
+        float NdotL_add = max(dot(N, L_add), 0.0);
+        float NdotL_inv_add = max(dot(-N, L_add), 0.0);
 
-        transmissionLight += additionalDiffuse;
+        float weight_add = (NdotL_add > 0.5 || NdotL_inv_add > 0.5) ? 1.0 : 0.5; 
+
+        omniLight += albedo * uAdditionalLightColor[i] * uAdditionalLightIntensity[i] * attenuation_add * weight_add;
     }
 
-    // Apply alpha as transmission strength
-    return transmissionLight * uAlpha;
+    return omniLight * uAlpha;
 }
 
 // **Fragment Shader Main Function**
@@ -194,28 +196,31 @@ void main() {
     // Determine normal based on whether a normal map is used
     vec3 N = (uUseNormalMap > 0.5) ? GetNormalFromMap(normalize(vNormal)) : normalize(vNormal);
 
-    // Calculate shadow factor based on main light's shadow
-    float shadow = ShadowCalculation(vFragPosWorld);
-
-    // Calculate main light's lighting contributions
-    vec3 mainDiffuse = MainLightDiffuse(albedo, N);
-    vec3 mainSpecular = MainLightSpecular(N);
-    vec3 mainLighting = (mainDiffuse + mainSpecular) * (1.0 - shadow);
-
-    // Calculate additional lights' lighting contributions
-    vec3 additionalLighting = AdditionalLights(albedo, N);
-
-    // Calculate transmission lighting for both main and additional lights
-    vec3 transmissionLighting = TransmissionLighting(albedo, N);
-
-    // Combine all light sources
-    vec3 lighting = mainLighting + additionalLighting + transmissionLighting;
-
     // Sample the texture's color and alpha
     vec4 texColor = texture(uTexture, vTexCoords);
-
-    // Combine texture alpha with uniform alpha
     float finalAlpha = texColor.a * uAlpha;
+
+    vec3 lighting = vec3(0.0);
+
+    // Check if material is transparent
+    if (uAlpha < 1.0) {
+        // Transparent Material: Omni-Directional Lighting
+        lighting = CalculateOmniDirectionalLighting(albedo, N);
+    } else {
+        // Opaque Material: Standard Lighting with Shadows
+        float shadow = ShadowCalculation(vFragPosWorld);
+
+        // Calculate main light's lighting contributions
+        vec3 mainDiffuse = MainLightDiffuse(albedo, N);
+        vec3 mainSpecular = MainLightSpecular(N);
+        vec3 mainLighting = (mainDiffuse + mainSpecular) * (1.0 - shadow);
+
+        // Calculate additional lights' lighting contributions
+        vec3 additionalLighting = AdditionalLights(albedo, N);
+
+        // Combine all light sources
+        lighting = mainLighting + additionalLighting;
+    }
 
     // Set the final fragment color with combined alpha
     FragColor = vec4(lighting * texColor.rgb, finalAlpha);

@@ -134,10 +134,6 @@ vec3 CalculateAdditionalLights(vec3 albedo, vec3 N) {
     return totalLight;
 }
 
-// **Transmission Lighting**
-vec3 CalculateTransmissionLighting(vec3 albedo, vec3 N) {
-    return (CalculateMainLight(albedo, -N) + CalculateAdditionalLights(albedo, -N)) * uAlpha;
-}
 
 // **Dither Effect (with Scaling and Monochrome Option)**
 vec3 ApplyDither(vec3 color) {
@@ -170,6 +166,41 @@ vec3 ApplyDither(vec3 color) {
     return color;
 }
 
+vec3 CalculateOmniDirectionalLighting(vec3 albedo, vec3 N) {
+    vec3 omniLight = vec3(0.0);
+
+    // Main Light Contribution (Omni-directional)
+    float distance = length(uLightPos_vs - vFragPos);
+    float attenuation = 1.0 / (1.0 + 0.05 * distance + 0.01 * distance * distance);
+    vec3 L = normalize(uLightPos_vs - vFragPos);
+
+    float NdotL = max(dot(N, L), 0.0);       // Alignment with normal
+    float NdotL_inv = max(dot(-N, L), 0.0);  // Alignment with inverse normal
+
+    // Determine Weight
+    float weight = (NdotL > 0.5 || NdotL_inv > 0.5) ? 1.0 : 0.7; // Side light gets reduced weight
+
+    omniLight += albedo * uLightIntensity * attenuation * weight;
+
+    // Additional Lights Contribution (Omni-directional)
+    for (int i = 0; i < uNumAdditionalLights; ++i) {
+        float distance_add = length(uAdditionalLightPos[i] - vFragPos);
+        float attenuation_add = 1.0 / (1.0 + 0.05 * distance_add + 0.01 * distance_add * distance_add);
+        vec3 L_add = normalize(uAdditionalLightPos[i] - vFragPos);
+
+        float NdotL_add = max(dot(N, L_add), 0.0);
+        float NdotL_inv_add = max(dot(-N, L_add), 0.0);
+
+        // Determine Weight for Additional Light
+        float weight_add = (NdotL_add > 0.5 || NdotL_inv_add > 0.5) ? 1.0 : 0.7; // Side light reduced weight
+
+        omniLight += albedo * uAdditionalLightColor[i] * uAdditionalLightIntensity[i] * attenuation_add * weight_add;
+    }
+
+    // Scale by alpha
+    return omniLight * uAlpha;
+}
+
 // ---------------------------------------------
 //              MAIN FUNCTION
 // ---------------------------------------------
@@ -177,14 +208,20 @@ vec3 ApplyDither(vec3 color) {
 void main() {
     vec3 albedo = (uUseTexture > 0.5) ? texture(uTexture, vTexCoords).rgb : uKd;
     vec3 N = (uUseNormalMap > 0.5) ? GetNormalFromMap(normalize(vNormal)) : normalize(vNormal);
-
-    float shadow = ShadowCalculation(vFragPosWorld);
-    vec3 lighting = (CalculateMainLight(albedo, N) * (1.0 - shadow)) 
-                    + CalculateAdditionalLights(albedo, N) 
-                    + CalculateTransmissionLighting(albedo, N);
-
+    
+    vec3 lighting = vec3(0.0);
     vec4 texColor = texture(uTexture, vTexCoords);
     float finalAlpha = texColor.a * uAlpha;
+
+    if (uAlpha < 1.0) {
+        // Transparent Material: Omni-directional Lighting with Reduced Side Weight
+        lighting = CalculateOmniDirectionalLighting(albedo, N);
+    } else {
+        // Opaque Material: Standard Lighting
+        float shadow = ShadowCalculation(vFragPosWorld);
+        lighting = (CalculateMainLight(albedo, N) * (1.0 - shadow)) 
+                   + CalculateAdditionalLights(albedo, N);
+    }
 
     if (ENABLE_DITHER) {
         lighting = ApplyDither(lighting);
