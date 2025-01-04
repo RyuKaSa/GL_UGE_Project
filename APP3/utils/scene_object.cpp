@@ -80,9 +80,13 @@ namespace utils_scene
     }
 
     void updateDisplayPlanetPositions(float currentFrame) {
-        // Fixed rotation speed for display planets
+        // Default rotation settings for most display planets
         const float ROTATION_SPEED = 1.3f;
         const glm::vec3 ROTATION_AXIS = glm::vec3(0.5f, 0.5f, 1.0f);
+
+        // Custom rotation settings for atmosphere displays
+        const float ATMOSPHERE_ROTATION_SPEED = 0.8f; // Slower rotation for atmosphere
+        const glm::vec3 ATMOSPHERE_ROTATION_AXIS = glm::vec3(0.0f, 1.0f, 0.0f); // Vertical rotation
 
         // List of planet display names
         std::vector<std::string> displayPlanets = {
@@ -94,8 +98,15 @@ namespace utils_scene
 
         // Apply rotation to each display planet
         for (const auto &planetName : displayPlanets) {
-            float rotationAngle = currentFrame * ROTATION_SPEED; // Calculate angle dynamically
-            setObjectRotation(planetName, ROTATION_AXIS, rotationAngle);
+            if (planetName == "earth_atmosphere_display" || planetName == "venus_atmosphere_display") {
+                // Custom rotation for atmospheres
+                float rotationAngle = currentFrame * ATMOSPHERE_ROTATION_SPEED; 
+                setObjectRotation(planetName, ATMOSPHERE_ROTATION_AXIS, rotationAngle);
+            } else {
+                // Default rotation for other planets
+                float rotationAngle = currentFrame * ROTATION_SPEED; 
+                setObjectRotation(planetName, ROTATION_AXIS, rotationAngle);
+            }
         }
     }
 

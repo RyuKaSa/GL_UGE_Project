@@ -1939,6 +1939,21 @@ int main(int argc, char *argv[])
         //     (sin(currentFrame * 0.5f) + 1.0f) / 2.0f // Blue oscillates more slowly between 0 and 1
         // );
 
+        // is light paused
+        // default sun position glm::vec3(9.5f, 34.0f, 11.5f)
+        // if light is paused, move the sunposition down 100 units
+        // else, bakc to the default original position
+        if (isLightPaused)
+        {
+            // setobject position to 100 units below the scene
+            utils_scene::setObjectPosition("sun", glm::vec3(9.5f, -100.0f, 11.5f));
+        }
+        else
+        {
+            // setobject position to the original position
+            utils_scene::setObjectPosition("sun", glm::vec3(9.5f, 34.0f, 11.5f));
+        }
+
         // set the main light position to the sun position
         // get the position of the sun using the transparent lsit of objects, name is "sun"
         // Fetch sun's position dynamically

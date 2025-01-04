@@ -86,7 +86,7 @@ assignment :
 
 ## Room 2:
 
- - Uses a different illumination model (can be simpler). ✅
+ - Uses a different illumination model (can be simpler). ❌
  - Must have at least one surface with transparency or mirror. ✅ (transparency, no mirror)
  - Lights affect only Room 2. ✅
 

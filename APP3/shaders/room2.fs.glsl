@@ -65,40 +65,25 @@ const vec3 gridSamplingDisk[20] = vec3[](
     vec3( 0,  1, -1), vec3( 0, -1, -1), vec3( 1,  1,  1), vec3(-1, -1, -1)
 );
 
-float Random(vec3 seed, int i) {
-    return fract(sin(dot(seed + vec3(i), vec3(12.9898, 78.233, 37.719))) * 43758.5453);
-}
-
 // **Shadow Calculation**
 float ShadowCalculation(vec3 fragPosWorld) {
     vec3 fragToLight = fragPosWorld - lightPosWorld;
     float currentDepth = length(fragToLight);
     float shadow = 0.0;
-    float bias = 0.25; // Reduced bias for accuracy
-    int samples = 25; // Number of random samples
+    float bias = 0.25; 
+    int samples = 20;
     float viewDistance = length(cameraPosWorld - fragPosWorld);
-    float diskRadius = (0.25 + (viewDistance / farPlane)) / 20.0; // Adjust blur radius (putting lwoer to hide the jagged edges)
-
-    float totalWeight = 0.0;
+    float diskRadius = (0.0 + (viewDistance / farPlane)) / 50.0;
 
     for (int i = 0; i < samples; ++i) {
-        // Random offsets based on the fragment position and loop index
-        float randX = Random(fragPosWorld, i) * 2.0 - 1.0;
-        float randY = Random(fragPosWorld, i + samples) * 2.0 - 1.0;
-        float randZ = Random(fragPosWorld, i + samples * 2) * 2.0 - 1.0;
-
-        vec3 offset = vec3(randX, randY, randZ) * diskRadius;
-        vec3 samplePos = fragToLight + offset;
-
+        vec3 samplePos = fragToLight + gridSamplingDisk[i] * diskRadius;
         float closestDepth = texture(depthMap, samplePos).r * farPlane;
 
         if (currentDepth - bias > closestDepth) {
             shadow += 1.0;
         }
-        totalWeight += 1.0;
     }
-
-    shadow /= totalWeight; // Normalize the shadow value
+    shadow /= float(samples);
     return shadow;
 }
 
@@ -123,8 +108,7 @@ float GetSpecularIntensity() {
 vec3 MainLightDiffuse(vec3 albedo, vec3 N) {
     vec3 L = normalize(uLightPos_vs - vFragPos);
     float distance = length(uLightPos_vs - vFragPos);
-    // float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
-    float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.010 * distance * distance);
+    float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
 
     float NdotL = max(dot(N, L), 0.0);
     return albedo * uLightIntensity * NdotL * attenuation;
@@ -137,8 +121,7 @@ vec3 MainLightSpecular(vec3 N) {
     vec3 H = normalize(L + V);
 
     float distance = length(uLightPos_vs - vFragPos);
-    // float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
-    float attenuation = 1.0 / (1.0 + 0.005 * distance + 0.001 * distance * distance);
+    float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
 
     float NdotH = max(dot(N, H), 0.0);
     float specularIntensity = GetSpecularIntensity();
@@ -155,8 +138,7 @@ vec3 AdditionalLights(vec3 albedo, vec3 N) {
         vec3 H = normalize(L + V);
 
         float distance = length(uAdditionalLightPos[i] - vFragPos);
-        // float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
-        float attenuation = 1.0 / (1.0 + 0.06 * distance + 0.032 * distance * distance);
+        float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
 
         float NdotL = max(dot(N, L), 0.0);
         float NdotH = max(dot(N, H), 0.0);
@@ -172,74 +154,136 @@ vec3 AdditionalLights(vec3 albedo, vec3 N) {
     return totalLight;
 }
 
-// **Omni-Directional Lighting for Transparency**
-vec3 CalculateOmniDirectionalLighting(vec3 albedo, vec3 N) {
-    vec3 omniLight = vec3(0.0);
+// **Transmission Lighting for Main and Additional Lights**
+vec3 TransmissionLighting(vec3 albedo, vec3 N) {
+    vec3 transmissionLight = vec3(0.0);
 
-    // Main Light Contribution
-    float distance = length(uLightPos_vs - vFragPos);
-    float attenuation = 1.0 / (1.0 + 0.05 * distance + 0.01 * distance * distance);
+    // Reverse the normal for back-face lighting
+    vec3 N_back = -N;
+
+    // --- Main Light Transmission ---
     vec3 L = normalize(uLightPos_vs - vFragPos);
+    float distance = length(uLightPos_vs - vFragPos);
+    float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
+    float NdotL = max(dot(N_back, L), 0.0); // Use reversed normal
+    vec3 mainDiffuse = albedo * uLightIntensity * NdotL * attenuation;
+    transmissionLight += mainDiffuse;
 
-    float NdotL = max(dot(N, L), 0.0);       
-    float NdotL_inv = max(dot(-N, L), 0.0);  
-
-    // Reduce weight for side directions
-    float weight = (NdotL > 0.5 || NdotL_inv > 0.5) ? 1.0 : 0.5; 
-
-    omniLight += albedo * uLightIntensity * attenuation * weight;
-
-    // Additional Lights Contribution
+    // --- Additional Lights Transmission ---
     for (int i = 0; i < uNumAdditionalLights; ++i) {
-        float distance_add = length(uAdditionalLightPos[i] - vFragPos);
-        float attenuation_add = 1.0 / (1.0 + 0.05 * distance_add + 0.01 * distance_add * distance_add);
         vec3 L_add = normalize(uAdditionalLightPos[i] - vFragPos);
+        float distance_add = length(uAdditionalLightPos[i] - vFragPos);
+        float attenuation_add = 1.0 / (1.0 + 0.09 * distance_add + 0.032 * distance_add * distance_add);
+        float NdotL_add = max(dot(N_back, L_add), 0.0); // Use reversed normal
 
-        float NdotL_add = max(dot(N, L_add), 0.0);
-        float NdotL_inv_add = max(dot(-N, L_add), 0.0);
+        vec3 additionalDiffuse = albedo * uAdditionalLightColor[i] * NdotL_add * uAdditionalLightIntensity[i] * attenuation_add;
 
-        float weight_add = (NdotL_add > 0.5 || NdotL_inv_add > 0.5) ? 1.0 : 0.5; 
-
-        omniLight += albedo * uAdditionalLightColor[i] * uAdditionalLightIntensity[i] * attenuation_add * weight_add;
+        transmissionLight += additionalDiffuse;
     }
 
-    return omniLight * uAlpha;
+    // Apply alpha as transmission strength
+    return transmissionLight * uAlpha;
 }
 
-// **Fragment Shader Main Function**
+// **Helper Function: Quantize a Single Color Channel**
+float quantizeChannel(float color, int levels) {
+    float step = 1.0 / float(levels);
+    return floor(color / step + 0.5) * step;
+}
+
 void main() {
     // Determine albedo based on whether a diffuse texture is used
     vec3 albedo = (uUseTexture > 0.5) ? texture(uTexture, vTexCoords).rgb : uKd;
     
+    // Determine normal based on whether a normal map is used
+    vec3 N = (uUseNormalMap > 0.5) ? GetNormalFromMap(normalize(vNormal)) : normalize(vNormal);
+
+    // Calculate shadow factor based on main light's shadow
+    float shadow = ShadowCalculation(vFragPosWorld);
+
+    // Calculate main light's lighting contributions
+    vec3 mainDiffuse = MainLightDiffuse(albedo, N);
+    vec3 mainSpecular = MainLightSpecular(N);
+    vec3 mainLighting = (mainDiffuse + mainSpecular) * (1.0 - shadow);
+
+    // Calculate additional lights' lighting contributions
+    vec3 additionalLighting = AdditionalLights(albedo, N);
+
+    // Calculate transmission lighting for both main and additional lights
+    vec3 transmissionLighting = TransmissionLighting(albedo, N);
+
+    // Combine all light sources
+    vec3 lighting = mainLighting + additionalLighting + transmissionLighting;
+
     // Sample the texture's color and alpha
     vec4 texColor = texture(uTexture, vTexCoords);
+
+    // Combine texture alpha with uniform alpha
     float finalAlpha = texColor.a * uAlpha;
 
-    vec3 lighting = vec3(0.0);
+    // ----------------------------- //
+    //       **Color Selection**     //
+    // ----------------------------- //
+    vec3 colorToDither;
 
     if (abs(uAlpha - 0.9) < 0.001) {
-        // **Special Case: Flat Texture Render for alpha == 0.9**
-        lighting = albedo; // Directly use the texture color without lighting
-    } 
-    else if (uAlpha < 0.9) {
-        // **Transparent Material: Omni-Directional Lighting**
-        lighting = CalculateOmniDirectionalLighting(albedo, normalize(vNormal));
-    } 
-    else {
-        // **Fully Opaque Path: Standard Lighting with Shadows**
-        vec3 N = (uUseNormalMap > 0.5) ? GetNormalFromMap(normalize(vNormal)) : normalize(vNormal);
-        float shadow = ShadowCalculation(vFragPosWorld);
-
-        // Standard opaque lighting
-        vec3 mainDiffuse = MainLightDiffuse(albedo, N);
-        vec3 mainSpecular = MainLightSpecular(N);
-        vec3 mainLighting = (mainDiffuse + mainSpecular) * (1.0 - shadow);
-
-        vec3 additionalLighting = AdditionalLights(albedo, N);
-
-        lighting = mainLighting + additionalLighting;
+        // **Special Case: Flat Texture Color for alpha == 0.9**
+        colorToDither = albedo;
+    } else {
+        // **Normal Case: Combined Lighting**
+        colorToDither = lighting * texColor.rgb;
     }
 
-    // Final fragment output
-    FragColor = vec4(lighting * texColor.rgb, finalAlpha);
+    // ----------------------------- //
+    //       **Dithering Effect**    //
+    // ----------------------------- //
+    
+    // ----- **Dither Configuration (Hard-Coded)** -----
+    const bool ENABLE_DITHER = true;          // Toggle dithering: true to enable, false to disable
+    const bool MONOCHROME_DITHER = false;     // Toggle monochromatic dithering: true for monochrome, false for color
+    const int COLOR_LEVELS = 8;               // Number of color levels per channel (e.g., 8 for 3-bit color)
+    
+    // 4x4 Bayer Matrix (Normalized)
+    const float bayerMatrix[16] = float[16](
+        0.0/16.0,  8.0/16.0,  2.0/16.0, 10.0/16.0,
+        12.0/16.0, 4.0/16.0, 14.0/16.0,  6.0/16.0,
+        3.0/16.0, 11.0/16.0,  1.0/16.0,  9.0/16.0,
+        15.0/16.0, 7.0/16.0, 13.0/16.0,  5.0/16.0
+    );
+
+    if (ENABLE_DITHER) {
+        // Calculate the position within the 4x4 Bayer matrix
+        float scaledX = gl_FragCoord.x / 4.0; 
+        float scaledY = gl_FragCoord.y / 4.0;
+        int x = int(mod(scaledX, 4.0));
+        int y = int(mod(scaledY, 4.0));
+        int index = y * 4 + x;
+
+        float threshold = bayerMatrix[index];
+
+        vec3 ditheredColor = colorToDither;
+
+        for(int i = 0; i < 3; ++i) { // Iterate over R, G, B
+            float channel = ditheredColor[i];
+            float quantized = quantizeChannel(channel, COLOR_LEVELS);
+            float error = fract(channel * float(COLOR_LEVELS)) - 0.5;
+
+            if (error > (threshold - 0.5)) {
+                ditheredColor[i] = quantized + (1.0 / float(COLOR_LEVELS));
+            } else {
+                ditheredColor[i] = quantized;
+            }
+        }
+
+        if (MONOCHROME_DITHER) {
+            const vec3 MONOCHROME_COLOR = vec3(0.95, 0.68, 0.49); 
+            float luminance = dot(ditheredColor, vec3(0.299, 0.587, 0.114));
+            float quantizedLuminance = quantizeChannel(luminance + threshold / float(COLOR_LEVELS), COLOR_LEVELS);
+            ditheredColor = MONOCHROME_COLOR * quantizedLuminance;
+        }
+
+        FragColor = vec4(ditheredColor, finalAlpha);
+    } else {
+        FragColor = vec4(colorToDither, finalAlpha);
+    }
 }
