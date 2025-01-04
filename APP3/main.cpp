@@ -1514,6 +1514,11 @@ int main(int argc, char *argv[])
         auto deltaLight = 0.0f;
         bool sameRoom = false;
 
+        GLint uTimeLocation = currentRoom->getUniformLocation("uTime");
+        if (uTimeLocation != -1) {
+            glUniform1f(uTimeLocation, currentFrame);
+        }
+
         // Render all scene objects (opaque)
         for (const auto &object : utils_scene::sceneObjects)
         {
@@ -1559,6 +1564,8 @@ int main(int argc, char *argv[])
 
                 std::string idx = std::to_string(i);
                 GLint intenLoc  = glGetUniformLocation(currentRoom->getGLId(), ("uAdditionalLightIntensity[" + idx + "]").c_str());
+                // also position
+                GLint posLoc    = glGetUniformLocation(currentRoom->getGLId(), ("uAdditionalLightPos[" + idx + "]").c_str());
 
                 if (sameRoomForAddLight)
                 {
