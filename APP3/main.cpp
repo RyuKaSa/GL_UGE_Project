@@ -957,72 +957,72 @@ int main(int argc, char *argv[])
     glm::vec3 initialPosition2(25.0f, 2.0f, 4.0f);
     glm::vec3 initialSize(1.0f, 1.0f, 1.0f);
 
-    // dsiplay the new materials
+    // // dsiplay the new materials
 
-    // Adding "crying_obsidian" cube
-    utils_scene::addCube(
-        "crying_obsidian",              // Name
-        glm::vec3(28.0f, 2.0f, 2.0f),   // Position
-        initialSize,                    // Size
-        crying_obsidian_material,       // Material
-        glm::vec3(0.0f, 1.0f, 0.0f),    // Rotation axis (Y-axis)
-        0.0f,                           // Rotation angle (e.g., 0 degrees)
-        cubeVAO,                        // VAO ID
-        cubeIndexCount,                 // Index count
-        true                            // Is static
-    );
+    // // Adding "crying_obsidian" cube
+    // utils_scene::addCube(
+    //     "crying_obsidian",              // Name
+    //     glm::vec3(28.0f, 2.0f, 2.0f),   // Position
+    //     initialSize,                    // Size
+    //     crying_obsidian_material,       // Material
+    //     glm::vec3(0.0f, 1.0f, 0.0f),    // Rotation axis (Y-axis)
+    //     0.0f,                           // Rotation angle (e.g., 0 degrees)
+    //     cubeVAO,                        // VAO ID
+    //     cubeIndexCount,                 // Index count
+    //     true                            // Is static
+    // );
 
-    // Adding "deepslate" cube
-    utils_scene::addCube(
-        "deepslate",              // Name
-        glm::vec3(28.0f, 2.0f, 3.0f), // Position
-        initialSize,              // Size
-        deepslate_material,       // Material
-        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
-        0.0f,                     // Rotation angle (e.g., 0 degrees)
-        cubeVAO,                  // VAO ID
-        cubeIndexCount,           // Index count
-        true                      // Is static
-    );
+    // // Adding "deepslate" cube
+    // utils_scene::addCube(
+    //     "deepslate",              // Name
+    //     glm::vec3(28.0f, 2.0f, 3.0f), // Position
+    //     initialSize,              // Size
+    //     deepslate_material,       // Material
+    //     glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+    //     0.0f,                     // Rotation angle (e.g., 0 degrees)
+    //     cubeVAO,                  // VAO ID
+    //     cubeIndexCount,           // Index count
+    //     true                      // Is static
+    // );
 
-    // Adding "mossy_stone_bricks" cube
-    utils_scene::addCube(
-        "mossy_stone_bricks",        // Name
-        glm::vec3(28.0f, 2.0f, 4.0f), // Position
-        initialSize,                 // Size
-        mossy_stone_bricks_material, // Material
-        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
-        0.0f,                        // Rotation angle (e.g., 0 degrees)
-        cubeVAO,                     // VAO ID
-        cubeIndexCount,              // Index count
-        true                         // Is static
-    );
+    // // Adding "mossy_stone_bricks" cube
+    // utils_scene::addCube(
+    //     "mossy_stone_bricks",        // Name
+    //     glm::vec3(28.0f, 2.0f, 4.0f), // Position
+    //     initialSize,                 // Size
+    //     mossy_stone_bricks_material, // Material
+    //     glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+    //     0.0f,                        // Rotation angle (e.g., 0 degrees)
+    //     cubeVAO,                     // VAO ID
+    //     cubeIndexCount,              // Index count
+    //     true                         // Is static
+    // );
 
-    // Adding "obsidian" cube
-    utils_scene::addCube(
-        "obsidian",                 // Name
-        glm::vec3(28.0f, 2.0f, 5.0f), // Position
-        initialSize,                // Size
-        obsidian_material,          // Material
-        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
-        0.0f,                       // Rotation angle (e.g., 0 degrees)
-        cubeVAO,                    // VAO ID
-        cubeIndexCount,             // Index count
-        true                        // Is static
-    );
+    // // Adding "obsidian" cube
+    // utils_scene::addCube(
+    //     "obsidian",                 // Name
+    //     glm::vec3(28.0f, 2.0f, 5.0f), // Position
+    //     initialSize,                // Size
+    //     obsidian_material,          // Material
+    //     glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+    //     0.0f,                       // Rotation angle (e.g., 0 degrees)
+    //     cubeVAO,                    // VAO ID
+    //     cubeIndexCount,             // Index count
+    //     true                        // Is static
+    // );
 
-    // Adding "portal" cube
-    utils_scene::addTransparentCube(
-        "portal",                    // Name
-        glm::vec3(28.0f, 2.0f, 6.0f), // Position
-        glm::vec3(0.1f, 1.0f, 1.0f) * 0.999f, // Size
-        portal_material,             // Material
-        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
-        0.0f,                        // Rotation angle (e.g., 0 degrees)
-        cubeVAO,                     // VAO ID
-        cubeIndexCount,              // Index count
-        true                         // Is static
-    );
+    // // Adding "portal" cube
+    // utils_scene::addTransparentCube(
+    //     "portal",                    // Name
+    //     glm::vec3(28.0f, 2.0f, 6.0f), // Position
+    //     glm::vec3(0.1f, 1.0f, 1.0f) * 0.999f, // Size
+    //     portal_material,             // Material
+    //     glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+    //     0.0f,                        // Rotation angle (e.g., 0 degrees)
+    //     cubeVAO,                     // VAO ID
+    //     cubeIndexCount,              // Index count
+    //     true                         // Is static
+    // );
 
     // white sphere in room 2, transparentt
     // pos 30, 2, 4
@@ -1036,96 +1036,96 @@ int main(int argc, char *argv[])
         true                          // Is static
     );
 
-    // Adding "stone_bricks" cube
-    utils_scene::addCube(
-        "stone_bricks",              // Name
-        initialPosition,             // Position
-        initialSize,                 // Size
-        stone_bricks_material,       // Material
-        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
-        0.0f,                        // Rotation angle (e.g., 0 degrees)
-        cubeVAO,                     // VAO ID
-        cubeIndexCount,              // Index count
-        true                         // Is static
-    );
+    // // Adding "stone_bricks" cube
+    // utils_scene::addCube(
+    //     "stone_bricks",              // Name
+    //     initialPosition,             // Position
+    //     initialSize,                 // Size
+    //     stone_bricks_material,       // Material
+    //     glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+    //     0.0f,                        // Rotation angle (e.g., 0 degrees)
+    //     cubeVAO,                     // VAO ID
+    //     cubeIndexCount,              // Index count
+    //     true                         // Is static
+    // );
 
-    // Adding "glass" cube
-    utils_scene::addTransparentCube(
-        "glass",                     // Name
-        initialPosition2,            // Position
-        initialSize * 0.999f,        // Size (slightly smaller to avoid z-fighting)
-        glass_material,              // Material
-        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
-        0.0f,                        // Rotation angle (e.g., 0 degrees)
-        cubeVAO,                     // VAO ID
-        cubeIndexCount,              // Index count
-        true                         // Is static
-    );
+    // // Adding "glass" cube
+    // utils_scene::addTransparentCube(
+    //     "glass",                     // Name
+    //     initialPosition2,            // Position
+    //     initialSize * 0.999f,        // Size (slightly smaller to avoid z-fighting)
+    //     glass_material,              // Material
+    //     glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+    //     0.0f,                        // Rotation angle (e.g., 0 degrees)
+    //     cubeVAO,                     // VAO ID
+    //     cubeIndexCount,              // Index count
+    //     true                         // Is static
+    // );
 
-    // Adding "purple_stained_glass" cube
-    utils_scene::addTransparentCube(
-        "purple_stained_glass",        // Name
-        glm::vec3(25.0f, 2.0f, 5.0f),  // Position
-        initialSize * 0.999f,          // Size (slightly smaller to avoid z-fighting)
-        purple_stained_glass_material, // Material
-        glm::vec3(0.0f, 1.0f, 0.0f),   // Rotation axis (Y-axis)
-        0.0f,                          // Rotation angle (e.g., 0 degrees)
-        cubeVAO,                       // VAO ID
-        cubeIndexCount,                // Index count
-        true                           // Is static
-    );
+    // // Adding "purple_stained_glass" cube
+    // utils_scene::addTransparentCube(
+    //     "purple_stained_glass",        // Name
+    //     glm::vec3(25.0f, 2.0f, 5.0f),  // Position
+    //     initialSize * 0.999f,          // Size (slightly smaller to avoid z-fighting)
+    //     purple_stained_glass_material, // Material
+    //     glm::vec3(0.0f, 1.0f, 0.0f),   // Rotation axis (Y-axis)
+    //     0.0f,                          // Rotation angle (e.g., 0 degrees)
+    //     cubeVAO,                       // VAO ID
+    //     cubeIndexCount,                // Index count
+    //     true                           // Is static
+    // );
 
-    // Adding "iron_block" cube
-    utils_scene::addCube(
-        "iron_block",                 // Name
-        glm::vec3(25.0f, 2.0f, 6.0f), // Position
-        initialSize,                  // Size
-        iron_block_material,          // Material
-        glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
-        0.0f,                         // Rotation angle (e.g., 0 degrees)
-        cubeVAO,                      // VAO ID
-        cubeIndexCount,               // Index count
-        true                          // Is static
-    );
+    // // Adding "iron_block" cube
+    // utils_scene::addCube(
+    //     "iron_block",                 // Name
+    //     glm::vec3(25.0f, 2.0f, 6.0f), // Position
+    //     initialSize,                  // Size
+    //     iron_block_material,          // Material
+    //     glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
+    //     0.0f,                         // Rotation angle (e.g., 0 degrees)
+    //     cubeVAO,                      // VAO ID
+    //     cubeIndexCount,               // Index count
+    //     true                          // Is static
+    // );
 
-    // Adding "note_block" cube
-    utils_scene::addCube(
-        "note_block",                 // Name
-        glm::vec3(25.0f, 2.0f, 7.0f), // Position
-        initialSize,                  // Size
-        note_block_material,          // Material
-        glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
-        0.0f,                         // Rotation angle (e.g., 0 degrees)
-        cubeVAO,                      // VAO ID
-        cubeIndexCount,               // Index count
-        true                          // Is static
-    );
+    // // Adding "note_block" cube
+    // utils_scene::addCube(
+    //     "note_block",                 // Name
+    //     glm::vec3(25.0f, 2.0f, 7.0f), // Position
+    //     initialSize,                  // Size
+    //     note_block_material,          // Material
+    //     glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
+    //     0.0f,                         // Rotation angle (e.g., 0 degrees)
+    //     cubeVAO,                      // VAO ID
+    //     cubeIndexCount,               // Index count
+    //     true                          // Is static
+    // );
 
-    // Adding "oak_planks" cube
-    utils_scene::addCube(
-        "oak_planks",                 // Name
-        glm::vec3(25.0f, 2.0f, 8.0f), // Position
-        initialSize,                  // Size
-        oak_planks_material,          // Material
-        glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
-        0.0f,                         // Rotation angle (e.g., 0 degrees)
-        cubeVAO,                      // VAO ID
-        cubeIndexCount,               // Index count
-        true                          // Is static
-    );
+    // // Adding "oak_planks" cube
+    // utils_scene::addCube(
+    //     "oak_planks",                 // Name
+    //     glm::vec3(25.0f, 2.0f, 8.0f), // Position
+    //     initialSize,                  // Size
+    //     oak_planks_material,          // Material
+    //     glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
+    //     0.0f,                         // Rotation angle (e.g., 0 degrees)
+    //     cubeVAO,                      // VAO ID
+    //     cubeIndexCount,               // Index count
+    //     true                          // Is static
+    // );
 
-    // Adding "deepslate_emerald_ore" cube
-    utils_scene::addCube(
-        "deepslate_emerald_ore",        // Name
-        glm::vec3(25.0f, 2.0f, 9.0f),   // Position
-        initialSize,                    // Size
-        deepslate_emerald_ore_material, // Material
-        glm::vec3(0.0f, 1.0f, 0.0f),    // Rotation axis (Y-axis)
-        0.0f,                           // Rotation angle (e.g., 0 degrees)
-        cubeVAO,                        // VAO ID
-        cubeIndexCount,                 // Index count
-        true                            // Is static
-    );
+    // // Adding "deepslate_emerald_ore" cube
+    // utils_scene::addCube(
+    //     "deepslate_emerald_ore",        // Name
+    //     glm::vec3(25.0f, 2.0f, 9.0f),   // Position
+    //     initialSize,                    // Size
+    //     deepslate_emerald_ore_material, // Material
+    //     glm::vec3(0.0f, 1.0f, 0.0f),    // Rotation axis (Y-axis)
+    //     0.0f,                           // Rotation angle (e.g., 0 degrees)
+    //     cubeVAO,                        // VAO ID
+    //     cubeIndexCount,                 // Index count
+    //     true                            // Is static
+    // );
 
     // displaying materials over.
 
@@ -1346,6 +1346,490 @@ int main(int argc, char *argv[])
         cubeIndexCount,              // Index count
         true                         // Is static
     );
+
+    // actual decor objects
+    // decorcenterright (36, 2, 20)
+    glm::vec3 decorCenterRight(33.0f, 1.0f, 20.0f);
+    utils_scene::addCube(
+        "30",          // Name
+        decorCenterRight,  // Position
+        initialSize,                 // Size
+        crying_obsidian_material,    // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                        // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                     // VAO ID
+        cubeIndexCount,              // Index count
+        true                         // Is static
+    );
+
+    // decorecetnerriht + (1, 0, 0)
+    utils_scene::addCube(
+        "31",          // Name
+        decorCenterRight + glm::vec3(1.0f, 0.0f, 0.0f),  // Position
+        initialSize,                 // Size
+        deepslate_material,          // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                        // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                     // VAO ID
+        cubeIndexCount,              // Index count
+        true                         // Is static
+    );
+
+    // decorecetnerriht + (0, 1, 0) emerald ore
+    utils_scene::addCube(
+        "32",          // Name
+        decorCenterRight + glm::vec3(0.0f, 1.0f, 0.0f),  // Position
+        initialSize,                 // Size
+        deepslate_emerald_ore_material, // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                        // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                     // VAO ID
+        cubeIndexCount,              // Index count
+        true                         // Is static
+    );
+
+    // decorecetnerriht + (0, 0, 1) crying obsidian
+    utils_scene::addCube(
+        "33",          // Name
+        decorCenterRight + glm::vec3(0.0f, 0.0f, 1.0f),  // Position
+        initialSize,                 // Size
+        crying_obsidian_material,    // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                        // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                     // VAO ID
+        cubeIndexCount,              // Index count
+        true                         // Is static
+    );
+
+    // decorecetnerriht + (-1, 0, -1) obsidian
+    utils_scene::addCube(
+        "34",          // Name
+        decorCenterRight + glm::vec3(-1.0f, 0.0f, -1.0f),  // Position
+        initialSize,                 // Size
+        obsidian_material,           // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                        // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                     // VAO ID
+        cubeIndexCount,              // Index count
+        true                         // Is static
+    );
+
+    // decorecetnerriht + (-1, 0, 0) deepslate
+    // decorecetnerriht + (-2, 0, 0) emerald ore
+    // decorecetnerriht + (-3, 0, 1) crying obsidian
+    // decorecetnerriht + (0, 0, 1) obsidian
+    // decorecetnerriht + (-1, 0, 1) deepslate
+    // decorecetnerriht + (-1, 0, -2) emerald ore
+    // decorecetnerriht + (-1, 1, -2) crying obsidian
+    // decorecetnerriht + (-1, 0, 1) obsidian
+    // decorecetnerriht + (-1, 2, 2) deepslate
+    // decorecetnerriht + (-1, 1, 2) emerald ore
+
+    utils_scene::addCube(
+        "35",          // Name
+        decorCenterRight + glm::vec3(-1.0f, 0.0f, 0.0f),  // Position
+        initialSize,                 // Size
+        deepslate_material,          // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                        // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                     // VAO ID
+        cubeIndexCount,              // Index count
+        true                         // Is static
+    );
+
+    utils_scene::addCube(
+        "36",          // Name
+        decorCenterRight + glm::vec3(-2.0f, 0.0f, 0.0f),  // Position
+        initialSize,                 // Size
+        deepslate_emerald_ore_material, // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                        // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                     // VAO ID
+        cubeIndexCount,              // Index count
+        true                         // Is static
+    );
+
+    utils_scene::addCube(
+        "37",          // Name
+        decorCenterRight + glm::vec3(-3.0f, 0.0f, 1.0f),  // Position
+        initialSize,                 // Size
+        crying_obsidian_material,    // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                        // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                     // VAO ID
+        cubeIndexCount,              // Index count
+        true                         // Is static
+    );
+
+    utils_scene::addCube(
+        "38",          // Name
+        decorCenterRight + glm::vec3(0.0f, 0.0f, 1.0f),  // Position
+        initialSize,                 // Size
+        obsidian_material,           // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                        // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                     // VAO ID
+        cubeIndexCount,              // Index count
+        true                         // Is static
+    );
+
+    utils_scene::addCube(
+        "39",          // Name
+        decorCenterRight + glm::vec3(-1.0f, 0.0f, 1.0f),  // Position
+        initialSize,                 // Size
+        deepslate_material,          // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                        // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                     // VAO ID
+        cubeIndexCount,              // Index count
+        true                         // Is static
+    );
+
+    utils_scene::addCube(
+        "40",          // Name
+        decorCenterRight + glm::vec3(-1.0f, 0.0f, -2.0f),  // Position
+        initialSize,                 // Size
+        deepslate_emerald_ore_material, // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                        // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                     // VAO ID
+        cubeIndexCount,              // Index count
+        true                         // Is static
+    );
+
+    utils_scene::addCube(
+        "41",          // Name
+        decorCenterRight + glm::vec3(-1.0f, 1.0f, -2.0f),  // Position
+        initialSize,                 // Size
+        crying_obsidian_material,    // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                        // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                     // VAO ID
+        cubeIndexCount,              // Index count
+        true                         // Is static
+    );
+
+    utils_scene::addCube(
+        "42",          // Name
+        decorCenterRight + glm::vec3(-1.0f, 0.0f, 1.0f),  // Position
+        initialSize,                 // Size
+        obsidian_material,           // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                        // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                     // VAO ID
+        cubeIndexCount,              // Index count
+        true                         // Is static
+    );
+
+    utils_scene::addCube(
+        "43",          // Name
+        decorCenterRight + glm::vec3(-1.0f, 2.0f, 2.0f),  // Position
+        initialSize,                 // Size
+        deepslate_material,          // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                        // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                     // VAO ID
+        cubeIndexCount,              // Index count
+        true                         // Is static
+    );
+
+    utils_scene::addCube(
+        "44",          // Name
+        decorCenterRight + glm::vec3(-1.0f, 1.0f, 2.0f),  // Position
+        initialSize,                 // Size
+        deepslate_material,          // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                        // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                     // VAO ID
+        cubeIndexCount,              // Index count
+        true                         // Is static
+    );
+
+    // Additional Blocks
+
+    utils_scene::addCube(
+        "45", decorCenterRight + glm::vec3(2.0f, 0.0f, 0.0f), initialSize,
+        mossy_stone_bricks_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    utils_scene::addCube(
+        "46", decorCenterRight + glm::vec3(-2.0f, 1.0f, 0.0f), initialSize,
+        stone_bricks_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    utils_scene::addCube(
+        "47", decorCenterRight + glm::vec3(0.0f, 1.0f, -1.0f), initialSize,
+        stoneMaterial, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    utils_scene::addCube(
+        "48", decorCenterRight + glm::vec3(1.0f, 0.0f, -1.0f), initialSize,
+        wallMaterial, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    utils_scene::addCube(
+        "49", decorCenterRight + glm::vec3(-2.0f, 0.0f, -1.0f), initialSize,
+        mossy_stone_bricks_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    utils_scene::addCube(
+        "50", decorCenterRight + glm::vec3(1.0f, 1.0f, 1.0f), initialSize,
+        stone_bricks_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    utils_scene::addCube(
+        "51", decorCenterRight + glm::vec3(-1.0f, 2.0f, -1.0f), initialSize,
+        stoneMaterial, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    utils_scene::addCube(
+        "52", decorCenterRight + glm::vec3(0.0f, 2.0f, 0.0f), initialSize,
+        wallMaterial, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    utils_scene::addCube(
+        "53", decorCenterRight + glm::vec3(-2.0f, 1.0f, 1.0f), initialSize,
+        mossy_stone_bricks_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    utils_scene::addCube(
+        "54", decorCenterRight + glm::vec3(2.0f, 1.0f, -1.0f), initialSize,
+        stone_bricks_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    utils_scene::addCube(
+        "55", decorCenterRight + glm::vec3(0.0f, 0.0f, -2.0f), initialSize,
+        stoneMaterial, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    utils_scene::addCube(
+        "56", decorCenterRight + glm::vec3(-1.0f, 1.0f, -3.0f), initialSize,
+        wallMaterial, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    utils_scene::addCube(
+        "57", decorCenterRight + glm::vec3(1.0f, 2.0f, -2.0f), initialSize,
+        mossy_stone_bricks_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    utils_scene::addCube(
+        "58", decorCenterRight + glm::vec3(-2.0f, 2.0f, -1.0f), initialSize,
+        stone_bricks_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    utils_scene::addCube(
+        "59", decorCenterRight + glm::vec3(0.0f, 3.0f, 0.0f), initialSize,
+        wallMaterial, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // left decor, (planks, iron block, note block, glass, purple stained glass)
+    glm::vec3 decorCenterLeft(34.0f, 1.0f, 3.0f);
+
+    // Block 1: Glass
+    utils_scene::addTransparentCube(
+        "60", decorCenterLeft, initialSize * 0.999f,
+        glass_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 2: Purple Stained Glass
+    utils_scene::addTransparentCube(
+        "61", decorCenterLeft + glm::vec3(1.0f, 0.0f, 0.0f), initialSize* 0.999f,
+        purple_stained_glass_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 3: Iron Block
+    utils_scene::addCube(
+        "62", decorCenterLeft + glm::vec3(0.0f, 1.0f, 0.0f), initialSize,
+        iron_block_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 4: Note Block
+    utils_scene::addCube(
+        "63", decorCenterLeft + glm::vec3(0.0f, 0.0f, 1.0f), initialSize,
+        note_block_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 5: Oak Planks
+    utils_scene::addCube(
+        "64", decorCenterLeft + glm::vec3(-1.0f, 0.0f, -1.0f), initialSize,
+        oak_planks_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 6: Mossy Stone Bricks
+    utils_scene::addCube(
+        "65", decorCenterLeft + glm::vec3(-1.0f, 0.0f, 0.0f), initialSize,
+        mossy_stone_bricks_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 7: Glass
+    utils_scene::addTransparentCube(
+        "66", decorCenterLeft + glm::vec3(-2.0f, 0.0f, 0.0f), initialSize* 0.999f,
+        glass_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 8: Purple Stained Glass
+    utils_scene::addTransparentCube(
+        "67", decorCenterLeft + glm::vec3(-3.0f, 0.0f, 1.0f), initialSize* 0.999f,
+        purple_stained_glass_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 9: Iron Block
+    utils_scene::addCube(
+        "68", decorCenterLeft + glm::vec3(0.0f, 0.0f, -1.0f), initialSize,
+        iron_block_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 10: Note Block
+    utils_scene::addCube(
+        "69", decorCenterLeft + glm::vec3(-1.0f, 0.0f, 1.0f), initialSize,
+        note_block_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 11: Oak Planks
+    utils_scene::addCube(
+        "70", decorCenterLeft + glm::vec3(-1.0f, 1.0f, -2.0f), initialSize,
+        oak_planks_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 12: Mossy Stone Bricks
+    utils_scene::addCube(
+        "71", decorCenterLeft + glm::vec3(-1.0f, 2.0f, -2.0f), initialSize,
+        mossy_stone_bricks_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 13: Glass
+    utils_scene::addTransparentCube(
+        "72", decorCenterLeft + glm::vec3(-1.0f, 0.0f, 1.0f), initialSize* 0.999f,
+        glass_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 14: Purple Stained Glass
+    utils_scene::addTransparentCube(
+        "73", decorCenterLeft + glm::vec3(-1.0f, 2.0f, 2.0f), initialSize* 0.999f,
+        purple_stained_glass_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 15: Iron Block
+    utils_scene::addCube(
+        "74", decorCenterLeft + glm::vec3(-1.0f, 1.0f, 2.0f), initialSize,
+        iron_block_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Additional Blocks around decorCenterLeft
+
+    // Block 16: Glass
+    utils_scene::addTransparentCube(
+        "75", decorCenterLeft + glm::vec3(1.0f, 1.0f, 0.0f), initialSize* 0.999f,
+        glass_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 17: Purple Stained Glass
+    utils_scene::addTransparentCube(
+        "76", decorCenterLeft + glm::vec3(0.0f, 1.0f, 1.0f), initialSize* 0.999f,
+        purple_stained_glass_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 18: Iron Block
+    utils_scene::addCube(
+        "77", decorCenterLeft + glm::vec3(2.0f, 0.0f, 0.0f), initialSize,
+        iron_block_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 19: Note Block
+    utils_scene::addCube(
+        "78", decorCenterLeft + glm::vec3(0.0f, 2.0f, 0.0f), initialSize,
+        note_block_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 20: Oak Planks
+    utils_scene::addCube(
+        "79", decorCenterLeft + glm::vec3(-2.0f, 1.0f, 1.0f), initialSize,
+        oak_planks_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 21: Mossy Stone Bricks
+    utils_scene::addCube(
+        "80", decorCenterLeft + glm::vec3(-1.0f, 1.0f, 1.0f), initialSize,
+        mossy_stone_bricks_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 22: Glass
+    utils_scene::addTransparentCube(
+        "81", decorCenterLeft + glm::vec3(0.0f, 1.0f, -1.0f), initialSize* 0.999f,
+        glass_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 23: Purple Stained Glass
+    utils_scene::addTransparentCube(
+        "82", decorCenterLeft + glm::vec3(-1.0f, 2.0f, 0.0f), initialSize* 0.999f,
+        purple_stained_glass_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 24: Iron Block
+    utils_scene::addCube(
+        "83", decorCenterLeft + glm::vec3(1.0f, 0.0f, 1.0f), initialSize,
+        iron_block_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 25: Note Block
+    utils_scene::addCube(
+        "84", decorCenterLeft + glm::vec3(-2.0f, 0.0f, -1.0f), initialSize,
+        note_block_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 26: Oak Planks
+    utils_scene::addCube(
+        "85", decorCenterLeft + glm::vec3(0.0f, 0.0f, -2.0f), initialSize,
+        oak_planks_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 27: Mossy Stone Bricks
+    utils_scene::addCube(
+        "86", decorCenterLeft + glm::vec3(-1.0f, 0.0f, 2.0f), initialSize,
+        mossy_stone_bricks_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 28: Glass
+    utils_scene::addTransparentCube(
+        "87", decorCenterLeft + glm::vec3(1.0f, 2.0f, -1.0f), initialSize* 0.999f,
+        glass_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 29: Purple Stained Glass
+    utils_scene::addTransparentCube(
+        "88", decorCenterLeft + glm::vec3(2.0f, 1.0f, 1.0f), initialSize* 0.999f,
+        purple_stained_glass_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 30: Iron Block
+    utils_scene::addCube(
+        "89", decorCenterLeft + glm::vec3(0.0f, 2.0f, -2.0f), initialSize,
+        iron_block_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 31: Note Block
+    utils_scene::addCube(
+        "90", decorCenterLeft + glm::vec3(-2.0f, 2.0f, 0.0f), initialSize,
+        note_block_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 32: Oak Planks
+    utils_scene::addCube(
+        "91", decorCenterLeft + glm::vec3(1.0f, 1.0f, -2.0f), initialSize,
+        oak_planks_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 33: Mossy Stone Bricks
+    utils_scene::addCube(
+        "92", decorCenterLeft + glm::vec3(0.0f, 2.0f, 1.0f), initialSize,
+        mossy_stone_bricks_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
+
+    // Block 34: Glass
+    utils_scene::addTransparentCube(
+        "93", decorCenterLeft + glm::vec3(-2.0f, 1.0f, -2.0f), initialSize* 0.999f,
+        glass_material, glm::vec3(0.0f, 1.0f, 0.0f), 0.0f,
+        cubeVAO, cubeIndexCount, true);
 
     // =======================
 
@@ -2091,21 +2575,21 @@ int main(int argc, char *argv[])
         simpleLights,
         glm::vec3(30.0f, 4.0f, 4.0f), // position
         glm::vec3(1.0f, 1.0f, 1.0f),   // color
-        0.8f                           // intensity
+        1.0f                           // intensity
     );
 
     int newLightID11 = utils_light::addLight(
         simpleLights,
         glm::vec3(30.0f, 4.0f, 20.0f), // position
         glm::vec3(1.0f, 1.0f, 1.0f),   // color
-        0.4f                           // intensity
+        0.9f                           // intensity
     );
 
     int newLightID12 = utils_light::addLight(
         simpleLights,
         glm::vec3(23.0f, 4.0f, 11.5f), // position
         glm::vec3(1.0f, 1.0f, 1.0f),   // color
-        0.8f                           // intensity
+        1.0f                           // intensity
     );
 
 
@@ -2353,7 +2837,7 @@ int main(int argc, char *argv[])
 
         // update the light inside the nether portal, light ID = 9
         // we can here vary the light intensity, to change the shader vs effect
-        simpleLights[8].intensity = 1.0f + 0.5f * sin(currentFrame);
+        simpleLights[8].intensity = 1.0f + 0.9f * cos(currentFrame);
         // simpleLights[9].intensity = 1.0f + 0.5f * cos(currentFrame);
 
         // update the display planets (they should rotate)
@@ -2371,7 +2855,7 @@ int main(int argc, char *argv[])
         simpleLights[9].position.z = whiteSpherePosition.z + 1.6f * sin(currentFrame);
 
         // also change the color
-        simpleLights[11].color = glm::vec3(
+        simpleLights[10].color = glm::vec3(
             (sin(currentFrame) + 1.0f) / 2.0f,       // Red oscillates between 0 and 1
             (cos(currentFrame) + 1.0f) / 2.0f,       // Green oscillates between 0 and 1
             (sin(currentFrame * 2.5f) + 1.0f) / 2.0f // Blue oscillates faster
@@ -2383,7 +2867,8 @@ int main(int argc, char *argv[])
         simpleLights[10].position.y = torusPosition.y + 1.6f * sin(currentFrame);
         simpleLights[10].position.z = torusPosition.z + 1.6f * sin(currentFrame);
 
-
+        // keep the light id 11 to 1.0f above the camera
+        simpleLights[11].position = cameraPos + glm::vec3(0.0f, 1.0f, 0.0f);
 
         // light position on the camera
         // glm::vec3 lightPosWorld = cameraPos + glm::vec3(0.0f, 1.0f, 0.0f); // Slightly elevate the light position above the camera
@@ -2984,6 +3469,12 @@ int main(int argc, char *argv[])
             // {
             //     continue;
             // }
+
+            // skip specific light IDs
+            if (light.id == 8 || light.id == 11)
+            {
+                continue;
+            }
 
             glm::mat4 modelMatrix = glm::mat4(1.0f);
             modelMatrix = glm::translate(modelMatrix, light.position);

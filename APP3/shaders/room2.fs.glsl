@@ -193,6 +193,33 @@ float quantizeChannel(float color, int levels) {
     return floor(color / step + 0.5) * step;
 }
 
+// ----------------------------- //
+//    **Old TV Pixel Effect**    //
+// ----------------------------- //
+
+vec3 filterTV(vec3 color) {
+    int column = int(gl_FragCoord.x) % 3; // Determine the column (0,1,2)
+    
+    if (column == 0) {
+        // First column: Only Red channel
+        return vec3(color.r, 0.0, 0.0);
+    } 
+    else if (column == 1) {
+        // Second column: Only Green channel
+        return vec3(0.0, color.g, 0.0);
+    } 
+    else if (column == 2) {
+        // Third column: Only Blue channel
+        return vec3(0.0, 0.0, color.b);
+    } 
+    else {
+        // Fourth column: Black edge
+        return vec3(0.0, 0.0, 0.0);
+    }
+}
+
+vec3 tempo;
+
 void main() {
     // Determine albedo based on whether a diffuse texture is used
     vec3 albedo = (uUseTexture > 0.5) ? texture(uTexture, vTexCoords).rgb : uKd;
@@ -297,13 +324,16 @@ void main() {
         // if all channels are zero or 1, output the original color
         // uColorMask
         if (uColorMask.r == 0.0 && uColorMask.g == 0.0 && uColorMask.b == 0.0) {
-            FragColor = vec4(colorToDither, finalAlpha);
+            // FragColor = vec4(colorToDither, finalAlpha);
+            tempo = filterTV(colorToDither);
+            FragColor = vec4(tempo, finalAlpha);
         } else {
             vec3 maskedColor = vec3(0.0);
             maskedColor.r = colorToDither.r * uColorMask.r;
             maskedColor.g = colorToDither.g * uColorMask.g;
             maskedColor.b = colorToDither.b * uColorMask.b;
-            FragColor = vec4(maskedColor, finalAlpha);
+            tempo = filterTV(maskedColor);
+            FragColor = vec4(tempo, finalAlpha);
         }
 
         // debug
