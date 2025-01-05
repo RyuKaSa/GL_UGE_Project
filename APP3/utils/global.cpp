@@ -27,3 +27,10 @@ float currentFrame = 0.0f;
 int MAX_ADDITIONAL_LIGHTS = 100; // Maximum number of additional lights excluding the main point light which has shadows
 
 bool wireframeMode = false;
+
+// Define color masks for RGB channels
+glm::vec3 colorMasks[3] = {
+    glm::vec3(1.0f, 0.0f, 0.0f), // Red
+    glm::vec3(0.0f, 1.0f, 0.0f), // Green
+    glm::vec3(0.0f, 0.0f, 1.0f)  // Blue
+};

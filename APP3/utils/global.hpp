@@ -53,4 +53,7 @@ struct SphereVertex {
     glm::vec3 bitangent;
 };
 
+// Define color masks for RGB channels
+extern glm::vec3 colorMasks[3];
+
 #endif // GLOBAL_HPP

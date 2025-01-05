@@ -241,8 +241,6 @@ int main(int argc, char *argv[])
         std::cerr << "Failed to get 'uShininess' location in room2 shader" << std::endl;
     if (room2_uLightIntensityLocation == -1)
         std::cerr << "Failed to get 'uLightIntensity' location in room2 shader" << std::endl;
-    if (room2_uColorMaskLocation == -1)
-        std::cerr << "Failed to get 'uColorMask' location in room2 shader" << std::endl;
 
     room1.use(); // Activate room1 shader program
 
@@ -469,7 +467,7 @@ int main(int argc, char *argv[])
     torusMaterial.specularMapID = 0;
     torusMaterial.hasNormalMap = false;
     torusMaterial.normalMapID = 0;
-    torusMaterial.alpha = alphaTransparent5; // 50% opaque
+    torusMaterial.alpha = alphaOpaque; // Opaque
 
     // Define the soccer ball material
     Material soccerMaterial;
@@ -908,21 +906,6 @@ int main(int argc, char *argv[])
     materialManager.addOrGetMaterial(obsidian_material);
     materialManager.addOrGetMaterial(portal_material);
 
-    // white material
-    Material whiteMaterial;
-    whiteMaterial.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
-    whiteMaterial.hasDiffuseMap = false;
-    whiteMaterial.diffuseMapID = 0;
-    whiteMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    whiteMaterial.shininess = 32.0f;                // Shininess exponent
-    whiteMaterial.hasSpecularMap = false;           // Assuming no specular map
-    whiteMaterial.specularMapID = 0;
-    whiteMaterial.hasNormalMap = false;
-    whiteMaterial.normalMapID = 0;
-    whiteMaterial.alpha = alphaTransparent5; // Transparent
-
-    materialManager.addOrGetMaterial(whiteMaterial);
-
     std::cout << "Materials created" << std::endl;
     // After loading textures
     for (const auto &material : materialManager.materials)
@@ -1022,18 +1005,6 @@ int main(int argc, char *argv[])
         cubeVAO,                     // VAO ID
         cubeIndexCount,              // Index count
         true                         // Is static
-    );
-
-    // white sphere in room 2, transparentt
-    // pos 30, 2, 4
-    utils_scene::addTransparentSphere(
-        "whiteSphere",                // Name
-        glm::vec3(30.0f, 2.0f, 4.0f), // Position
-        1.0f,                         // Radius
-        whiteMaterial,                // Material
-        sphereVAO,                    // VAO ID
-        sphereVertexCount,             // Index count
-        true                          // Is static
     );
 
     // Adding "stone_bricks" cube
@@ -1350,6 +1321,7 @@ int main(int argc, char *argv[])
     // =======================
 
     // decor objects room 2
+
 
     // transparent cube in room 2
     // utils_scene::addTransparentCube(
@@ -2073,41 +2045,13 @@ int main(int argc, char *argv[])
         0.2f                           // intensity
     );
 
+    // light pos 32 2 11
     int newLightID9 = utils_light::addLight(
         simpleLights,
         glm::vec3(37.0f, 3.0f, 11.5f), // position
         glm::vec3(0.4f, 0.24f, 0.7f),   // color
-        1.3f                           // intensity
+        1.0f                           // intensity
     );
-
-    // add more lights to room 2
-    // light pos 30 4 4
-    // light pos 30 4 20
-    // light pos 23 4 11.5
-
-    // glm::vec3(30.0f, 2.0f, 4.0f), // Position
-
-    int newLightID10 = utils_light::addLight(
-        simpleLights,
-        glm::vec3(30.0f, 4.0f, 4.0f), // position
-        glm::vec3(1.0f, 1.0f, 1.0f),   // color
-        0.4f                           // intensity
-    );
-
-    int newLightID11 = utils_light::addLight(
-        simpleLights,
-        glm::vec3(30.0f, 4.0f, 20.0f), // position
-        glm::vec3(1.0f, 1.0f, 1.0f),   // color
-        0.4f                           // intensity
-    );
-
-    int newLightID12 = utils_light::addLight(
-        simpleLights,
-        glm::vec3(23.0f, 4.0f, 11.5f), // position
-        glm::vec3(1.0f, 1.0f, 1.0f),   // color
-        0.4f                           // intensity
-    );
-
 
     // int newLightID10 = utils_light::addLight(
     //     simpleLights,

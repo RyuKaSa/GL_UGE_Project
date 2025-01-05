@@ -18,6 +18,8 @@ in mat3 TBN;
 
 out vec4 FragColor;
 
+uniform vec3 colorMask;
+
 // Material properties
 uniform vec3 uKd;           
 uniform vec3 uKs;           
@@ -239,7 +241,7 @@ void main() {
     // ----------------------------- //
     
     // ----- **Dither Configuration (Hard-Coded)** -----
-    const bool ENABLE_DITHER = true;          // Toggle dithering: true to enable, false to disable
+    const bool ENABLE_DITHER = false;          // Toggle dithering: true to enable, false to disable
     const bool MONOCHROME_DITHER = false;     // Toggle monochromatic dithering: true for monochrome, false for color
     const int COLOR_LEVELS = 8;               // Number of color levels per channel (e.g., 8 for 3-bit color)
     
@@ -284,6 +286,18 @@ void main() {
 
         FragColor = vec4(ditheredColor, finalAlpha);
     } else {
-        FragColor = vec4(colorToDither, finalAlpha);
+
+        // only output the color channel of the color mask
+        // if all channels are zero or 1, output the original color
+        // colorMask
+        if (colorMask.r == 0.0 && colorMask.g == 0.0 && colorMask.b == 0.0) {
+            FragColor = vec4(colorToDither, finalAlpha);
+        } else {
+            vec3 maskedColor = vec3(0.0);
+            maskedColor.r = colorToDither.r * colorMask.r;
+            maskedColor.g = colorToDither.g * colorMask.g;
+            maskedColor.b = colorToDither.b * colorMask.b;
+            FragColor = vec4(maskedColor, finalAlpha);
+        }
     }
 }

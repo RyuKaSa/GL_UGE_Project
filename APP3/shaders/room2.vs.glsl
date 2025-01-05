@@ -29,12 +29,22 @@ const float GRAVITY_FALLOFF = 0.5;    // Prevents division by zero
 // uTime
 uniform float uTime;
 
+// Color Mask
+uniform vec3 uColorMask; // Color mask for distortion scaling
+
+const float RED_SCALE = 1.5;    // More distortion
+const float GREEN_SCALE = 1.0;  // Normal distortion
+const float BLUE_SCALE = 0.5;   // Less distortion
+
+const float EPSILON = 0.01;
+
 // Outputs to Fragment Shader
 out vec3 vNormal;
 out vec3 vFragPos;
 out vec2 vTexCoords;
 out vec3 vFragPosWorld;
 out mat3 TBN; // Tangent-Bitangent-Normal matrix
+// out vec3 vTotalDisplacement; // Removed as it's no longer needed
 
 // Pseudo-Random Function for Per-Triangle Variance
 float rand(vec2 co) {
@@ -62,9 +72,7 @@ float triangleWave(float t) {
 float calculateShrinkFactor(vec3 vertexPos, vec3 lightPos, float intensity) {
     float distance = length(lightPos - vertexPos);
     if (distance < GRAVITY_RANGE) {
-        // also add time factor
-        // return clamp(1.0 - (distance / GRAVITY_RANGE), 0.5, 1.0); // Min shrink to 50%
-        // return clamp(1.0 - (distance / GRAVITY_RANGE) + sin(uTime) * 0.1, 0.5, 1.5); // Min shrink to 50%
+        // Also add time factor
         return clamp(1.0 - (distance / GRAVITY_RANGE) + intensity * 0.2, 0.5, 1.3); // Min shrink to 50%
     }
     return 1.0; // No shrink beyond range
@@ -91,8 +99,34 @@ void main() {
         totalDisplacement += calculateGravitationalPull(viewPosition, uAdditionalLightPos[i], GRAVITY_STRENGTH, triangleRandom);
     }
 
+    // **Apply Color Mask-Based Distortion Scaling**
+    // Check if all channels are fully active (1.0) or fully inactive (0.0)
+    bool allActive = (abs(uColorMask.r - 1.0) < EPSILON) && 
+                    (abs(uColorMask.g - 1.0) < EPSILON) && 
+                    (abs(uColorMask.b - 1.0) < EPSILON);
+
+    bool allInactive = (abs(uColorMask.r) < EPSILON) && 
+                    (abs(uColorMask.g) < EPSILON) && 
+                    (abs(uColorMask.b) < EPSILON);
+
+    float distortionScale = 1.0;
+
+    if (allActive) {
+        distortionScale = 1.0; // No extra scaling
+    } else if (allInactive) {
+        distortionScale = 1.0;
+    } else {
+        // Apply cumulative scaling based on active channels
+        distortionScale = (uColorMask.r * RED_SCALE) + 
+                        (uColorMask.g * GREEN_SCALE) + 
+                        (uColorMask.b * BLUE_SCALE);
+    }
+
+    // Apply the distortion scale to the total displacement
+    vec3 totalDisplacementScaled = totalDisplacement * distortionScale;
+
     // Apply gravitational pull displacement
-    vec3 displacedPosition = aPosition + (inverse(uMVMatrix) * vec4(totalDisplacement, 0.0)).xyz;
+    vec3 displacedPosition = aPosition + (inverse(uMVMatrix) * vec4(totalDisplacementScaled, 0.0)).xyz;
 
     // Calculate triangle center (approximate using neighboring vertices)
     vec3 triangleCenter = calculateTriangleCenter(aPosition, aTangent, aBitangent);
@@ -116,7 +150,7 @@ void main() {
 
     // Pass data to Fragment Shader
     vNormal = uNormalMatrix * aNormal;
-    vFragPos = viewPosition + totalDisplacement;
+    vFragPos = viewPosition + totalDisplacementScaled;
     vTexCoords = aTexCoords;
     vFragPosWorld = (inverse(uMVMatrix) * vec4(viewPosition, 1.0)).xyz;
 
