@@ -187,8 +187,8 @@ vec3 TransmissionLighting(vec3 albedo, vec3 N) {
 
 // **Helper Function: Quantize a Single Color Channel**
 float quantizeChannel(float color, int levels) {
-    float step = 1.0 / float(levels);
-    return floor(color / step + 0.5) * step;
+    float quantStep = 1.0 / float(levels); // Renamed from 'step' to 'quantStep'
+    return floor(color / quantStep + 0.5) * quantStep;
 }
 
 void main() {
@@ -238,52 +238,106 @@ void main() {
     //       **Dithering Effect**    //
     // ----------------------------- //
     
-    // ----- **Dither Configuration (Hard-Coded)** -----
+    // ----- **Dither Configuration (Enhanced)** -----
     const bool ENABLE_DITHER = true;          // Toggle dithering: true to enable, false to disable
     const bool MONOCHROME_DITHER = false;     // Toggle monochromatic dithering: true for monochrome, false for color
-    const int COLOR_LEVELS = 8;               // Number of color levels per channel (e.g., 8 for 3-bit color)
-    
-    // 4x4 Bayer Matrix (Normalized)
-    const float bayerMatrix[16] = float[16](
-        0.0/16.0,  8.0/16.0,  2.0/16.0, 10.0/16.0,
-        12.0/16.0, 4.0/16.0, 14.0/16.0,  6.0/16.0,
-        3.0/16.0, 11.0/16.0,  1.0/16.0,  9.0/16.0,
-        15.0/16.0, 7.0/16.0, 13.0/16.0,  5.0/16.0
+    const int COLOR_LEVELS = 4;               // Reduced for more pronounced dithering
+
+    // 4x3 Bayer-Like Matrix (Normalized)
+    const float bayerMatrix[12] = float[12](
+        // Row 0
+        0.0/12.0, 6.0/12.0, 2.0/12.0, 4.0/12.0,
+        // Row 1
+        3.0/12.0, 9.0/12.0, 1.0/12.0, 7.0/12.0,
+        // Row 2
+        5.0/12.0, 11.0/12.0, 3.0/12.0, 10.0/12.0
     );
 
+    vec3 ditheredColor = colorToDither;
+
     if (ENABLE_DITHER) {
-        // Calculate the position within the 4x4 Bayer matrix
-        float scaledX = gl_FragCoord.x / 4.0; 
-        float scaledY = gl_FragCoord.y / 4.0;
-        int x = int(mod(scaledX, 4.0));
-        int y = int(mod(scaledY, 4.0));
-        int index = y * 4 + x;
+        // Calculate the local position within the 4x3 big pixel
+        int localX = int(mod(gl_FragCoord.x, 4.0));
+        int localY = int(mod(gl_FragCoord.y, 3.0));
+        
+        // Calculate index for 4x3 matrix (12 elements)
+        int index = localY * 4 + localX; // 4 columns per row
+
+        // Clamp index to prevent out-of-bounds access (safety measure)
+        index = clamp(index, 0, 11);
 
         float threshold = bayerMatrix[index];
 
-        vec3 ditheredColor = colorToDither;
+        // Declare quantStep outside the loop to ensure it's in scope for MONOCHROME_DITHER
+        float quantStep = 1.0 / float(COLOR_LEVELS);
 
         for(int i = 0; i < 3; ++i) { // Iterate over R, G, B
             float channel = ditheredColor[i];
-            float quantized = quantizeChannel(channel, COLOR_LEVELS);
-            float error = fract(channel * float(COLOR_LEVELS)) - 0.5;
-
-            if (error > (threshold - 0.5)) {
-                ditheredColor[i] = quantized + (1.0 / float(COLOR_LEVELS));
+            float quantized = floor(channel / quantStep) * quantStep;
+            
+            // Compare channel value with threshold to decide quantization
+            if (fract(channel / quantStep) > threshold) {
+                ditheredColor[i] = quantized + quantStep;
             } else {
                 ditheredColor[i] = quantized;
             }
         }
-
+        
         if (MONOCHROME_DITHER) {
             const vec3 MONOCHROME_COLOR = vec3(0.95, 0.68, 0.49); 
             float luminance = dot(ditheredColor, vec3(0.299, 0.587, 0.114));
-            float quantizedLuminance = quantizeChannel(luminance + threshold / float(COLOR_LEVELS), COLOR_LEVELS);
+            float quantizedLuminance = floor(luminance / quantStep) * quantStep;
+            if (fract(luminance / quantStep) > threshold) {
+                quantizedLuminance += quantStep;
+            }
             ditheredColor = MONOCHROME_COLOR * quantizedLuminance;
         }
-
-        FragColor = vec4(ditheredColor, finalAlpha);
-    } else {
-        FragColor = vec4(colorToDither, finalAlpha);
     }
+
+    // ----------------------------- //
+    //       **Old Television Effect**//
+    // ----------------------------- //
+    
+    // **Old Television Effect: Column-Based Masking**
+    const int CYCLE_SIZE = 4;
+
+    // Calculate the current column index based on fragment coordinates
+    int column = int(mod(gl_FragCoord.x, float(CYCLE_SIZE)));
+
+    // Initialize channel mask to full color
+    vec3 channelMask = vec3(1.0, 1.0, 1.0);
+
+    // Assign specific color channels based on column
+    if(column == 0){
+        channelMask = vec3(1.0, 0.3, 0.3); // Red dominant
+    }
+    else if(column == 1){
+        channelMask = vec3(0.3, 1.0, 0.3); // Green dominant
+    }
+    else if(column == 2){
+        channelMask = vec3(0.3, 0.3, 1.0); // Blue dominant
+    }
+    else if(column == 3){
+        channelMask = vec3(0.0, 0.0, 0.0); // Black line
+    }
+
+    // Apply the channel mask to the dithered color
+    vec3 finalColor = ditheredColor * channelMask;
+
+    // **Row-Based Black Lines: Add a black line every third row**
+    const int ROW_CYCLE_SIZE = 3;
+
+    // Calculate the current row index based on fragment coordinates
+    int row = int(mod(gl_FragCoord.y, float(ROW_CYCLE_SIZE)));
+
+    // If the current row is the first in the cycle, blend the color towards black
+    if(row == 0){
+        finalColor = mix(finalColor, vec3(0.0, 0.0, 0.0), 0.7); // Blend 70% towards black
+    }
+
+    // ----------------------------- //
+    //       **Final Output**        //
+    // ----------------------------- //
+    
+    FragColor = vec4(finalColor, finalAlpha);
 }

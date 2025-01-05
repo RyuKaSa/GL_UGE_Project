@@ -14,20 +14,15 @@ uniform mat3 uNormalMatrix;   // Normal matrix
 
 // Light Properties
 uniform vec3 uLightPos_vs;    // Main light position in view space
-uniform vec3 uLightIntensity; // Main light color
 
 #define MAX_ADDITIONAL_LIGHTS 100
 uniform int uNumAdditionalLights;          
 uniform vec3 uAdditionalLightPos[MAX_ADDITIONAL_LIGHTS]; // Additional lights in view space
-uniform float uAdditionalLightIntensity[MAX_ADDITIONAL_LIGHTS];
 
 // Constants for Gravitational Pull
-const float GRAVITY_STRENGTH = 0.8;   // Controls intensity of gravitational pull
-const float GRAVITY_RANGE = 2.6;     // Maximum range of gravitational effect
+const float GRAVITY_STRENGTH = 1.3;   // Controls intensity of gravitational pull
+const float GRAVITY_RANGE = 3.0;     // Maximum range of gravitational effect
 const float GRAVITY_FALLOFF = 0.5;    // Prevents division by zero
-
-// uTime
-uniform float uTime;
 
 // Outputs to Fragment Shader
 out vec3 vNormal;
@@ -54,18 +49,11 @@ vec3 calculateGravitationalPull(vec3 vertexPos, vec3 lightPos, float strength, f
     return vec3(0.0);
 }
 
-float triangleWave(float t) {
-    return abs(fract(t) - 0.5) * 2.0; // Range [0.0, 1.0]
-}
-
 // Triangle Shrink Function
-float calculateShrinkFactor(vec3 vertexPos, vec3 lightPos, float intensity) {
+float calculateShrinkFactor(vec3 vertexPos, vec3 lightPos) {
     float distance = length(lightPos - vertexPos);
     if (distance < GRAVITY_RANGE) {
-        // also add time factor
-        // return clamp(1.0 - (distance / GRAVITY_RANGE), 0.5, 1.0); // Min shrink to 50%
-        // return clamp(1.0 - (distance / GRAVITY_RANGE) + sin(uTime) * 0.1, 0.5, 1.5); // Min shrink to 50%
-        return clamp(1.0 - (distance / GRAVITY_RANGE) + intensity * 0.2, 0.5, 1.3); // Min shrink to 50%
+        return clamp(1.0 - (distance / GRAVITY_RANGE), 0.5, 1.0); // Min shrink to 50%
     }
     return 1.0; // No shrink beyond range
 }
@@ -98,9 +86,9 @@ void main() {
     vec3 triangleCenter = calculateTriangleCenter(aPosition, aTangent, aBitangent);
 
     // Apply shrink factor based on gravitational pull
-    float shrinkFactor = calculateShrinkFactor(viewPosition, uLightPos_vs, uLightIntensity.x);
+    float shrinkFactor = calculateShrinkFactor(viewPosition, uLightPos_vs);
     for (int i = 0; i < uNumAdditionalLights; ++i) {
-        shrinkFactor *= calculateShrinkFactor(viewPosition, uAdditionalLightPos[i], uAdditionalLightIntensity[i]);
+        shrinkFactor *= calculateShrinkFactor(viewPosition, uAdditionalLightPos[i]);
     }
 
     // Limit the maximum displacement towards the triangle center

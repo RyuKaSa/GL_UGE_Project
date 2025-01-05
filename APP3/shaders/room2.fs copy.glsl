@@ -222,14 +222,27 @@ void main() {
     float finalAlpha = texColor.a * uAlpha;
 
     // ----------------------------- //
+    //       **Color Selection**     //
+    // ----------------------------- //
+    vec3 colorToDither;
+
+    if (abs(uAlpha - 0.9) < 0.001) {
+        // **Special Case: Flat Texture Color for alpha == 0.9**
+        colorToDither = albedo;
+    } else {
+        // **Normal Case: Combined Lighting**
+        colorToDither = lighting * texColor.rgb;
+    }
+
+    // ----------------------------- //
     //       **Dithering Effect**    //
     // ----------------------------- //
-
+    
     // ----- **Dither Configuration (Hard-Coded)** -----
     const bool ENABLE_DITHER = true;          // Toggle dithering: true to enable, false to disable
     const bool MONOCHROME_DITHER = false;     // Toggle monochromatic dithering: true for monochrome, false for color
     const int COLOR_LEVELS = 8;               // Number of color levels per channel (e.g., 8 for 3-bit color)
-
+    
     // 4x4 Bayer Matrix (Normalized)
     const float bayerMatrix[16] = float[16](
         0.0/16.0,  8.0/16.0,  2.0/16.0, 10.0/16.0,
@@ -239,6 +252,7 @@ void main() {
     );
 
     if (ENABLE_DITHER) {
+        // Calculate the position within the 4x4 Bayer matrix
         float scaledX = gl_FragCoord.x / 4.0; 
         float scaledY = gl_FragCoord.y / 4.0;
         int x = int(mod(scaledX, 4.0));
@@ -247,7 +261,7 @@ void main() {
 
         float threshold = bayerMatrix[index];
 
-        vec3 ditheredColor = lighting * texColor.rgb;
+        vec3 ditheredColor = colorToDither;
 
         for(int i = 0; i < 3; ++i) { // Iterate over R, G, B
             float channel = ditheredColor[i];
@@ -270,6 +284,6 @@ void main() {
 
         FragColor = vec4(ditheredColor, finalAlpha);
     } else {
-        FragColor = vec4(lighting * texColor.rgb, finalAlpha);
+        FragColor = vec4(colorToDither, finalAlpha);
     }
 }

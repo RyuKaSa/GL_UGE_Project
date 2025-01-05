@@ -25,6 +25,11 @@ void loadTextures(GLuint& textureID, GLuint& stoneTextureID, GLuint& brownTerrac
                   GLuint& marsTextureID, GLuint& jupiterTextureID, GLuint& saturnTextureID, GLuint& saturn_ringTextureID,
                   GLuint& uranusTextureID, GLuint& neptuneTextureID,
                   GLuint& earthTextureID, GLuint& earth_nTextureID, GLuint& earth_sTextureID, GLuint& earth_atmosphereTextureID,
+                  GLuint& crying_obsidianTextureID, GLuint& crying_obsidianTextureID_n, GLuint& crying_obsidianTextureID_s,
+                  GLuint& deepslateTextureID, GLuint& deepslateTextureID_n, GLuint& deepslateTextureID_s,
+                  GLuint& mossy_stone_bricksTextureID, GLuint& mossy_stone_bricksTextureID_n, GLuint& mossy_stone_bricksTextureID_s,
+                  GLuint& obsidianTextureID, GLuint& obsidianTextureID_n, GLuint& obsidianTextureID_s,
+                  GLuint& portalTextureID, GLuint& portalTextureID_s,
                   
                   const glimac::FilePath& applicationPath) {
     textureID = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_HD/cobblestone_8bit.png");
@@ -146,6 +151,30 @@ void loadTextures(GLuint& textureID, GLuint& stoneTextureID, GLuint& brownTerrac
 
     // neptune
     neptuneTextureID = loadTextureBall(applicationPath.dirPath() + "../APP3/assets/planets/neptune/neptune.png");
+
+    // crying obs
+    crying_obsidianTextureID = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/crying_obsidian/crying_obsidian.png");
+    crying_obsidianTextureID_n = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/crying_obsidian/crying_obsidian_n.png");
+    crying_obsidianTextureID_s = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/crying_obsidian/crying_obsidian_s.png");
+
+    // deepslate
+    deepslateTextureID = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/deepslate/deepslate.png");
+    deepslateTextureID_n = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/deepslate/deepslate_n.png");
+    deepslateTextureID_s = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/deepslate/deepslate_s.png");
+
+    // mossy stone bricks
+    mossy_stone_bricksTextureID = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/mossy_stone_bricks/mossy_stone_bricks.png");
+    mossy_stone_bricksTextureID_n = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/mossy_stone_bricks/mossy_stone_bricks_n.png");
+    mossy_stone_bricksTextureID_s = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/mossy_stone_bricks/mossy_stone_bricks_s.png");
+
+    // obsidian
+    obsidianTextureID = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/obsidian/obsidian.png");
+    obsidianTextureID_n = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/obsidian/obsidian_n.png");
+    obsidianTextureID_s = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/obsidian/obsidian_s.png");
+
+    // portal
+    portalTextureID = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/portal/portal.png");
+    portalTextureID_s = loadTexture(applicationPath.dirPath() + "../APP3/assets/textures_cube_PBR/portal/portal_s.png");
 
     // add all textures to the allTextures vector
     allTextures.push_back(textureID);

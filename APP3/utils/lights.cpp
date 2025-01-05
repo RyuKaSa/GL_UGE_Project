@@ -89,7 +89,7 @@ namespace utils_light
     }
 
     // Update all lights dynamically
-    void updateDynamicLights(std::vector<SimplePointLight> &lights, float currentFrame)
+    void updateDynamicLights(std::vector<std::reference_wrapper<SimplePointLight>> &lights, float currentFrame)
     {
         // Constants for dynamic behavior
         const float HEIGHT_AMPLITUDE = 0.004f;  // Max vertical displacement

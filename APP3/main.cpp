@@ -119,6 +119,12 @@ int main(int argc, char *argv[])
     GLuint uranusTextureID, neptuneTextureID;
     GLuint earthTextureID, earth_nTextureID, earth_sTextureID, earth_atmosphereTextureID;
 
+    GLuint crying_obsidianTextureID, crying_obsidianTextureID_n, crying_obsidianTextureID_s;
+    GLuint deepslateTextureID, deepslateTextureID_n, deepslateTextureID_s;
+    GLuint mossy_stone_bricksTextureID, mossy_stone_bricksTextureID_n, mossy_stone_bricksTextureID_s;
+    GLuint obsidianTextureID, obsidianTextureID_n, obsidianTextureID_s;
+    GLuint portalTextureID, portalTextureID_s;
+
     utils_loader::loadTextures(textureID, stoneTextureID, brownTerracottaTextureID, soccerTextureID,
                                textureID_normalMap, stoneTextureID_normalMap, brownTerracottaTextureID_normalMap, soccerTextureID_normalMap,
                                chairBaseColorTextureID, chairNormalMapTextureID,
@@ -133,6 +139,11 @@ int main(int argc, char *argv[])
                                marsTextureID, jupiterTextureID, saturnTextureID, saturn_ringTextureID,
                                uranusTextureID, neptuneTextureID,
                                earthTextureID, earth_nTextureID, earth_sTextureID, earth_atmosphereTextureID,
+                               crying_obsidianTextureID, crying_obsidianTextureID_n, crying_obsidianTextureID_s,
+                               deepslateTextureID, deepslateTextureID_n, deepslateTextureID_s,
+                               mossy_stone_bricksTextureID, mossy_stone_bricksTextureID_n, mossy_stone_bricksTextureID_s,
+                               obsidianTextureID, obsidianTextureID_n, obsidianTextureID_s,
+                               portalTextureID, portalTextureID_s,
                                applicationPath);
 
     GLuint depthCubeMap, shadowMapFBO;
@@ -821,6 +832,78 @@ int main(int argc, char *argv[])
     materialManager.addOrGetMaterial(uranusMaterial);
     materialManager.addOrGetMaterial(neptuneMaterial);
 
+    // more material
+    // crying obsidian
+    Material crying_obsidian_material;
+    crying_obsidian_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
+    crying_obsidian_material.hasDiffuseMap = true;
+    crying_obsidian_material.diffuseMapID = crying_obsidianTextureID;
+    crying_obsidian_material.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    crying_obsidian_material.shininess = 32.0f;                // Shininess exponent
+    crying_obsidian_material.hasSpecularMap = true;
+    crying_obsidian_material.specularMapID = crying_obsidianTextureID_s;
+    crying_obsidian_material.hasNormalMap = true;
+    crying_obsidian_material.normalMapID = crying_obsidianTextureID_n;
+    crying_obsidian_material.alpha = alphaOpaque; // Opaque
+
+    // deepslate
+    Material deepslate_material;
+    deepslate_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
+    deepslate_material.hasDiffuseMap = true;
+    deepslate_material.diffuseMapID = deepslateTextureID;
+    deepslate_material.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    deepslate_material.shininess = 32.0f;                // Shininess exponent
+    deepslate_material.hasSpecularMap = true;
+    deepslate_material.specularMapID = deepslateTextureID_s;
+    deepslate_material.hasNormalMap = true;
+    deepslate_material.normalMapID = deepslateTextureID_n;
+    deepslate_material.alpha = alphaOpaque; // Opaque
+
+    // mossy stone bricks
+    Material mossy_stone_bricks_material;
+    mossy_stone_bricks_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
+    mossy_stone_bricks_material.hasDiffuseMap = true;
+    mossy_stone_bricks_material.diffuseMapID = mossy_stone_bricksTextureID;
+    mossy_stone_bricks_material.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    mossy_stone_bricks_material.shininess = 32.0f;                // Shininess exponent
+    mossy_stone_bricks_material.hasSpecularMap = true;
+    mossy_stone_bricks_material.specularMapID = mossy_stone_bricksTextureID_s;
+    mossy_stone_bricks_material.hasNormalMap = true;
+    mossy_stone_bricks_material.normalMapID = mossy_stone_bricksTextureID_n;
+    mossy_stone_bricks_material.alpha = alphaOpaque; // Opaque
+
+    // obsidian
+    Material obsidian_material;
+    obsidian_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
+    obsidian_material.hasDiffuseMap = true;
+    obsidian_material.diffuseMapID = obsidianTextureID;
+    obsidian_material.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    obsidian_material.shininess = 32.0f;                // Shininess exponent
+    obsidian_material.hasSpecularMap = true;
+    obsidian_material.specularMapID = obsidianTextureID_s;
+    obsidian_material.hasNormalMap = true;
+    obsidian_material.normalMapID = obsidianTextureID_n;
+    obsidian_material.alpha = alphaOpaque; // Opaque
+
+    // portal
+    Material portal_material;
+    portal_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
+    portal_material.hasDiffuseMap = true;
+    portal_material.diffuseMapID = portalTextureID;
+    portal_material.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
+    portal_material.shininess = 32.0f;                // Shininess exponent
+    portal_material.hasSpecularMap = true;
+    portal_material.specularMapID = portalTextureID_s;
+    portal_material.hasNormalMap = false;
+    portal_material.normalMapID = 0;
+    portal_material.alpha = alphaTransparent5; // 50% opaque
+
+    // add to manager
+    materialManager.addOrGetMaterial(crying_obsidian_material);
+    materialManager.addOrGetMaterial(deepslate_material);
+    materialManager.addOrGetMaterial(mossy_stone_bricks_material);
+    materialManager.addOrGetMaterial(obsidian_material);
+    materialManager.addOrGetMaterial(portal_material);
 
     std::cout << "Materials created" << std::endl;
     // After loading textures
@@ -855,6 +938,74 @@ int main(int argc, char *argv[])
     glm::vec3 initialPosition(25.0f, 2.0f, 3.0f);
     glm::vec3 initialPosition2(25.0f, 2.0f, 4.0f);
     glm::vec3 initialSize(1.0f, 1.0f, 1.0f);
+
+    // dsiplay the new materials
+
+    // Adding "crying_obsidian" cube
+    utils_scene::addCube(
+        "crying_obsidian",              // Name
+        glm::vec3(28.0f, 2.0f, 2.0f),   // Position
+        initialSize,                    // Size
+        crying_obsidian_material,       // Material
+        glm::vec3(0.0f, 1.0f, 0.0f),    // Rotation axis (Y-axis)
+        0.0f,                           // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                        // VAO ID
+        cubeIndexCount,                 // Index count
+        true                            // Is static
+    );
+
+    // Adding "deepslate" cube
+    utils_scene::addCube(
+        "deepslate",              // Name
+        glm::vec3(28.0f, 2.0f, 3.0f), // Position
+        initialSize,              // Size
+        deepslate_material,       // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                     // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                  // VAO ID
+        cubeIndexCount,           // Index count
+        true                      // Is static
+    );
+
+    // Adding "mossy_stone_bricks" cube
+    utils_scene::addCube(
+        "mossy_stone_bricks",        // Name
+        glm::vec3(28.0f, 2.0f, 4.0f), // Position
+        initialSize,                 // Size
+        mossy_stone_bricks_material, // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                        // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                     // VAO ID
+        cubeIndexCount,              // Index count
+        true                         // Is static
+    );
+
+    // Adding "obsidian" cube
+    utils_scene::addCube(
+        "obsidian",                 // Name
+        glm::vec3(28.0f, 2.0f, 5.0f), // Position
+        initialSize,                // Size
+        obsidian_material,          // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                       // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                    // VAO ID
+        cubeIndexCount,             // Index count
+        true                        // Is static
+    );
+
+    // Adding "portal" cube
+    utils_scene::addTransparentCube(
+        "portal",                    // Name
+        glm::vec3(28.0f, 2.0f, 6.0f), // Position
+        glm::vec3(0.1f, 1.0f, 1.0f) * 0.999f, // Size
+        portal_material,             // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                        // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                     // VAO ID
+        cubeIndexCount,              // Index count
+        true                         // Is static
+    );
+
     // Adding "stone_bricks" cube
     utils_scene::addCube(
         "stone_bricks",              // Name
@@ -946,6 +1097,8 @@ int main(int argc, char *argv[])
         true                            // Is static
     );
 
+    // displaying materials over.
+
     // floor
     glm::vec3 origin(0.0f, 0.0f, 0.0f);
     glm::vec3 floorSize(42.0f, 1.0f, 24.0f);
@@ -1033,6 +1186,141 @@ int main(int argc, char *argv[])
         cubeIndexCount,     // Index count
         true                // Is static
     );
+
+    // room 2 nether portal build, we can use composite cube for this, and make 4 composite cubes
+    // first composite cube
+    glm::vec3 portalPosition1(38.0f, 1.0f, 10.0f);
+    glm::vec3 portalSize1(1.0f, 1.0f, 4.0f);
+
+    utils_scene::createCompositeCube(
+        "portal1",          // Name
+        portalPosition1,    // Position
+        portalSize1,        // Size
+        obsidian_material,  // Material
+        cubeVAO,            // VAO ID
+        cubeIndexCount,     // Index count
+        true                // Is static
+    );
+
+    glm::vec3 portalPosition2(38.0f, 2.0f, 10.0f);
+    glm::vec3 portalSize2(1.0f, 3.0f, 1.0f);
+
+    utils_scene::createCompositeCube(
+        "portal2",          // Name
+        portalPosition2,    // Position
+        portalSize2,        // Size
+        obsidian_material,  // Material
+        cubeVAO,            // VAO ID
+        cubeIndexCount,     // Index count
+        true                // Is static
+    );
+
+    glm::vec3 portalPosition3(38.0f, 2.0f, 13.0f);
+
+    utils_scene::createCompositeCube(
+        "portal3",          // Name
+        portalPosition3,    // Position
+        portalSize2,        // Size
+        obsidian_material,  // Material
+        cubeVAO,            // VAO ID
+        cubeIndexCount,     // Index count
+        true                // Is static
+    );
+
+    glm::vec3 portalPosition4(38.0f, 5.0f, 10.0f);
+    glm::vec3 portalSize3(1.0f, 1.0f, 4.0f);
+
+    utils_scene::createCompositeCube(
+        "portal4",          // Name
+        portalPosition4,    // Position
+        portalSize3,        // Size
+        obsidian_material,  // Material
+        cubeVAO,            // VAO ID
+        cubeIndexCount,     // Index count
+        true                // Is static
+    );
+
+    // now we an fill the portal with portal material
+    glm::vec3 portalPosition5(38.0f, 2.0f, 11.0f);
+    glm::vec3 portalSize4(1.0f, 3.0f, 2.0f);
+
+    // Adding "portal" cube
+    utils_scene::addTransparentCube(
+        "portal",                    // Name
+        glm::vec3(38.0f, 2.0f, 11.0f), // Position
+        glm::vec3(0.1f, 1.0f, 1.0f) * 0.999f, // Size
+        portal_material,             // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                        // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                     // VAO ID
+        cubeIndexCount,              // Index count
+        true                         // Is static
+    );
+
+    utils_scene::addTransparentCube(
+        "portal",                    // Name
+        glm::vec3(38.0f, 2.0f, 12.0f), // Position
+        glm::vec3(0.1f, 1.0f, 1.0f) * 0.999f, // Size
+        portal_material,             // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                        // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                     // VAO ID
+        cubeIndexCount,              // Index count
+        true                         // Is static
+    );
+    
+    utils_scene::addTransparentCube(
+        "portal",                    // Name
+        glm::vec3(38.0f, 3.0f, 11.0f), // Position
+        glm::vec3(0.1f, 1.0f, 1.0f) * 0.999f, // Size
+        portal_material,             // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                        // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                     // VAO ID
+        cubeIndexCount,              // Index count
+        true                         // Is static
+    );
+
+    utils_scene::addTransparentCube(
+        "portal",                    // Name
+        glm::vec3(38.0f, 3.0f, 12.0f), // Position
+        glm::vec3(0.1f, 1.0f, 1.0f) * 0.999f, // Size
+        portal_material,             // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                        // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                     // VAO ID
+        cubeIndexCount,              // Index count
+        true                         // Is static
+    );
+
+    utils_scene::addTransparentCube(
+        "portal",                    // Name
+        glm::vec3(38.0f, 4.0f, 11.0f), // Position
+        glm::vec3(0.1f, 1.0f, 1.0f) * 0.999f, // Size
+        portal_material,             // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                        // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                     // VAO ID
+        cubeIndexCount,              // Index count
+        true                         // Is static
+    );
+
+    utils_scene::addTransparentCube(
+        "portal",                    // Name
+        glm::vec3(38.0f, 4.0f, 12.0f), // Position
+        glm::vec3(0.1f, 1.0f, 1.0f) * 0.999f, // Size
+        portal_material,             // Material
+        glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
+        0.0f,                        // Rotation angle (e.g., 0 degrees)
+        cubeVAO,                     // VAO ID
+        cubeIndexCount,              // Index count
+        true                         // Is static
+    );
+
+    // =======================
+
+    // decor objects room 2
+
 
     // transparent cube in room 2
     // utils_scene::addTransparentCube(
@@ -1756,6 +2044,36 @@ int main(int argc, char *argv[])
         0.2f                           // intensity
     );
 
+    // light pos 32 2 11
+    int newLightID9 = utils_light::addLight(
+        simpleLights,
+        glm::vec3(37.0f, 3.0f, 11.5f), // position
+        glm::vec3(0.4f, 0.24f, 0.7f),   // color
+        1.0f                           // intensity
+    );
+
+    // int newLightID10 = utils_light::addLight(
+    //     simpleLights,
+    //     glm::vec3(39.0f, 3.0f, 11.5f), // position
+    //     glm::vec3(0.4f, 0.24f, 0.7f),   // color
+    //     1.0f                           // intensity
+    // );
+
+    // // light pos 32 2 13
+    // int newLightID10 = utils_light::addLight(
+    //     simpleLights,
+    //     glm::vec3(28.0f, 2.0f, 13.0f), // position
+    //     glm::vec3(1.0f, 1.0f, 1.0f),   // color
+    //     1.0f                           // intensity
+    // );
+
+    // // pos 26 1 3
+    // int newLightID11 = utils_light::addLight(
+    //     simpleLights,
+    //     glm::vec3(28.0f, 4.0f, 3.0f), // position
+    //     glm::vec3(1.0f, 1.0f, 1.0f),   // color
+    //     1.0f                           // intensity
+    // );
 
     // update a light position during the loop
     // utils_light::updateLightPosition(simpleLights, newLightID, glm::vec3(5.0f, 2.0f, 1.0f));
@@ -1966,11 +2284,23 @@ int main(int argc, char *argv[])
 
 
         // update the display lights
-        utils_light::updateDynamicLights(simpleLights, currentFrame);
+        // but we cant just send simpleLights, we need to send the first 8 lights of it
+        std::vector<std::reference_wrapper<utils_light::SimplePointLight>> truncatedLights;
+        for (auto it = simpleLights.begin(); it != simpleLights.begin() + std::min(8, (int)simpleLights.size()); ++it) {
+            truncatedLights.push_back(*it);
+        }
+        // debug prnt
+        // std::cout << "truncatedLights size: " << truncatedLights.size() << std::endl;
+
+        utils_light::updateDynamicLights(truncatedLights, currentFrame);
+
+        // update the light inside the nether portal, light ID = 9
+        // we can here vary the light intensity, to change the shader vs effect
+        simpleLights[8].intensity = 1.0f + 0.5f * sin(currentFrame);
+        // simpleLights[9].intensity = 1.0f + 0.5f * cos(currentFrame);
 
         // update the display planets (they should rotate)
         utils_scene::updateDisplayPlanetPositions(currentFrame);
-
 
         // light position on the camera
         // glm::vec3 lightPosWorld = cameraPos + glm::vec3(0.0f, 1.0f, 0.0f); // Slightly elevate the light position above the camera
@@ -2563,9 +2893,15 @@ int main(int argc, char *argv[])
 
         for (const auto &light : simpleLights)
         {
-            // Always render the sphere if you like, or skip if intensity is 0
             if (light.intensity <= 0.0f)
                 continue;
+
+            // one more condition, we don't need to render the light if the light position is above 20.5
+
+            // if (light.position.x > 20.5f)
+            // {
+            //     continue;
+            // }
 
             glm::mat4 modelMatrix = glm::mat4(1.0f);
             modelMatrix = glm::translate(modelMatrix, light.position);
