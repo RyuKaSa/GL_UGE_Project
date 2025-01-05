@@ -39,6 +39,9 @@ Added small spheres to each light source, to see their position, and color. They
 Better omnidirectional transmisison for transparent objects, and the transparency is more realistic, with weighted normales and inverse normals, to mimic direct refraction.
 new vertex shader on room 2 for gravity pull.warp effect on the triangles, distance based on vertex position and all light positions, as if mini suns with great mass. going hand in hand with the space spheremaps, its now a space themed room, in minecraft blocks, but with better visuals.
 
+# 5-Jan-2025
+new room 2 shader idea, to render an object 3 times, and each time, render it on a different color channel, and in the vs.glsl; warp the vertex differently to see the colors being offset. The warp is based on light sources treated like gravity wells, or black holes. also removed the dithering effect, are replaced it with a old tv effect, where each screen pixel only displays one of the 3 color channels, when zoomed out, it looks almsot normal, but getting closer to the screen lets the viewer see the RGB separation, very retro, and goes well with the glithy/warp theme.
+
 ## note
 
 If i implemente a big thing, i can try to test it in APP2, to keep APP1 working on previous version. (now on APP3_executable)
@@ -57,7 +60,7 @@ assignment :
 
  - C++ application with OpenGL 3+ (shaders, no fixed pipeline) ✅
  - Windowed app with event loop ✅
- - Must compile on Linux (no memory leaks, documented, uses Git). ❌ (MacOS, no Valgrind)
+ - Must compile on Linux (no memory leaks, documented, uses Git). ❌ (MacOS, no Valgrind, documented, uses Git)
  - Loading/importing of geometry or .obj/.ply models ✅
  - Skybox rendering (visible from anywhere, no ceiling) ✅
  - Two separate lighting/shader pipelines (one per room) ✅
@@ -72,7 +75,7 @@ assignment :
 ## General Scene:
 
  - Two rooms connected by a passage, as per the floor plan (strict geometry). ✅
- - Minimum two “exhibit” objects in each room. ❌
+ - Minimum two “exhibit” objects in each room. ✅
  - Skybox must be present (no ceilings). ✅
 
 ## Room 1:
@@ -86,7 +89,7 @@ assignment :
 
 ## Room 2:
 
- - Uses a different illumination model (can be simpler). ❌
+ - Uses a different illumination model (can be simpler). ✅
  - Must have at least one surface with transparency or mirror. ✅ (transparency, no mirror)
  - Lights affect only Room 2. ✅
 

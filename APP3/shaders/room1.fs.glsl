@@ -99,7 +99,7 @@ float ShadowCalculation(vec3 fragPosWorld) {
     }
 
     shadow /= totalWeight; // Normalize the shadow value
-    return shadow;
+    return shadow * 5;
 }
 
 // **Normal Map Sampling with Strength**
