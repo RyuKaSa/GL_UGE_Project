@@ -409,6 +409,19 @@ namespace utils_scene
         return glm::vec3(0.0f);
     }
 
+    // getObjectPosition
+    glm::vec3 getObjectPosition(const std::string &name)
+    {
+        for (const auto &obj : sceneObjects)
+        {
+            if (obj.name == name)
+            {
+                return obj.position;
+            }
+        }
+        return glm::vec3(0.0f);
+    }
+
     // setObjectPosition
     void setObjectPosition(const std::string &name, const glm::vec3 &position)
     {

@@ -23,7 +23,7 @@ uniform float uAdditionalLightIntensity[MAX_ADDITIONAL_LIGHTS];
 
 // Constants for Gravitational Pull
 const float GRAVITY_STRENGTH = 0.8;   // Controls intensity of gravitational pull
-const float GRAVITY_RANGE = 2.6;     // Maximum range of gravitational effect
+const float GRAVITY_RANGE = 3.3;     // Maximum range of gravitational effect
 const float GRAVITY_FALLOFF = 0.5;    // Prevents division by zero
 
 // uTime

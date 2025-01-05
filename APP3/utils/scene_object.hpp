@@ -142,6 +142,9 @@ namespace utils_scene
     // getTransparentObjectPosition
     glm::vec3 getTransparentObjectPosition(const std::string &name);
 
+    // get object position
+    glm::vec3 getObjectPosition(const std::string &name);
+
     // setObjectPosition
     void setObjectPosition(const std::string &name, const glm::vec3 &position);
 

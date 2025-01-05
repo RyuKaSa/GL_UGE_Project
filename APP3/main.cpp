@@ -1028,7 +1028,7 @@ int main(int argc, char *argv[])
     // pos 30, 2, 4
     utils_scene::addTransparentSphere(
         "whiteSphere",                // Name
-        glm::vec3(30.0f, 2.0f, 4.0f), // Position
+        glm::vec3(30.0f, 5.0f, 4.0f), // Position
         1.0f,                         // Radius
         whiteMaterial,                // Material
         sphereVAO,                    // VAO ID
@@ -1943,7 +1943,7 @@ int main(int argc, char *argv[])
     AABB torusBoundingBox = computeAABB(torusModelData.vertices);
     // replace bounding box with new scale
 
-    glm::vec3 torusPosition(29.0f, 1.0f, 21.0f);
+    glm::vec3 torusPosition(29.0f, 5.0f, 21.0f);
     glm::vec3 torusScale(0.05f, 0.05f, 0.05f);
 
     torusBoundingBox.min *= torusScale;
@@ -2091,7 +2091,7 @@ int main(int argc, char *argv[])
         simpleLights,
         glm::vec3(30.0f, 4.0f, 4.0f), // position
         glm::vec3(1.0f, 1.0f, 1.0f),   // color
-        0.4f                           // intensity
+        0.8f                           // intensity
     );
 
     int newLightID11 = utils_light::addLight(
@@ -2105,7 +2105,7 @@ int main(int argc, char *argv[])
         simpleLights,
         glm::vec3(23.0f, 4.0f, 11.5f), // position
         glm::vec3(1.0f, 1.0f, 1.0f),   // color
-        0.4f                           // intensity
+        0.8f                           // intensity
     );
 
 
@@ -2358,6 +2358,32 @@ int main(int argc, char *argv[])
 
         // update the display planets (they should rotate)
         utils_scene::updateDisplayPlanetPositions(currentFrame);
+
+
+        // move this light newLightID10 around the object with name "whiteSphere"
+
+        // get the position of the object
+        glm::vec3 whiteSpherePosition = utils_scene::getTransparentObjectPosition("whiteSphere");
+
+        // move the light around the object
+        simpleLights[9].position.x = whiteSpherePosition.x + 1.6f * cos(currentFrame);
+        simpleLights[9].position.y = whiteSpherePosition.y + 1.6f * sin(currentFrame);
+        simpleLights[9].position.z = whiteSpherePosition.z + 1.6f * sin(currentFrame);
+
+        // also change the color
+        simpleLights[11].color = glm::vec3(
+            (sin(currentFrame) + 1.0f) / 2.0f,       // Red oscillates between 0 and 1
+            (cos(currentFrame) + 1.0f) / 2.0f,       // Green oscillates between 0 and 1
+            (sin(currentFrame * 2.5f) + 1.0f) / 2.0f // Blue oscillates faster
+        );
+
+        // mvoe the simpleLights[11] as well, on the object torus
+        glm::vec3 torusPosition = utils_scene::getObjectPosition("torus");
+        simpleLights[10].position.x = torusPosition.x + 1.6f * cos(currentFrame);
+        simpleLights[10].position.y = torusPosition.y + 1.6f * sin(currentFrame);
+        simpleLights[10].position.z = torusPosition.z + 1.6f * sin(currentFrame);
+
+
 
         // light position on the camera
         // glm::vec3 lightPosWorld = cameraPos + glm::vec3(0.0f, 1.0f, 0.0f); // Slightly elevate the light position above the camera
@@ -2746,7 +2772,6 @@ int main(int argc, char *argv[])
             }
             glBindVertexArray(0);
         }
-
 
         // =======================
         // Render Skybox Objects
