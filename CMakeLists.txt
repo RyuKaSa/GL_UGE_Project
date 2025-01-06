@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.8)
 cmake_policy(SET CMP0072 NEW)
 
+# Enable Debug symbols and disable optimizations
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug)
+endif()
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+
 project(deux_salles_deux_ambiances)
 
 # Set the folder where the executables are created

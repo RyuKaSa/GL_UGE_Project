@@ -14,7 +14,7 @@ message(STATUS "Source files: ${SRC_FILES}")
 message(STATUS "Header files: ${HEADER_FILES}")
 
 # Create the executable with Main.cpp and other source files
-add_executable(${OUTPUT} main.cpp ${SRC_FILES} ${HEADER_FILES})
+add_executable(${OUTPUT} main.cpp ${SRC_FILES})
 
 # Link libraries and set include directories
 target_link_libraries(${OUTPUT} PRIVATE glimac)
@@ -41,3 +41,17 @@ endif()
 include("${CMAKE_SOURCE_DIR}/CMakeUtils/files_and_folders.cmake")
 Cool__target_copy_folder(${OUTPUT} ../assets)
 Cool__target_copy_folder(${OUTPUT} shaders)
+
+find_package(SDL REQUIRED) # SDL 1.2
+include_directories(${SDL_INCLUDE_DIR})
+
+target_link_libraries(${OUTPUT} 
+    PRIVATE 
+        glimac
+        ${SDL_LIBRARY}
+        dl
+        OpenGL::GL
+)
+
+find_package(OpenGL REQUIRED)
+

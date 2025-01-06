@@ -4,6 +4,7 @@
 #include "global.hpp"
 #include <glimac/Program.hpp>
 #include <glimac/FilePath.hpp>
+#include <vector>
 
 namespace utils_loader {
 

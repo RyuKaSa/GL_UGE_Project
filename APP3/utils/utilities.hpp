@@ -3,7 +3,7 @@
 
 #include <glm/glm.hpp>
 #include <vector>
-#include <SDL2/SDL.h>
+// #include <SDL2/SDL.h>
 #include <glimac/SDLWindowManager.hpp>
 
 namespace glimac {

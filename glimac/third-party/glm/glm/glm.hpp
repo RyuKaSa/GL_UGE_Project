@@ -106,6 +106,8 @@
 
 #pragma once
 
+#include <glm/gtc/random.hpp>
+
 #include <cmath>
 #include <climits>
 #include <cfloat>

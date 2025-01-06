@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include <glad/glad.h>
+
 #include "common.hpp"
 
 namespace glimac {

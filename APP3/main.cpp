@@ -24,19 +24,26 @@
 #include <glimac/Program.hpp>
 #include <glimac/Image.hpp>
 #include <glimac/SDLWindowManager.hpp>
-#include <SDL2/SDL.h>
+// #include <SDL2/SDL.h>
 #include <cstddef> // For offsetof
 #include <vector>
 #include <map>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/glm.hpp> // For vector calculations
+#include <algorithm>
 
 int main(int argc, char *argv[])
 {
     (void)argc;
 
     auto windowManager = utils_init::initOpenGL(window_width, window_height);
+
+    if (!gladLoadGL()) {
+        std::cerr << "Failed to initialize OpenGL context!" << std::endl;
+        return EXIT_FAILURE;
+    }
+
 
     /*********************************
      * Initialization code
@@ -346,7 +353,9 @@ int main(int argc, char *argv[])
     float lastFrame = 0.0f;    // Time of last frame
 
     // Enable relative mouse mode to capture mouse movement
-    SDL_SetRelativeMouseMode(SDL_TRUE);
+    SDL_ShowCursor(SDL_DISABLE); // Hide the cursor
+    SDL_WarpMouse(320, 240);     // Warp mouse to center (example coordinates)
+
 
     int frameCount = 0;
     float fpsTimer = 0.0f;
@@ -2658,11 +2667,17 @@ int main(int argc, char *argv[])
             fpsTimer -= 1.0f;
         }
 
+        if (!SDL_GetVideoSurface()) {
+            std::cerr << "Error: SDL Video Surface not initialized!" << std::endl;
+            return EXIT_FAILURE;
+        }
+
+
         // Update window title with camera position every frame
         std::string newTitle = "Boules - FPS: " + std::to_string(fps) + " - Position: (" + std::to_string(cameraPos.x) + ", " + std::to_string(cameraPos.z) + ")";
         // std::string newTitle = std::to_string(cameraPos.x) + ", " + std::to_string(cameraPos.z);
         // std::string newTitle = "FPS: " + std::to_string(fps);
-        SDL_SetWindowTitle(windowManager.getWindow(), newTitle.c_str());
+        SDL_WM_SetCaption(newTitle.c_str(), NULL);
 
         // Update light intensity dynamically within the loop
         // glm::vec3 lightIntensity = glm::vec3(
@@ -2685,7 +2700,7 @@ int main(int argc, char *argv[])
         glm::vec3 rightDirection = glm::normalize(glm::cross(frontDirection, cameraUp));
 
         // Keyboard input for movement
-        const Uint8 *state = SDL_GetKeyboardState(NULL);
+        Uint8 *state = SDL_GetKeyState(NULL);
 
         glm::vec3 proposedCameraPos = cameraPos; // Temporary camera position for collision testing
 
@@ -2693,21 +2708,21 @@ int main(int argc, char *argv[])
         glm::vec3 movementDirection = glm::vec3(0.0f);
 
         // Forward and Backward
-        if (state[SDL_SCANCODE_W])
+        if (state[SDLK_w])
         {
             movementDirection += frontDirection;
         }
-        if (state[SDL_SCANCODE_S])
+        if (state[SDLK_s])
         {
             movementDirection -= frontDirection;
         }
 
         // Left and Right
-        if (state[SDL_SCANCODE_A])
+        if (state[SDLK_a])
         {
             movementDirection -= rightDirection;
         }
-        if (state[SDL_SCANCODE_D])
+        if (state[SDLK_d])
         {
             movementDirection += rightDirection;
         }
@@ -2826,13 +2841,13 @@ int main(int argc, char *argv[])
 
         // update the display lights
         // but we cant just send simpleLights, we need to send the first 8 lights of it
-        std::vector<std::reference_wrapper<utils_light::SimplePointLight>> truncatedLights;
-        for (auto it = simpleLights.begin(); it != simpleLights.begin() + std::min(8, (int)simpleLights.size()); ++it) {
-            truncatedLights.push_back(*it);
+        // Create a vector for the first 8 shared_ptr lights
+        std::vector<std::shared_ptr<utils_light::SimplePointLight>> truncatedLights;
+        for (size_t i = 0; i < simpleLights.size(); ++i) {
+            truncatedLights.push_back(std::make_shared<utils_light::SimplePointLight>(simpleLights[i]));
         }
-        // debug prnt
-        // std::cout << "truncatedLights size: " << truncatedLights.size() << std::endl;
 
+        // Call the function
         utils_light::updateDynamicLights(truncatedLights, currentFrame);
 
         // update the light inside the nether portal, light ID = 9

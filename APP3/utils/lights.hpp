@@ -4,6 +4,8 @@
 #include <glm/glm.hpp>
 #include <vector>
 
+#include "pointer.hpp"
+
 namespace utils_light {
 
     // ---------------------------
@@ -45,8 +47,6 @@ namespace utils_light {
     float pseudoRandom(float seed);
 
     // void update simple light pso and colors
-    void updateDynamicLights(std::vector<std::reference_wrapper<SimplePointLight>> &lights, float currentFrame);
-
-} // namespace utils_light
+    void updateDynamicLights(std::vector<std::shared_ptr<SimplePointLight>> &lights, float currentFrame);} // namespace utils_light
 
 #endif // LIGHTS_HPP
