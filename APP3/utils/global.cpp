@@ -34,3 +34,10 @@ glm::vec3 colorMasks[3] = {
     glm::vec3(0.0f, 1.0f, 0.0f), // Green
     glm::vec3(0.0f, 0.0f, 1.0f)  // Blue
 };
+
+float yaw = -90.0f; // Horizontal angle
+float pitch = 0.0f; // Vertical angle
+
+// Center of the screen
+int centerX = window_width / 2;
+int centerY = window_height / 2;

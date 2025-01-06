@@ -6,7 +6,7 @@
 
 namespace utils_init {
 
-glimac::SDLWindowManager initOpenGL(int window_width, int window_height) {
+glimac::SDLWindowManager initOpenGL(int& window_width, int& window_height) {
     std::cout << "Program started" << std::endl;
 
     // Initialize SDL video subsystem
@@ -15,8 +15,18 @@ glimac::SDLWindowManager initOpenGL(int window_width, int window_height) {
         throw std::runtime_error("Failed to initialize SDL");
     }
 
+    // Fetch fullscreen modes
+    SDL_Rect** modes = SDL_ListModes(NULL, SDL_FULLSCREEN | SDL_OPENGL);
+    if (modes == (SDL_Rect**)0) {
+        throw std::runtime_error("No fullscreen modes available.");
+    }
+    if (modes != (SDL_Rect**)-1) {
+        window_width = modes[0]->w;
+        window_height = modes[0]->h;
+    }
+
     // Create OpenGL window
-    SDL_Surface* screen = SDL_SetVideoMode(window_width, window_height, 32, SDL_OPENGL | SDL_RESIZABLE);
+    SDL_Surface* screen = SDL_SetVideoMode(window_width, window_height, 32, SDL_OPENGL | SDL_FULLSCREEN);
     if (!screen) {
         std::cerr << "Failed to create SDL OpenGL window: " << SDL_GetError() << std::endl;
         throw std::runtime_error("Failed to create SDL OpenGL window");
@@ -26,6 +36,12 @@ glimac::SDLWindowManager initOpenGL(int window_width, int window_height) {
 
     // OpenGL setup
     glViewport(0, 0, window_width, window_height);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(45.0f, (float)window_width / (float)window_height, 0.1f, 100.0f);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     SDL_GL_SwapBuffers();

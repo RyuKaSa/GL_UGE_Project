@@ -5,8 +5,7 @@
 
 namespace utils_init {
 
-glimac::SDLWindowManager initOpenGL(int window_width, int window_height);
-
+    glimac::SDLWindowManager initOpenGL(int& window_width, int& window_height);
 }
 
 #endif // INITIALIZATION_HPP

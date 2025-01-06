@@ -354,7 +354,7 @@ int main(int argc, char *argv[])
 
     // Enable relative mouse mode to capture mouse movement
     SDL_ShowCursor(SDL_DISABLE); // Hide the cursor
-    SDL_WarpMouse(320, 240);     // Warp mouse to center (example coordinates)
+    SDL_WarpMouse(320, 240);     // Warp mouse to center
 
 
     int frameCount = 0;
@@ -2762,8 +2762,28 @@ int main(int argc, char *argv[])
             cameraPos = proposedCameraPos;
         }
 
-        // Keep the camera at the initial y position
-        cameraPos.y = cameraPosY;
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                done = false;
+            }
+        }
+
+        // Get mouse position
+        int mouseX, mouseY;
+        SDL_GetMouseState(&mouseX, &mouseY);
+
+        // Calculate mouse movement
+        int xrel = mouseX - centerX;
+        int yrel = mouseY - centerY;
+
+        // Reset mouse to center
+        SDL_WarpMouse(centerX, centerY);
+
+        // Update yaw and pitch
+        yaw += xrel * sensitivity;
+        pitch -= yrel * sensitivity;
+        pitch = glm::clamp(pitch, -89.0f, 89.0f); // Prevent camera flipping
 
         // Define MVP matrices
         glm::mat4 ProjMatrix = glm::perspective(

@@ -56,4 +56,12 @@ struct SphereVertex {
 // Define color masks for RGB channels
 extern glm::vec3 colorMasks[3];
 
+extern float yaw;   // Horizontal angle
+extern float pitch; // Vertical angle
+
+extern int centerX; // Center of the screen
+extern int centerY;
+
+
+
 #endif // GLOBAL_HPP
