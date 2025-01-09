@@ -96,15 +96,15 @@ namespace utils_light
         const float COLOR_VARIATION_SPEED = 2.5f;       // Speed of color variation
         const glm::vec3 BASE_COLOR = glm::vec3(1.0f, 0.8f, 0.6f); // Base light color
 
-        std::cout << "Debug: Number of lights in updateDynamicLights: " << lights.size() << "\n";
-        for (size_t i = 0; i < lights.size(); ++i) {
-            if (!lights[i]) {
-                std::cout << "Light[" << i << "] is null!\n";
-            } else {
-                std::cout << "Light[" << i << "] Initial Position: (" << lights[i]->position.x << ", "
-                        << lights[i]->position.y << ", " << lights[i]->position.z << ")\n";
-            }
-        }
+        // std::cout << "Debug: Number of lights in updateDynamicLights: " << lights.size() << "\n";
+        // for (size_t i = 0; i < lights.size(); ++i) {
+        //     if (!lights[i]) {
+        //         std::cout << "Light[" << i << "] is null!\n";
+        //     } else {
+        //         std::cout << "Light[" << i << "] Initial Position: (" << lights[i]->position.x << ", "
+        //                 << lights[i]->position.y << ", " << lights[i]->position.z << ")\n";
+        //     }
+        // }
 
 
         // Update each light dynamically
