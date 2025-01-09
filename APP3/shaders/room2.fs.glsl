@@ -55,7 +55,7 @@ uniform samplerCube depthMap;
 uniform vec3 lightPosWorld;
 
 // Hardcoded map strengths
-const float NORMAL_MAP_STRENGTH = 0.3;
+const float NORMAL_MAP_STRENGTH = 0.8;
 const float SPECULAR_MAP_STRENGTH = 3.0;
 
 // Sampling offsets for shadow mapping
@@ -198,19 +198,21 @@ float quantizeChannel(float color, int levels) {
 // ----------------------------- //
 
 vec3 filterTV(vec3 color) {
-    int column = int(gl_FragCoord.x) % 3; // Determine the column (0,1,2)
+    int column = int(gl_FragCoord.x) % 4; // Determine the column (0,1,2)
     
+    // return color;
+
     if (column == 0) {
         // First column: Only Red channel
-        return vec3(color.r, 0.0, 0.0);
+        return vec3(color.r, color.g*0.6, color.b*0.6);
     } 
     else if (column == 1) {
         // Second column: Only Green channel
-        return vec3(0.0, color.g, 0.0);
+        return vec3(color.r*0.6, color.g, color.b*0.6);
     } 
     else if (column == 2) {
         // Third column: Only Blue channel
-        return vec3(0.0, 0.0, color.b);
+        return vec3(color.r*0.6, color.g*0.6, color.b);
     } 
     else {
         // Fourth column: Black edge

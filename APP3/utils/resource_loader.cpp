@@ -11,6 +11,7 @@ namespace utils_loader {
 std::vector<GLuint> allTextures;
 
 // Load textures
+/*
 void loadTextures(GLuint& textureID, GLuint& stoneTextureID, GLuint& brownTerracottaTextureID, GLuint& soccerTextureID,
                   GLuint& textureID_normalMap, GLuint& stoneTextureID_normalMap, GLuint& brownTerracottaTextureID_normalMap, GLuint& soccerTextureID_normalMap,
                   GLuint& chairBaseColorTextureID, GLuint& chairNormalMapTextureID,
@@ -211,6 +212,46 @@ void loadTextures(GLuint& textureID, GLuint& stoneTextureID, GLuint& brownTerrac
     allTextures.push_back(earth_sTextureID);
 
     std::cout << "All textures added to the allTextures vector" << std::endl;
+}*/
+
+void loadTextures(std::vector<utils_loader::TextureInfo>& textureList,
+                  const glimac::FilePath& applicationPath,
+                  std::vector<GLuint>& selectedSkyboxTextures) {
+    // Separate list for skybox textures
+    std::vector<utils_loader::TextureInfo> skyboxTextures;
+
+    for (const auto& texture : textureList) {
+        // Check if it's a skybox texture
+        if (texture.name.find("Skybox") != std::string::npos) {
+            skyboxTextures.push_back(texture); // Collect skybox textures for later
+            continue;
+        }
+
+        // Load regular textures
+        *(texture.textureID) = loadTexture(applicationPath.dirPath() + texture.path);
+        allTextures.push_back(*(texture.textureID));
+        std::cout << "Loaded texture: " << texture.name << " from " << texture.path << std::endl;
+    }
+
+    // Randomly select one skybox texture
+    srand(static_cast<unsigned int>(time(0)));
+    int randomIndex = rand() % skyboxTextures.size(); // Random index within skyboxTextures
+
+    for (size_t i = 0; i < skyboxTextures.size(); ++i) {
+        const auto& texture = skyboxTextures[i];
+        *(texture.textureID) = loadTexture(applicationPath.dirPath() + texture.path);
+
+        // Add the selected skybox texture to the separate list
+        if (i == randomIndex) {
+            selectedSkyboxTextures.push_back(*(texture.textureID));
+            std::cout << "Selected Skybox: " << texture.name << " from " << texture.path << std::endl;
+        }
+
+        // Add all skybox textures to the global texture list
+        allTextures.push_back(*(texture.textureID));
+    }
+
+    std::cout << "Textures loaded successfully." << std::endl;
 }
 
 // Setup depth cube map

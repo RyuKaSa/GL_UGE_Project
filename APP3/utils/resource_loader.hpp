@@ -8,9 +8,16 @@
 
 namespace utils_loader {
 
+struct TextureInfo {
+    std::string name;    // Name or purpose of the texture
+    std::string path;    // File path to the texture
+    GLuint* textureID;   // Pointer to the texture ID
+};
+
 extern std::vector<GLuint> allTextures;
 
 // Function to load textures
+/*
 void loadTextures(GLuint& textureID, GLuint& stoneTextureID, GLuint& brownTerracottaTextureID, GLuint& soccerTextureID,
                   GLuint& textureID_normalMap, GLuint& stoneTextureID_normalMap, GLuint& brownTerracottaTextureID_normalMap, GLuint& soccerTextureID_normalMap,
                   GLuint& chairBaseColorTextureID, GLuint& chairNormalMapTextureID,
@@ -31,6 +38,8 @@ void loadTextures(GLuint& textureID, GLuint& stoneTextureID, GLuint& brownTerrac
                   GLuint& obsidianTextureID, GLuint& obsidianTextureID_n, GLuint& obsidianTextureID_s,
                   GLuint& portalTextureID, GLuint& portalTextureID_s,
                   const glimac::FilePath& applicationPath);
+*/
+void loadTextures(std::vector<TextureInfo>& textureList, const glimac::FilePath& applicationPath, std::vector<GLuint>& selectedSkyboxTextures);
 
 // Function to set up a depth cube map
 void setupDepthCubeMap(GLuint& depthCubeMap, GLuint& shadowMapFBO, int resolution = 4096);

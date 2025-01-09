@@ -49,6 +49,11 @@ public:
         return -1; // Not found
     }
 
+    // get the number of materials
+    int getNumberOfMaterials() const {
+        return static_cast<int>(materials.size());
+    }
+
     std::vector<Material> materials;
 
 private:
