@@ -82,19 +82,30 @@ namespace utils_light
         }
     }
 
-// Simple hash function for pseudo-random generation
+    // Simple hash function for pseudo-random generation
     float pseudoRandom(float seed)
     {
         return glm::fract(sin(seed) * 43758.5453f);
     }
 
     // Update all lights dynamically
-    void updateDynamicLights(std::vector<std::shared_ptr<SimplePointLight>> &lights, float currentFrame)
+    void updateDynamicLights(std::vector<SimplePointLight*> &lights, float currentFrame)
     {
         // Constants for dynamic behavior
         const float HEIGHT_AMPLITUDE = 0.004f;          // Max vertical displacement
         const float COLOR_VARIATION_SPEED = 2.5f;       // Speed of color variation
         const glm::vec3 BASE_COLOR = glm::vec3(1.0f, 0.8f, 0.6f); // Base light color
+
+        std::cout << "Debug: Number of lights in updateDynamicLights: " << lights.size() << "\n";
+        for (size_t i = 0; i < lights.size(); ++i) {
+            if (!lights[i]) {
+                std::cout << "Light[" << i << "] is null!\n";
+            } else {
+                std::cout << "Light[" << i << "] Initial Position: (" << lights[i]->position.x << ", "
+                        << lights[i]->position.y << ", " << lights[i]->position.z << ")\n";
+            }
+        }
+
 
         // Update each light dynamically
         for (size_t i = 0; i < lights.size(); i++) {

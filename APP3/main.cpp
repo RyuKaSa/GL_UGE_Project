@@ -442,533 +442,6 @@ int main(int argc, char *argv[])
 
     createMaterials(materialManager, textures, selectedSkyboxTextures);
 
-    // Material for the floor and walls using stone texture
-    // Material stoneMaterial;
-    // stoneMaterial.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color (will be tinted by texture)
-    // stoneMaterial.hasDiffuseMap = true;
-    // stoneMaterial.diffuseMapID = stoneTextureID;
-    // stoneMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // stoneMaterial.shininess = 32.0f;                // Shininess exponent
-    // stoneMaterial.hasSpecularMap = false;
-    // stoneMaterial.specularMapID = 0;
-    // stoneMaterial.hasNormalMap = true;
-    // stoneMaterial.normalMapID = stoneTextureID_normalMap;
-    // stoneMaterial.alpha = alphaOpaque; // Opaque
-
-    // Material for walls without stone texture but with general texture
-    // Material wallMaterial;
-    // wallMaterial.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
-    // wallMaterial.hasDiffuseMap = true;
-    // wallMaterial.diffuseMapID = textureID;
-    // wallMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // wallMaterial.shininess = 32.0f;                // Shininess exponent
-    // wallMaterial.hasSpecularMap = false;
-    // wallMaterial.specularMapID = 0;
-    // wallMaterial.hasNormalMap = true;
-    // wallMaterial.normalMapID = textureID_normalMap;
-    // wallMaterial.alpha = alphaOpaque; // Opaque
-
-    // Material for separation walls with brown terracotta texture
-    // Material terracottaMaterial;
-    // terracottaMaterial.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
-    // terracottaMaterial.hasDiffuseMap = true;
-    // terracottaMaterial.diffuseMapID = brownTerracottaTextureID;
-    // terracottaMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // terracottaMaterial.shininess = 32.0f;                // Shininess exponent
-    // terracottaMaterial.hasSpecularMap = false;
-    // terracottaMaterial.specularMapID = 0;
-    // terracottaMaterial.hasNormalMap = true;
-    // terracottaMaterial.normalMapID = brownTerracottaTextureID_normalMap;
-    // terracottaMaterial.alpha = alphaOpaque; // Opaque
-
-    // Material for transparent cubes without textures
-    // Material transparentMaterialNoTexture;
-    // transparentMaterialNoTexture.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
-    // transparentMaterialNoTexture.hasDiffuseMap = false;
-    // transparentMaterialNoTexture.diffuseMapID = 0;
-    // transparentMaterialNoTexture.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // transparentMaterialNoTexture.shininess = 32.0f;                // Shininess exponent
-    // transparentMaterialNoTexture.hasSpecularMap = false;
-    // transparentMaterialNoTexture.specularMapID = 0;
-    // transparentMaterialNoTexture.hasNormalMap = false;
-    // transparentMaterialNoTexture.normalMapID = 0;
-    // transparentMaterialNoTexture.alpha = alphaTransparent1; // 30% opaque
-
-    // Material for transparent cubes with textures
-    // Material transparentMaterialWithTexture;
-    // transparentMaterialWithTexture.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
-    // transparentMaterialWithTexture.hasDiffuseMap = true;
-    // transparentMaterialWithTexture.diffuseMapID = textureID;         // Ensure textureID is loaded
-    // transparentMaterialWithTexture.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // transparentMaterialWithTexture.shininess = 32.0f;                // Shininess exponent
-    // transparentMaterialWithTexture.hasSpecularMap = false;           // Assuming no specular map
-    // transparentMaterialWithTexture.specularMapID = 0;
-    // transparentMaterialWithTexture.hasNormalMap = true;
-    // transparentMaterialWithTexture.normalMapID = textureID_normalMap; // Ensure textureID_normalMap is loaded
-    // transparentMaterialWithTexture.alpha = alphaTransparent2;         // 50% opaque
-
-    // Material for the rocking chair model with textures
-    // Material rockingChairMaterial;
-    // rockingChairMaterial.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
-    // rockingChairMaterial.hasDiffuseMap = true;
-    // rockingChairMaterial.diffuseMapID = chairBaseColorTextureID;
-    // rockingChairMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // rockingChairMaterial.shininess = 32.0f;                // Shininess exponent
-    // rockingChairMaterial.hasSpecularMap = false;           // Assuming no specular map
-    // rockingChairMaterial.specularMapID = 0;
-    // rockingChairMaterial.hasNormalMap = true;
-    // rockingChairMaterial.normalMapID = chairNormalMapTextureID;
-    // rockingChairMaterial.alpha = alphaOpaque; // Opaque
-
-    // Material for the torus model (no textures)
-    // Material torusMaterial;
-    // torusMaterial.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
-    // torusMaterial.hasDiffuseMap = false;
-    // torusMaterial.diffuseMapID = 0;
-    // torusMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // torusMaterial.shininess = 32.0f;                // Shininess exponent
-    // torusMaterial.hasSpecularMap = false;
-    // torusMaterial.specularMapID = 0;
-    // torusMaterial.hasNormalMap = false;
-    // torusMaterial.normalMapID = 0;
-    // torusMaterial.alpha = alphaTransparent5; // 50% opaque
-
-    // Define the soccer ball material
-    // Material soccerMaterial;
-    // soccerMaterial.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
-    // soccerMaterial.hasDiffuseMap = true;
-    // soccerMaterial.diffuseMapID = soccerTextureID;   // Ensure soccerTextureID is loaded
-    // soccerMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // soccerMaterial.shininess = 32.0f;                // Shininess exponent
-    // soccerMaterial.hasSpecularMap = false;           // Assuming no specular map
-    // soccerMaterial.specularMapID = 0;
-    // soccerMaterial.hasNormalMap = true;
-    // soccerMaterial.normalMapID = soccerTextureID_normalMap; // Ensure soccerTextureID_normalMap is loaded
-    // soccerMaterial.alpha = alphaOpaque;
-
-    // // Add materials to the MaterialManager function is addOrGetMaterial
-    // materialManager.addOrGetMaterial(stoneMaterial);
-    // materialManager.addOrGetMaterial(wallMaterial);
-    // materialManager.addOrGetMaterial(terracottaMaterial);
-    // materialManager.addOrGetMaterial(transparentMaterialNoTexture);
-    // materialManager.addOrGetMaterial(transparentMaterialWithTexture);
-    // // materialManager.addOrGetMaterial(heaterMaterial);
-    // materialManager.addOrGetMaterial(rockingChairMaterial);
-    // materialManager.addOrGetMaterial(torusMaterial);
-    // materialManager.addOrGetMaterial(soccerMaterial);
-
-    // second set of materials, with specular maps
-    // Material for stone_bricks
-    // Material stone_bricks_material;
-    // stone_bricks_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f);
-    // stone_bricks_material.hasDiffuseMap = true;
-    // stone_bricks_material.diffuseMapID = texture_ID_stone_bricks;
-    // stone_bricks_material.Ks = glm::vec3(0.4f, 0.4f, 0.4f);
-    // stone_bricks_material.shininess = 16.0f;
-    // stone_bricks_material.hasSpecularMap = true;
-    // stone_bricks_material.specularMapID = texture_ID_stone_bricks_s;
-    // stone_bricks_material.hasNormalMap = true;
-    // stone_bricks_material.normalMapID = texture_ID_stone_bricks_n;
-    // stone_bricks_material.alpha = alphaOpaque;
-
-    // Material for glass and purple stained glass
-    // Material glass_material;
-    // glass_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f);
-    // glass_material.hasDiffuseMap = true;
-    // glass_material.diffuseMapID = texture_ID_glass;
-    // glass_material.Ks = glm::vec3(0.9f, 0.9f, 0.9f);
-    // glass_material.shininess = 130.0f;
-    // glass_material.hasSpecularMap = false;
-    // glass_material.specularMapID = 0;
-    // glass_material.hasNormalMap = false;
-    // glass_material.normalMapID = 0;
-    // glass_material.alpha = alphaTransparent5;
-
-    // Material purple_stained_glass_material;
-    // purple_stained_glass_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f);
-    // purple_stained_glass_material.hasDiffuseMap = true;
-    // purple_stained_glass_material.diffuseMapID = texture_ID_purple_stained_glass;
-    // purple_stained_glass_material.Ks = glm::vec3(0.9f, 0.7f, 0.9f);
-    // purple_stained_glass_material.shininess = 130.0f;
-    // purple_stained_glass_material.hasSpecularMap = false;
-    // purple_stained_glass_material.specularMapID = 0;
-    // purple_stained_glass_material.hasNormalMap = false;
-    // purple_stained_glass_material.normalMapID = 0;
-    // purple_stained_glass_material.alpha = alphaTransparent5;
-
-    // Material for iron block
-    // Material iron_block_material;
-    // iron_block_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f);
-    // iron_block_material.hasDiffuseMap = true;
-    // iron_block_material.diffuseMapID = testure_ID_iron_block;
-    // iron_block_material.Ks = glm::vec3(0.8f, 0.8f, 0.8f);
-    // iron_block_material.shininess = 64.0f;
-    // iron_block_material.hasSpecularMap = true;
-    // iron_block_material.specularMapID = texture_ID_iron_block_s;
-    // iron_block_material.hasNormalMap = true;
-    // iron_block_material.normalMapID = texture_ID_iron_block_n;
-    // iron_block_material.alpha = alphaOpaque;
-
-    // Material for note block
-    // Material note_block_material;
-    // note_block_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f);
-    // note_block_material.hasDiffuseMap = true;
-    // note_block_material.diffuseMapID = texture_ID_note_block;
-    // note_block_material.Ks = glm::vec3(0.2f, 0.2f, 0.2f);
-    // note_block_material.shininess = 8.0f;
-    // note_block_material.hasSpecularMap = true;
-    // note_block_material.specularMapID = texture_ID_note_block_s;
-    // note_block_material.hasNormalMap = true;
-    // note_block_material.normalMapID = texture_ID_note_block_n;
-    // note_block_material.alpha = alphaOpaque;
-
-    // Material for oak planks
-    // Material oak_planks_material;
-    // oak_planks_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f);
-    // oak_planks_material.hasDiffuseMap = true;
-    // oak_planks_material.diffuseMapID = texture_ID_oak_planks;
-    // oak_planks_material.Ks = glm::vec3(0.3f, 0.3f, 0.3f);
-    // oak_planks_material.shininess = 12.0f;
-    // oak_planks_material.hasSpecularMap = true;
-    // oak_planks_material.specularMapID = texture_ID_oak_planks_s;
-    // oak_planks_material.hasNormalMap = true;
-    // oak_planks_material.normalMapID = texture_ID_oak_planks_n;
-    // oak_planks_material.alpha = alphaOpaque;
-
-    // material deepslate_emerald_ore
-    // Material deepslate_emerald_ore_material;
-    // deepslate_emerald_ore_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f);
-    // deepslate_emerald_ore_material.hasDiffuseMap = true;
-    // deepslate_emerald_ore_material.diffuseMapID = texture_ID_deepslate_emerald_ore;
-    // deepslate_emerald_ore_material.Ks = glm::vec3(0.6f, 0.8f, 0.6f);
-    // deepslate_emerald_ore_material.shininess = 54.0f;
-    // deepslate_emerald_ore_material.hasSpecularMap = true;
-    // deepslate_emerald_ore_material.specularMapID = texture_ID_deepslate_emerald_ore_s;
-    // deepslate_emerald_ore_material.hasNormalMap = true;
-    // deepslate_emerald_ore_material.normalMapID = texture_ID_deepslate_emerald_ore_n;
-    // deepslate_emerald_ore_material.alpha = alphaOpaque;
-
-    // add transparent iron block
-    // Material transparent_iron_block_material;
-    // transparent_iron_block_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f);
-    // transparent_iron_block_material.hasDiffuseMap = true;
-    // transparent_iron_block_material.diffuseMapID = testure_ID_iron_block;
-    // transparent_iron_block_material.Ks = glm::vec3(0.8f, 0.8f, 0.8f);
-    // transparent_iron_block_material.shininess = 64.0f;
-    // transparent_iron_block_material.hasSpecularMap = true;
-    // transparent_iron_block_material.specularMapID = texture_ID_iron_block_s;
-    // transparent_iron_block_material.hasNormalMap = true;
-    // transparent_iron_block_material.normalMapID = texture_ID_iron_block_n;
-    // transparent_iron_block_material.alpha = alphaTransparent5;
-
-    // Add materials to the MaterialManager
-    // materialManager.addOrGetMaterial(stone_bricks_material);
-    // materialManager.addOrGetMaterial(glass_material);
-    // materialManager.addOrGetMaterial(purple_stained_glass_material);
-    // materialManager.addOrGetMaterial(iron_block_material);
-    // materialManager.addOrGetMaterial(note_block_material);
-    // materialManager.addOrGetMaterial(oak_planks_material);
-    // materialManager.addOrGetMaterial(deepslate_emerald_ore_material);
-
-    // sky material (big sphere around the scene)
-    // Material skyMaterial;
-    // skyMaterial.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
-    // skyMaterial.hasDiffuseMap = true;
-    // skyMaterial.diffuseMapID = skyboxTextureID;
-    // skyMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // skyMaterial.shininess = 0.0f;                 // Shininess exponent
-    // skyMaterial.hasSpecularMap = false;           // Assuming no specular map
-    // skyMaterial.specularMapID = 0;
-    // skyMaterial.hasNormalMap = false;
-    // skyMaterial.normalMapID = 0;
-    // skyMaterial.alpha = alphaOpaque; // Opaque
-
-    // light material
-    // Material lightMaterial;
-    // lightMaterial.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
-    // lightMaterial.hasDiffuseMap = false;
-    // lightMaterial.diffuseMapID = 0;
-    // lightMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // lightMaterial.shininess = 32.0f;                // Shininess exponent
-    // lightMaterial.hasSpecularMap = false;
-    // lightMaterial.specularMapID = 0;
-    // lightMaterial.hasNormalMap = false;
-    // lightMaterial.normalMapID = 0;
-    // lightMaterial.alpha = alphaOpaque; // Opaque
-
-    // Material simpleLightMaterial;
-    // simpleLightMaterial.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // Default white color
-    // simpleLightMaterial.Ks = glm::vec3(0.0f);            // No specular reflection
-    // simpleLightMaterial.shininess = 1.0f;               // Low shininess
-    // simpleLightMaterial.alpha = 1.0f;                   // Opaque
-
-    // Add sky material to the MaterialManager
-    // materialManager.addOrGetMaterial(skyMaterial);
-    // materialManager.addOrGetMaterial(lightMaterial);
-    // materialManager.addOrGetMaterial(simpleLightMaterial);
-
-    // planet materials in order
-
-    // // sun material
-    // Material sunMaterial;
-    // sunMaterial.Kd = glm::vec3(1.0f, 0.8f, 0.6f);
-    // sunMaterial.hasDiffuseMap = true;
-    // sunMaterial.diffuseMapID = sunTextureID;
-    // sunMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // sunMaterial.shininess = 0.0f;                // Shininess exponent
-    // sunMaterial.hasSpecularMap = false;
-    // sunMaterial.specularMapID = 0;
-    // sunMaterial.hasNormalMap = false;
-    // sunMaterial.normalMapID = 0;
-    // sunMaterial.alpha = alphaTransparent9; // Transparent
-
-    // mercury material
-    // Material mercuryMaterial;
-    // mercuryMaterial.Kd = glm::vec3(0.5f, 0.5f, 0.5f);
-    // mercuryMaterial.hasDiffuseMap = true;
-    // mercuryMaterial.diffuseMapID = mercuryTextureID;
-    // mercuryMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // mercuryMaterial.shininess = 20.0f;                // Shininess exponent
-    // mercuryMaterial.hasSpecularMap = false;
-    // mercuryMaterial.specularMapID = 0;
-    // mercuryMaterial.hasNormalMap = false;
-    // mercuryMaterial.normalMapID = 0;
-    // mercuryMaterial.alpha = alphaOpaque; // Opaque
-
-    // venus material
-    // Material venusMaterial;
-    // venusMaterial.Kd = glm::vec3(0.8f, 0.7f, 0.6f);
-    // venusMaterial.hasDiffuseMap = true;
-    // venusMaterial.diffuseMapID = venusTextureID;
-    // venusMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // venusMaterial.shininess = 25.0f;                // Shininess exponent
-    // venusMaterial.hasSpecularMap = false;
-    // venusMaterial.specularMapID = 0;
-    // venusMaterial.hasNormalMap = false;
-    // venusMaterial.normalMapID = 0;
-    // venusMaterial.alpha = alphaOpaque; // Opaque
-
-    // venus atmosphere is transparent
-    // Material venusAtmosphereMaterial;
-    // venusAtmosphereMaterial.Kd = glm::vec3(0.7f, 0.7f, 0.9f);
-    // venusAtmosphereMaterial.hasDiffuseMap = true;
-    // venusAtmosphereMaterial.diffuseMapID = venus_atmosphereTextureID;
-    // venusAtmosphereMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // venusAtmosphereMaterial.shininess = 5.0f;                // Shininess exponent
-    // venusAtmosphereMaterial.hasSpecularMap = false;
-    // venusAtmosphereMaterial.specularMapID = 0;
-    // venusAtmosphereMaterial.hasNormalMap = false;
-    // venusAtmosphereMaterial.normalMapID = 0;
-    // venusAtmosphereMaterial.alpha = alphaTransparent3; // Transparent
-
-    // earth material, has diffuse, specular, and normal maps
-    // Material earthMaterial;
-    // earthMaterial.Kd = glm::vec3(0.4f, 0.6f, 0.8f);
-    // earthMaterial.hasDiffuseMap = true;
-    // earthMaterial.diffuseMapID = earthTextureID;
-    // earthMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // earthMaterial.shininess = 30.0f;                // Shininess exponent
-    // earthMaterial.hasSpecularMap = true;
-    // earthMaterial.specularMapID = earth_sTextureID;
-    // earthMaterial.hasNormalMap = true;
-    // earthMaterial.normalMapID = earth_nTextureID;
-    // earthMaterial.alpha = alphaOpaque; // Opaque
-
-    // earth atmosphere is transparent
-    // Material earthAtmosphereMaterial;
-    // earthAtmosphereMaterial.Kd = glm::vec3(0.6f, 0.7f, 0.9f); // White color
-    // earthAtmosphereMaterial.hasDiffuseMap = true;
-    // earthAtmosphereMaterial.diffuseMapID = earth_atmosphereTextureID;
-    // earthAtmosphereMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // earthAtmosphereMaterial.shininess = 8.0f;                // Shininess exponent
-    // earthAtmosphereMaterial.hasSpecularMap = false;
-    // earthAtmosphereMaterial.specularMapID = 0;
-    // earthAtmosphereMaterial.hasNormalMap = false;
-    // earthAtmosphereMaterial.normalMapID = 0;
-    // earthAtmosphereMaterial.alpha = alphaTransparent3;
-
-    // // mars material
-    // Material marsMaterial;
-    // marsMaterial.Kd = glm::vec3(0.6f, 0.3f, 0.2f);
-    // marsMaterial.hasDiffuseMap = true;
-    // marsMaterial.diffuseMapID = marsTextureID;
-    // marsMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // marsMaterial.shininess = 15.0f;                // Shininess exponent
-    // marsMaterial.hasSpecularMap = false;
-    // marsMaterial.specularMapID = 0;
-    // marsMaterial.hasNormalMap = false;
-    // marsMaterial.normalMapID = 0;
-    // marsMaterial.alpha = alphaOpaque; // Opaque
-
-    // // jupiter material
-    // Material jupiterMaterial;
-    // jupiterMaterial.Kd = glm::vec3(0.7f, 0.6f, 0.5f);
-    // jupiterMaterial.hasDiffuseMap = true;
-    // jupiterMaterial.diffuseMapID = jupiterTextureID;
-    // jupiterMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // jupiterMaterial.shininess = 18.0f;                // Shininess exponent
-    // jupiterMaterial.hasSpecularMap = false;
-    // jupiterMaterial.specularMapID = 0;
-    // jupiterMaterial.hasNormalMap = false;
-    // jupiterMaterial.normalMapID = 0;
-    // jupiterMaterial.alpha = alphaOpaque; // Opaque
-
-    // // saturn material
-    // Material saturnMaterial;
-    // saturnMaterial.Kd = glm::vec3(0.8f, 0.7f, 0.6f);
-    // saturnMaterial.hasDiffuseMap = true;
-    // saturnMaterial.diffuseMapID = saturnTextureID;
-    // saturnMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // saturnMaterial.shininess = 25.0f;                // Shininess exponent
-    // saturnMaterial.hasSpecularMap = false;
-    // saturnMaterial.specularMapID = 0;
-    // saturnMaterial.hasNormalMap = false;
-    // saturnMaterial.normalMapID = 0;
-    // saturnMaterial.alpha = alphaOpaque; // Opaque
-
-    // // saturn ring material
-    // Material saturnRingMaterial;
-    // saturnRingMaterial.Kd = glm::vec3(0.9f, 0.8f, 0.7f);
-    // saturnRingMaterial.hasDiffuseMap = true;
-    // saturnRingMaterial.diffuseMapID = saturn_ringTextureID;
-    // saturnRingMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // saturnRingMaterial.shininess = 60.0f;                // Shininess exponent
-    // saturnRingMaterial.hasSpecularMap = false;
-    // saturnRingMaterial.specularMapID = 0;
-    // saturnRingMaterial.hasNormalMap = false;
-    // saturnRingMaterial.normalMapID = 0;
-    // saturnRingMaterial.alpha = alphaTransparent4; // Transparent
-
-    // // uranus material
-    // Material uranusMaterial;
-    // uranusMaterial.Kd = glm::vec3(0.5f, 0.7f, 0.8f);
-    // uranusMaterial.hasDiffuseMap = true;
-    // uranusMaterial.diffuseMapID = uranusTextureID;
-    // uranusMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // uranusMaterial.shininess = 20.0f;                // Shininess exponent
-    // uranusMaterial.hasSpecularMap = false;
-    // uranusMaterial.specularMapID = 0;
-    // uranusMaterial.hasNormalMap = false;
-    // uranusMaterial.normalMapID = 0;
-    // uranusMaterial.alpha = alphaOpaque; // Opaque
-
-    // // neptune material
-    // Material neptuneMaterial;
-    // neptuneMaterial.Kd = glm::vec3(0.4f, 0.6f, 0.9f);
-    // neptuneMaterial.hasDiffuseMap = true;
-    // neptuneMaterial.diffuseMapID = neptuneTextureID;
-    // neptuneMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // neptuneMaterial.shininess = 22.0f;                // Shininess exponent
-    // neptuneMaterial.hasSpecularMap = false;
-    // neptuneMaterial.specularMapID = 0;
-    // neptuneMaterial.hasNormalMap = false;
-    // neptuneMaterial.normalMapID = 0;
-    // neptuneMaterial.alpha = alphaOpaque; // Opaque
-
-    // f*ck pluto, not a real planet
-
-    // add to manager
-    // materialManager.addOrGetMaterial(sunMaterial);
-    // materialManager.addOrGetMaterial(mercuryMaterial);
-    // materialManager.addOrGetMaterial(venusMaterial);
-    // materialManager.addOrGetMaterial(venusAtmosphereMaterial);
-    // materialManager.addOrGetMaterial(earthMaterial);
-    // materialManager.addOrGetMaterial(earthAtmosphereMaterial);
-    // materialManager.addOrGetMaterial(marsMaterial);
-    // materialManager.addOrGetMaterial(jupiterMaterial);
-    // materialManager.addOrGetMaterial(saturnMaterial);
-    // materialManager.addOrGetMaterial(saturnRingMaterial);
-    // materialManager.addOrGetMaterial(uranusMaterial);
-    // materialManager.addOrGetMaterial(neptuneMaterial);
-
-    // more material
-    // // crying obsidian
-    // Material crying_obsidian_material;
-    // crying_obsidian_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
-    // crying_obsidian_material.hasDiffuseMap = true;
-    // crying_obsidian_material.diffuseMapID = crying_obsidianTextureID;
-    // crying_obsidian_material.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // crying_obsidian_material.shininess = 32.0f;                // Shininess exponent
-    // crying_obsidian_material.hasSpecularMap = true;
-    // crying_obsidian_material.specularMapID = crying_obsidianTextureID_s;
-    // crying_obsidian_material.hasNormalMap = true;
-    // crying_obsidian_material.normalMapID = crying_obsidianTextureID_n;
-    // crying_obsidian_material.alpha = alphaOpaque; // Opaque
-
-    // // deepslate
-    // Material deepslate_material;
-    // deepslate_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
-    // deepslate_material.hasDiffuseMap = true;
-    // deepslate_material.diffuseMapID = deepslateTextureID;
-    // deepslate_material.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // deepslate_material.shininess = 32.0f;                // Shininess exponent
-    // deepslate_material.hasSpecularMap = true;
-    // deepslate_material.specularMapID = deepslateTextureID_s;
-    // deepslate_material.hasNormalMap = true;
-    // deepslate_material.normalMapID = deepslateTextureID_n;
-    // deepslate_material.alpha = alphaOpaque; // Opaque
-
-    // // mossy stone bricks
-    // Material mossy_stone_bricks_material;
-    // mossy_stone_bricks_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
-    // mossy_stone_bricks_material.hasDiffuseMap = true;
-    // mossy_stone_bricks_material.diffuseMapID = mossy_stone_bricksTextureID;
-    // mossy_stone_bricks_material.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // mossy_stone_bricks_material.shininess = 32.0f;                // Shininess exponent
-    // mossy_stone_bricks_material.hasSpecularMap = true;
-    // mossy_stone_bricks_material.specularMapID = mossy_stone_bricksTextureID_s;
-    // mossy_stone_bricks_material.hasNormalMap = true;
-    // mossy_stone_bricks_material.normalMapID = mossy_stone_bricksTextureID_n;
-    // mossy_stone_bricks_material.alpha = alphaOpaque; // Opaque
-
-    // // obsidian
-    // Material obsidian_material;
-    // obsidian_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
-    // obsidian_material.hasDiffuseMap = true;
-    // obsidian_material.diffuseMapID = obsidianTextureID;
-    // obsidian_material.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // obsidian_material.shininess = 32.0f;                // Shininess exponent
-    // obsidian_material.hasSpecularMap = true;
-    // obsidian_material.specularMapID = obsidianTextureID_s;
-    // obsidian_material.hasNormalMap = true;
-    // obsidian_material.normalMapID = obsidianTextureID_n;
-    // obsidian_material.alpha = alphaOpaque; // Opaque
-
-    // // portal
-    // Material portal_material;
-    // portal_material.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
-    // portal_material.hasDiffuseMap = true;
-    // portal_material.diffuseMapID = portalTextureID;
-    // portal_material.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // portal_material.shininess = 32.0f;                // Shininess exponent
-    // portal_material.hasSpecularMap = true;
-    // portal_material.specularMapID = portalTextureID_s;
-    // portal_material.hasNormalMap = false;
-    // portal_material.normalMapID = 0;
-    // portal_material.alpha = alphaTransparent5; // 50% opaque
-
-    // add to manager
-    // materialManager.addOrGetMaterial(crying_obsidian_material);
-    // materialManager.addOrGetMaterial(deepslate_material);
-    // materialManager.addOrGetMaterial(mossy_stone_bricks_material);
-    // materialManager.addOrGetMaterial(obsidian_material);
-    // materialManager.addOrGetMaterial(portal_material);
-
-    // white material
-    // Material whiteMaterial;
-    // whiteMaterial.Kd = glm::vec3(1.0f, 1.0f, 1.0f); // White color
-    // whiteMaterial.hasDiffuseMap = false;
-    // whiteMaterial.diffuseMapID = 0;
-    // whiteMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
-    // whiteMaterial.shininess = 32.0f;                // Shininess exponent
-    // whiteMaterial.hasSpecularMap = false;           // Assuming no specular map
-    // whiteMaterial.specularMapID = 0;
-    // whiteMaterial.hasNormalMap = false;
-    // whiteMaterial.normalMapID = 0;
-    // whiteMaterial.alpha = alphaTransparent5; // Transparent
-
-    // materialManager.addOrGetMaterial(whiteMaterial);
-
     // std::cout << "Materials created" << std::endl;
     // // After loading textures
     // for (const auto &material : materialManager.materials)
@@ -1003,73 +476,6 @@ int main(int argc, char *argv[])
     glm::vec3 initialPosition2(25.0f, 2.0f, 4.0f);
     glm::vec3 initialSize(1.0f, 1.0f, 1.0f);
 
-    // // dsiplay the new materials
-
-    // // Adding "crying_obsidian" cube
-    // utils_scene::addCube(
-    //     "crying_obsidian",              // Name
-    //     glm::vec3(28.0f, 2.0f, 2.0f),   // Position
-    //     initialSize,                    // Size
-    //     crying_obsidian_material,       // Material
-    //     glm::vec3(0.0f, 1.0f, 0.0f),    // Rotation axis (Y-axis)
-    //     0.0f,                           // Rotation angle (e.g., 0 degrees)
-    //     cubeVAO,                        // VAO ID
-    //     cubeIndexCount,                 // Index count
-    //     true                            // Is static
-    // );
-
-    // // Adding "deepslate" cube
-    // utils_scene::addCube(
-    //     "deepslate",              // Name
-    //     glm::vec3(28.0f, 2.0f, 3.0f), // Position
-    //     initialSize,              // Size
-    //     deepslate_material,       // Material
-    //     glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
-    //     0.0f,                     // Rotation angle (e.g., 0 degrees)
-    //     cubeVAO,                  // VAO ID
-    //     cubeIndexCount,           // Index count
-    //     true                      // Is static
-    // );
-
-    // // Adding "mossy_stone_bricks" cube
-    // utils_scene::addCube(
-    //     "mossy_stone_bricks",        // Name
-    //     glm::vec3(28.0f, 2.0f, 4.0f), // Position
-    //     initialSize,                 // Size
-    //     mossy_stone_bricks_material, // Material
-    //     glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
-    //     0.0f,                        // Rotation angle (e.g., 0 degrees)
-    //     cubeVAO,                     // VAO ID
-    //     cubeIndexCount,              // Index count
-    //     true                         // Is static
-    // );
-
-    // // Adding "obsidian" cube
-    // utils_scene::addCube(
-    //     "obsidian",                 // Name
-    //     glm::vec3(28.0f, 2.0f, 5.0f), // Position
-    //     initialSize,                // Size
-    //     obsidian_material,          // Material
-    //     glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
-    //     0.0f,                       // Rotation angle (e.g., 0 degrees)
-    //     cubeVAO,                    // VAO ID
-    //     cubeIndexCount,             // Index count
-    //     true                        // Is static
-    // );
-
-    // // Adding "portal" cube
-    // utils_scene::addTransparentCube(
-    //     "portal",                    // Name
-    //     glm::vec3(28.0f, 2.0f, 6.0f), // Position
-    //     glm::vec3(0.1f, 1.0f, 1.0f) * 0.999f, // Size
-    //     portal_material,             // Material
-    //     glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
-    //     0.0f,                        // Rotation angle (e.g., 0 degrees)
-    //     cubeVAO,                     // VAO ID
-    //     cubeIndexCount,              // Index count
-    //     true                         // Is static
-    // );
-
     // white sphere in room 2, transparentt
     // pos 30, 2, 4
     utils_scene::addTransparentSphere(
@@ -1081,99 +487,6 @@ int main(int argc, char *argv[])
         sphereVertexCount,             // Index count
         true                          // Is static
     );
-
-    // // Adding "stone_bricks" cube
-    // utils_scene::addCube(
-    //     "stone_bricks",              // Name
-    //     initialPosition,             // Position
-    //     initialSize,                 // Size
-    //     stone_bricks_material,       // Material
-    //     glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
-    //     0.0f,                        // Rotation angle (e.g., 0 degrees)
-    //     cubeVAO,                     // VAO ID
-    //     cubeIndexCount,              // Index count
-    //     true                         // Is static
-    // );
-
-    // // Adding "glass" cube
-    // utils_scene::addTransparentCube(
-    //     "glass",                     // Name
-    //     initialPosition2,            // Position
-    //     initialSize * 0.999f,        // Size (slightly smaller to avoid z-fighting)
-    //     glass_material,              // Material
-    //     glm::vec3(0.0f, 1.0f, 0.0f), // Rotation axis (Y-axis)
-    //     0.0f,                        // Rotation angle (e.g., 0 degrees)
-    //     cubeVAO,                     // VAO ID
-    //     cubeIndexCount,              // Index count
-    //     true                         // Is static
-    // );
-
-    // // Adding "purple_stained_glass" cube
-    // utils_scene::addTransparentCube(
-    //     "purple_stained_glass",        // Name
-    //     glm::vec3(25.0f, 2.0f, 5.0f),  // Position
-    //     initialSize * 0.999f,          // Size (slightly smaller to avoid z-fighting)
-    //     purple_stained_glass_material, // Material
-    //     glm::vec3(0.0f, 1.0f, 0.0f),   // Rotation axis (Y-axis)
-    //     0.0f,                          // Rotation angle (e.g., 0 degrees)
-    //     cubeVAO,                       // VAO ID
-    //     cubeIndexCount,                // Index count
-    //     true                           // Is static
-    // );
-
-    // // Adding "iron_block" cube
-    // utils_scene::addCube(
-    //     "iron_block",                 // Name
-    //     glm::vec3(25.0f, 2.0f, 6.0f), // Position
-    //     initialSize,                  // Size
-    //     iron_block_material,          // Material
-    //     glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
-    //     0.0f,                         // Rotation angle (e.g., 0 degrees)
-    //     cubeVAO,                      // VAO ID
-    //     cubeIndexCount,               // Index count
-    //     true                          // Is static
-    // );
-
-    // // Adding "note_block" cube
-    // utils_scene::addCube(
-    //     "note_block",                 // Name
-    //     glm::vec3(25.0f, 2.0f, 7.0f), // Position
-    //     initialSize,                  // Size
-    //     note_block_material,          // Material
-    //     glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
-    //     0.0f,                         // Rotation angle (e.g., 0 degrees)
-    //     cubeVAO,                      // VAO ID
-    //     cubeIndexCount,               // Index count
-    //     true                          // Is static
-    // );
-
-    // // Adding "oak_planks" cube
-    // utils_scene::addCube(
-    //     "oak_planks",                 // Name
-    //     glm::vec3(25.0f, 2.0f, 8.0f), // Position
-    //     initialSize,                  // Size
-    //     oak_planks_material,          // Material
-    //     glm::vec3(0.0f, 1.0f, 0.0f),  // Rotation axis (Y-axis)
-    //     0.0f,                         // Rotation angle (e.g., 0 degrees)
-    //     cubeVAO,                      // VAO ID
-    //     cubeIndexCount,               // Index count
-    //     true                          // Is static
-    // );
-
-    // // Adding "deepslate_emerald_ore" cube
-    // utils_scene::addCube(
-    //     "deepslate_emerald_ore",        // Name
-    //     glm::vec3(25.0f, 2.0f, 9.0f),   // Position
-    //     initialSize,                    // Size
-    //     deepslate_emerald_ore_material, // Material
-    //     glm::vec3(0.0f, 1.0f, 0.0f),    // Rotation axis (Y-axis)
-    //     0.0f,                           // Rotation angle (e.g., 0 degrees)
-    //     cubeVAO,                        // VAO ID
-    //     cubeIndexCount,                 // Index count
-    //     true                            // Is static
-    // );
-
-    // displaying materials over.
 
     // floor
     glm::vec3 origin(0.0f, 0.0f, 0.0f);
@@ -2498,12 +1811,18 @@ int main(int argc, char *argv[])
     // add a std::vector of simple point lights from namespace utils_light
     std::vector<utils_light::SimplePointLight> simpleLights;
 
+    std::vector<std::shared_ptr<utils_light::SimplePointLight>> sharedSimpleLights;
+
+    for (auto& light : simpleLights) {
+        sharedSimpleLights.push_back(std::make_shared<utils_light::SimplePointLight>(light));
+    }
+
     // Add a simple point light to the scene
     // int newLightID = utils_light::addLight(
     //     simpleLights,
     //     glm::vec3(5.0f, 2.5f, 15.0f), // position
     //     glm::vec3(1.0f, 1.0f, 1.0f),  // color
-    //     1.0f                          // intensity
+    //     1.8f                          // intensity
     // );
 
     // // // Add a simple point light to the scene 2
@@ -2511,7 +1830,7 @@ int main(int argc, char *argv[])
     //     simpleLights,
     //     glm::vec3(5.0f, 1.0f, 19.0f), // position
     //     glm::vec3(0.3f, 0.4f, 1.0f),  // color
-    //     1.0f                          // intensity
+    //     1.8f                          // intensity
     // );
 
     // // light pos 32 2 11
@@ -2519,7 +1838,7 @@ int main(int argc, char *argv[])
     //     simpleLights,
     //     glm::vec3(32.0f, 2.0f, 19.0f), // position
     //     glm::vec3(1.0f, 0.0f, 1.0f),   // color
-    //     1.0f                           // intensity
+    //     1.8f                           // intensity
     // );
 
     // // light pos 32 2 13
@@ -2527,7 +1846,7 @@ int main(int argc, char *argv[])
     //     simpleLights,
     //     glm::vec3(37.0f, 2.0f, 13.0f), // position
     //     glm::vec3(1.0f, 1.0f, 1.0f),   // color
-    //     1.0f                           // intensity
+    //     1.8f                           // intensity
     // );
 
     // // pos 10 1 10
@@ -2535,7 +1854,7 @@ int main(int argc, char *argv[])
     //     simpleLights,
     //     glm::vec3(10.0f, 1.0f, 10.0f), // position
     //     glm::vec3(1.0f, 0.0f, 1.0f),   // color
-    //     1.0f                           // intensity
+    //     1.8f                           // intensity
     // );
 
     // one light for each planet case, a little bit above the planet
@@ -2544,7 +1863,7 @@ int main(int argc, char *argv[])
         simpleLights,
         glm::vec3(4.0f, 3.0f, 3.0f), // position
         glm::vec3(1.0f, 1.0f, 1.0f),  // color
-        0.2f                          // intensity
+        1.8f                          // intensity
     );
 
     // venus
@@ -2552,7 +1871,7 @@ int main(int argc, char *argv[])
         simpleLights,
         glm::vec3(8.0f, 3.0f, 3.0f), // position
         glm::vec3(1.0f, 1.0f, 1.0f),  // color
-        0.2f                        // intensity
+        1.8f                        // intensity
     );
 
     // earth
@@ -2560,7 +1879,7 @@ int main(int argc, char *argv[])
         simpleLights,
         glm::vec3(12.0f, 3.0f, 3.0f), // position
         glm::vec3(1.0f, 1.0f, 1.0f),  // color
-        0.2f                          // intensity
+        1.8f                          // intensity
     );
 
     // mars
@@ -2568,7 +1887,7 @@ int main(int argc, char *argv[])
         simpleLights,
         glm::vec3(16.0f, 3.0f, 3.0f), // position
         glm::vec3(1.0f, 1.0f, 1.0f),  // color
-        0.2f                          // intensity
+        1.8f                          // intensity
     );
 
     // jupiter
@@ -2576,7 +1895,7 @@ int main(int argc, char *argv[])
         simpleLights,
         glm::vec3(16.0f, 3.0f, 20.0f), // position
         glm::vec3(1.0f, 1.0f, 1.0f),   // color
-        0.2f                           // intensity
+        1.8f                           // intensity
     );
 
     // saturn
@@ -2584,7 +1903,7 @@ int main(int argc, char *argv[])
         simpleLights,
         glm::vec3(12.0f, 3.0f, 20.0f), // position
         glm::vec3(1.0f, 1.0f, 1.0f),   // color
-        0.2f                           // intensity
+        1.8f                           // intensity
     );
 
     // uranus
@@ -2592,7 +1911,7 @@ int main(int argc, char *argv[])
         simpleLights,
         glm::vec3(8.0f, 3.0f, 20.0f), // position
         glm::vec3(1.0f, 1.0f, 1.0f),   // color
-        0.2f                           // intensity
+        1.8f                           // intensity
     );
 
     // neptune
@@ -2600,7 +1919,7 @@ int main(int argc, char *argv[])
         simpleLights,
         glm::vec3(4.0f, 3.0f, 20.0f), // position
         glm::vec3(1.0f, 1.0f, 1.0f),   // color
-        0.2f                           // intensity
+        1.8f                           // intensity
     );
 
     int newLightID9 = utils_light::addLight(
@@ -2621,21 +1940,21 @@ int main(int argc, char *argv[])
         simpleLights,
         glm::vec3(30.0f, 4.0f, 4.0f), // position
         glm::vec3(1.0f, 1.0f, 1.0f),   // color
-        1.0f                           // intensity
+        3.5f                           // intensity
     );
 
     int newLightID11 = utils_light::addLight(
         simpleLights,
         glm::vec3(30.0f, 4.0f, 20.0f), // position
         glm::vec3(1.0f, 1.0f, 1.0f),   // color
-        0.9f                           // intensity
+        3.5f                           // intensity
     );
 
     int newLightID12 = utils_light::addLight(
         simpleLights,
         glm::vec3(23.0f, 4.0f, 11.5f), // position
         glm::vec3(1.0f, 1.0f, 1.0f),   // color
-        1.0f                           // intensity
+        1.5f                           // intensity
     );
 
 
@@ -2643,7 +1962,7 @@ int main(int argc, char *argv[])
     //     simpleLights,
     //     glm::vec3(39.0f, 3.0f, 11.5f), // position
     //     glm::vec3(0.4f, 0.24f, 0.7f),   // color
-    //     1.0f                           // intensity
+    //     1.8f                           // intensity
     // );
 
     // // light pos 32 2 13
@@ -2651,7 +1970,7 @@ int main(int argc, char *argv[])
     //     simpleLights,
     //     glm::vec3(28.0f, 2.0f, 13.0f), // position
     //     glm::vec3(1.0f, 1.0f, 1.0f),   // color
-    //     1.0f                           // intensity
+    //     1.8f                           // intensity
     // );
 
     // // pos 26 1 3
@@ -2659,7 +1978,7 @@ int main(int argc, char *argv[])
     //     simpleLights,
     //     glm::vec3(28.0f, 4.0f, 3.0f), // position
     //     glm::vec3(1.0f, 1.0f, 1.0f),   // color
-    //     1.0f                           // intensity
+    //     1.8f                           // intensity
     // );
 
     // update a light position during the loop
@@ -2745,7 +2064,7 @@ int main(int argc, char *argv[])
         glm::vec3 movementDirection = glm::vec3(0.0f);
 
         // Forward and Backward
-        if (state[SDLK_w])
+        if (state[SDLK_z])
         {
             movementDirection += frontDirection;
         }
@@ -2755,7 +2074,7 @@ int main(int argc, char *argv[])
         }
 
         // Left and Right
-        if (state[SDLK_a])
+        if (state[SDLK_q])
         {
             movementDirection -= rightDirection;
         }
@@ -2853,7 +2172,7 @@ int main(int argc, char *argv[])
         glm::vec3 lightPosWorld;
 
         // new method for light color, set to its material Kd
-        glm::vec3 lightIntensity = lightMaterial.Kd * 1.0f;
+        glm::vec3 lightIntensity = lightMaterial.Kd * 2.3f;
 
         // simple light ID 5, dynamic light
         // glm::vec3 lightPosWorld5;
@@ -2899,12 +2218,14 @@ int main(int argc, char *argv[])
         // update the display lights
         // but we cant just send simpleLights, we need to send the first 8 lights of it
         // Create a vector for the first 8 shared_ptr lights
-        std::vector<std::shared_ptr<utils_light::SimplePointLight>> truncatedLights;
-        for (size_t i = 0; i < simpleLights.size(); ++i) {
-            truncatedLights.push_back(std::make_shared<utils_light::SimplePointLight>(simpleLights[i]));
-        }
+        std::vector<utils_light::SimplePointLight*> truncatedLights;
 
-        // Call the function
+        std::transform(simpleLights.begin(), simpleLights.begin() + std::min(8ul, simpleLights.size()),
+                    std::back_inserter(truncatedLights),
+                    [](utils_light::SimplePointLight& light) {
+                        return &light;
+                    });
+
         utils_light::updateDynamicLights(truncatedLights, currentFrame);
 
         // update the light inside the nether portal, light ID = 9

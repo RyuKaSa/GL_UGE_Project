@@ -332,7 +332,7 @@ void createMaterials(MaterialManager& materialManager,
     earthMaterial.normalMapID = getTextureIDByName(std::string("Earth Normal Map"), textures, selectedSkyboxTextures);
     earthMaterial.alpha = alphaOpaque; // Opaque
 
-    earthAtmosphereMaterial.Kd = glm::vec3(0.6f, 0.7f, 0.9f); // White color
+    earthAtmosphereMaterial.Kd = glm::vec3(0.6f, 0.7f, 0.9f);
     earthAtmosphereMaterial.hasDiffuseMap = true;
     earthAtmosphereMaterial.diffuseMapID = getTextureIDByName(std::string("Earth Atmosphere"), textures, selectedSkyboxTextures);
     earthAtmosphereMaterial.Ks = glm::vec3(0.3f, 0.3f, 0.3f); // Specular color
@@ -341,7 +341,7 @@ void createMaterials(MaterialManager& materialManager,
     earthAtmosphereMaterial.specularMapID = 0;
     earthAtmosphereMaterial.hasNormalMap = false;
     earthAtmosphereMaterial.normalMapID = 0;
-    earthAtmosphereMaterial.alpha = alphaTransparent3;
+    earthAtmosphereMaterial.alpha = alphaTransparent8;
 
     // mars material
     marsMaterial.Kd = glm::vec3(0.6f, 0.3f, 0.2f);
@@ -484,7 +484,7 @@ void createMaterials(MaterialManager& materialManager,
     whiteMaterial.specularMapID = 0;
     whiteMaterial.hasNormalMap = false;
     whiteMaterial.normalMapID = 0;
-    whiteMaterial.alpha = alphaTransparent5; // Transparent
+    whiteMaterial.alpha = alphaTransparent1; // Transparent
 
     std::cout << "Materials initialized and added to the MaterialManager.\n";
     std::cout << "Number of materials: " << materialManager.getNumberOfMaterials() << std::endl;    

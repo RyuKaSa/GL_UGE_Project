@@ -110,7 +110,7 @@ float GetSpecularIntensity() {
 vec3 MainLightDiffuse(vec3 albedo, vec3 N) {
     vec3 L = normalize(uLightPos_vs - vFragPos);
     float distance = length(uLightPos_vs - vFragPos);
-    float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
+    float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.132 * distance * distance);
 
     float NdotL = max(dot(N, L), 0.0);
     return albedo * uLightIntensity * NdotL * attenuation;
@@ -123,7 +123,7 @@ vec3 MainLightSpecular(vec3 N) {
     vec3 H = normalize(L + V);
 
     float distance = length(uLightPos_vs - vFragPos);
-    float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
+    float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.132 * distance * distance);
 
     float NdotH = max(dot(N, H), 0.0);
     float specularIntensity = GetSpecularIntensity();
@@ -140,7 +140,8 @@ vec3 AdditionalLights(vec3 albedo, vec3 N) {
         vec3 H = normalize(L + V);
 
         float distance = length(uAdditionalLightPos[i] - vFragPos);
-        float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
+        // float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
+        float attenuation = 1.0 / (1.0 + 0.06 * distance + 0.052 * distance * distance);
 
         float NdotL = max(dot(N, L), 0.0);
         float NdotH = max(dot(N, H), 0.0);
