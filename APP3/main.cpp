@@ -26,7 +26,7 @@
 #include <glimac/Program.hpp>
 #include <glimac/Image.hpp>
 #include <glimac/SDLWindowManager.hpp>
-// #include <SDL2/SDL.h>
+#include <SDL2/SDL.h>
 #include <cstddef> // For offsetof
 #include <vector>
 #include <map>
@@ -427,8 +427,9 @@ int main(int argc, char *argv[])
     float lastFrame = 0.0f;    // Time of last frame
 
     // Enable relative mouse mode to capture mouse movement
-    SDL_ShowCursor(SDL_DISABLE); // Hide the cursor
-    SDL_WarpMouse(320, 240);     // Warp mouse to center
+    // SDL_ShowCursor(SDL_DISABLE); // Hide the cursor
+    // SDL_WarpMouse(320, 240);     // Warp mouse to center
+    SDL_SetRelativeMouseMode(SDL_TRUE);
 
 
     int frameCount = 0;
@@ -852,17 +853,11 @@ int main(int argc, char *argv[])
             fpsTimer -= 1.0f;
         }
 
-        if (!SDL_GetVideoSurface()) {
-            std::cerr << "Error: SDL Video Surface not initialized!" << std::endl;
-            return EXIT_FAILURE;
-        }
-
-
         // Update window title with camera position every frame
         std::string newTitle = "Boules - FPS: " + std::to_string(fps) + " - Position: (" + std::to_string(cameraPos.x) + ", " + std::to_string(cameraPos.z) + ")";
         // std::string newTitle = std::to_string(cameraPos.x) + ", " + std::to_string(cameraPos.z);
         // std::string newTitle = "FPS: " + std::to_string(fps);
-        SDL_WM_SetCaption(newTitle.c_str(), NULL);
+        SDL_SetWindowTitle(windowManager.getWindow(), newTitle.c_str());
 
         // Update light intensity dynamically within the loop
         // glm::vec3 lightIntensity = glm::vec3(
@@ -885,7 +880,7 @@ int main(int argc, char *argv[])
         glm::vec3 rightDirection = glm::normalize(glm::cross(frontDirection, cameraUp));
 
         // Keyboard input for movement
-        Uint8 *state = SDL_GetKeyState(NULL);
+        const Uint8 *state = SDL_GetKeyboardState(NULL);    
 
         glm::vec3 proposedCameraPos = cameraPos; // Temporary camera position for collision testing
 
@@ -893,21 +888,21 @@ int main(int argc, char *argv[])
         glm::vec3 movementDirection = glm::vec3(0.0f);
 
         // Forward and Backward
-        if (state[SDLK_z])
+        if (state[SDL_SCANCODE_W])
         {
             movementDirection += frontDirection;
         }
-        if (state[SDLK_s])
+        if (state[SDL_SCANCODE_S])
         {
             movementDirection -= frontDirection;
         }
 
         // Left and Right
-        if (state[SDLK_q])
+        if (state[SDL_SCANCODE_A])
         {
             movementDirection -= rightDirection;
         }
-        if (state[SDLK_d])
+        if (state[SDL_SCANCODE_D])
         {
             movementDirection += rightDirection;
         }
@@ -947,28 +942,7 @@ int main(int argc, char *argv[])
             cameraPos = proposedCameraPos;
         }
 
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
-                done = false;
-            }
-        }
-
-        // Get mouse position
-        int mouseX, mouseY;
-        SDL_GetMouseState(&mouseX, &mouseY);
-
-        // Calculate mouse movement
-        int xrel = mouseX - centerX;
-        int yrel = mouseY - centerY;
-
-        // Reset mouse to center
-        SDL_WarpMouse(centerX, centerY);
-
-        // Update yaw and pitch
-        yaw += xrel * sensitivity;
-        pitch -= yrel * sensitivity;
-        pitch = glm::clamp(pitch, -89.0f, 89.0f); // Prevent camera flipping
+        cameraPos.y = cameraPosY;
 
         // Define MVP matrices
         glm::mat4 ProjMatrix = glm::perspective(

@@ -14,36 +14,13 @@ message(STATUS "Source files: ${SRC_FILES}")
 message(STATUS "Header files: ${HEADER_FILES}")
 
 # Create the executable with Main.cpp and other source files
-add_executable(${OUTPUT} main.cpp ${SRC_FILES})
+add_executable(${OUTPUT} main.cpp ${SRC_FILES} ${HEADER_FILES})
 
 # Link libraries and set include directories
 target_link_libraries(${OUTPUT} PRIVATE glimac)
 target_include_directories(${OUTPUT} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(${OUTPUT} PRIVATE ${CMAKE_SOURCE_DIR}/glimac/include)
 target_include_directories(${OUTPUT} PRIVATE ${CMAKE_SOURCE_DIR}/glimac/third-party/glad/include)
-
-# Add OpenGL and GLU libraries
-find_package(OpenGL REQUIRED)
-find_library(GLU_LIBRARY GLU)
-
-if (GLU_LIBRARY)
-    target_link_libraries(${OUTPUT} PRIVATE ${OPENGL_LIBRARIES} ${GLU_LIBRARY})
-else()
-    message(FATAL_ERROR "GLU library not found!")
-endif()
-
-# Add SDL library
-find_package(SDL REQUIRED) # SDL 1.2
-include_directories(${SDL_INCLUDE_DIR})
-
-target_link_libraries(${OUTPUT} 
-    PRIVATE 
-        glimac
-        ${SDL_LIBRARY}
-        dl
-        OpenGL::GL
-        ${GLU_LIBRARY}
-)
 
 # Set properties for the target
 set_target_properties(${OUTPUT} PROPERTIES

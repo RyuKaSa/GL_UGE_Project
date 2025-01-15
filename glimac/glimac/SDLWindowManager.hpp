@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include <SDL/SDL.h>
+#include <SDL2/SDL.h>
 #include "glm.hpp"
 
 namespace glimac {
@@ -14,17 +14,23 @@ public:
 
     bool pollEvent(SDL_Event& e);
 
-    bool isKeyPressed(SDLKey key) const;
+    bool isKeyPressed(SDL_Keycode key) const;
 
-    // button can SDL_BUTTON_LEFT, SDL_BUTTON_RIGHT and SDL_BUTTON_MIDDLE
+    // Button can be SDL_BUTTON_LEFT, SDL_BUTTON_RIGHT, or SDL_BUTTON_MIDDLE
     bool isMouseButtonPressed(uint32_t button) const;
 
     glm::ivec2 getMousePosition() const;
 
     void swapBuffers();
 
-    // Return the time in seconds
+    // Returns the time in seconds
     float getTime() const;
+
+    SDL_Window* getWindow() const { return m_window; }
+
+private:
+    SDL_Window* m_window;
+    SDL_GLContext m_context;
 };
 
 }
